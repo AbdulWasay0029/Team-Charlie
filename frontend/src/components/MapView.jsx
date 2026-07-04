@@ -187,7 +187,12 @@ function CustomZoomWidget() {
   }, [map]);
 
   return (
-    <div className="absolute bottom-20 left-4 z-[1000] flex items-center bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-xl p-1.5 font-mono font-extrabold text-[12px] text-slate-800 select-none transition-all hover:border-slate-350">
+    <div 
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+      className="absolute bottom-20 left-4 z-[1000] flex items-center bg-white border border-slate-205/90 rounded-2xl shadow-xl p-1.5 font-mono font-extrabold text-[12px] text-slate-800 select-none transition-all hover:border-slate-350"
+    >
       <button
         type="button"
         onClick={() => map.zoomIn()}
@@ -215,7 +220,12 @@ function CustomZoomWidget() {
 function MapToolDock({ userPos, showHeatmap, onToggleHeatmap, onOpenHistory }) {
   const map = useMap();
   return (
-    <div className="absolute bottom-8 right-6 z-[1000] flex flex-col gap-2.5 font-mono uppercase tracking-widest text-[9px] select-none">
+    <div 
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+      className="absolute bottom-8 right-6 z-[1000] flex flex-col gap-2.5 font-mono uppercase tracking-widest text-[9px] select-none"
+    >
       {/* 1. Recenter to My Location */}
       <button
         type="button"
@@ -367,7 +377,12 @@ export default function MapView({
       </MapContainer>
 
       {/* Floating Instructions Banner (Bottom Left) */}
-      <div className="absolute bottom-4 left-4 bg-white/95 border border-slate-200 rounded-xl py-2 px-3 shadow-xl z-[1000] text-xs pointer-events-none select-none max-w-[280px] text-slate-700 font-body">
+      <div 
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+        onDoubleClick={(e) => e.stopPropagation()}
+        className="absolute bottom-4 left-4 bg-white border border-slate-200 rounded-xl py-2 px-3 shadow-xl z-[1000] text-xs select-none max-w-[280px] text-slate-700 font-body"
+      >
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-orange-500 animate-ping"></div>
           <p className="text-slate-800 font-bold">Grievance Map Mode</p>
