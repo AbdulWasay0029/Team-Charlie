@@ -191,7 +191,7 @@ function CustomZoomWidget() {
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
       onDoubleClick={(e) => e.stopPropagation()}
-      className="absolute bottom-20 left-4 z-[1000] flex items-center bg-white border border-slate-205/90 rounded-2xl shadow-xl p-1.5 font-mono font-extrabold text-[12px] text-slate-800 select-none transition-all hover:border-slate-350"
+      className="absolute bottom-32 left-4 z-[1000] flex items-center bg-white border border-slate-205/90 rounded-2xl shadow-xl p-1.5 font-mono font-extrabold text-[12px] text-slate-800 select-none transition-all hover:border-slate-350"
     >
       <button
         type="button"
