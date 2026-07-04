@@ -1,9 +1,9 @@
-const express = require("express");
-const cors = require("cors");
-const dotenv = require("dotenv");
-const { supabase, isConfigured } = require("./supabaseClient");
-const { draftEscalationMessage } = require("./aiModule");
-const { sendWhatsAppAlert } = require("./escalationModule");
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const { supabase, isConfigured } = require('./supabaseClient');
+const { verifyAndDescribePhoto, draftEscalationMessage } = require('./aiModule');
+const { sendWhatsAppAlert } = require('./escalationModule');
 
 dotenv.config();
 
@@ -13,411 +13,309 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
 // CORS setup
-const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL]
-  .map((url) => (url ? url.trim().replace(/\/$/, "") : ""))
-  .filter(Boolean);
+const allowedOrigins = [
+  'http://localhost:5173',
+  process.env.FRONTEND_URL
+].map(url => url ? url.trim().replace(/\/$/, '') : '').filter(Boolean);
 
-console.log("Configured CORS allowed origins:", allowedOrigins);
+console.log('Configured CORS allowed origins:', allowedOrigins);
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-
-      const formattedOrigin = origin.trim().replace(/\/$/, "");
-      if (allowedOrigins.includes(formattedOrigin)) {
-        return callback(null, true);
-      }
-
-      if (
-        formattedOrigin.startsWith("http://localhost:") ||
-        formattedOrigin.startsWith("http://127.0.0.1:")
-      ) {
-        return callback(null, true);
-      }
-
-      return callback(new Error(`Not allowed by CORS: ${origin}`));
-    },
-    credentials: true,
-  }),
-);
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    
+    const formattedOrigin = origin.trim().replace(/\/$/, '');
+    if (allowedOrigins.includes(formattedOrigin)) {
+      return callback(null, true);
+    }
+    
+    if (formattedOrigin.startsWith('http://localhost:') || formattedOrigin.startsWith('http://127.0.0.1:')) {
+      return callback(null, true);
+    }
+    
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
+  },
+  credentials: true
+}));
 
 // --- STATEFUL IN-MEMORY MOCK DATA (Phase 1 Fallback) ---
-const users = [
-  {
-    id: "11111111-1111-1111-1111-111111111111",
-    phone: "9999999999",
-    name: "Sameer Ansari",
-    ward: "Khairatabad",
-    role: "citizen",
-  },
-  {
-    id: "22222222-2222-2222-2222-222222222222",
-    phone: "8888888888",
-    name: "Official Khairatabad",
-    ward: "Khairatabad",
-    role: "official",
-  },
-  {
-    id: "33333333-3333-3333-3333-333333333333",
-    phone: "7777777777",
-    name: "Ravi Kumar",
-    ward: "Ameerpet",
-    role: "citizen",
-  },
+const mockUsers = [
+  { id: '11111111-1111-1111-1111-111111111111', phone: '9999999999', name: 'Sameer Ansari' },
+  { id: '22222222-2222-2222-2222-222222222222', phone: '8888888888', name: 'Ravi Kumar' }
 ];
 
-let reports = [
+let mockReports = [
   {
-    id: "10000000-0000-0000-0000-000000000001",
-    user_id: "11111111-1111-1111-1111-111111111111",
-    lat: 17.385,
+    id: '10000000-0000-0000-0000-000000000001',
+    user_id: '11111111-1111-1111-1111-111111111111',
+    lat: 17.3850,
     lng: 78.4867,
-    category: "Garbage",
-    description:
-      "Heavy pile of dump lying on road near the main market square.",
-    photo_url: "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9",
+    category: 'Garbage Accumulation',
+    description: 'Large pile of uncollected plastic and household waste near the community park.',
+    photo_url: 'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9',
     ai_verified: true,
     ai_severity: 4,
-    ai_issue_type: "Solid Waste",
-    status: "live",
+    status: 'live',
     priority_score: 10,
-    ward: "Khairatabad",
-    resolution_photo_url: null,
-    created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
+    created_at: new Date(Date.now() - 3600000 * 5).toISOString()
   },
   {
-    id: "10000000-0000-0000-0000-000000000002",
-    user_id: "33333333-3333-3333-3333-333333333333",
-    lat: 17.406,
-    lng: 78.468,
-    category: "Pothole",
-    description: "Huge pothole near primary school gate.",
-    photo_url: "https://images.unsplash.com/photo-1515162305285-0293e4767cc2",
+    id: '10000000-0000-0000-0000-000000000002',
+    user_id: '22222222-2222-2222-2222-222222222222',
+    lat: 17.4060,
+    lng: 78.4680,
+    category: 'Pothole',
+    description: 'Huge pothole near primary school gate. Very dangerous.',
+    photo_url: 'https://images.unsplash.com/photo-1515162305285-0293e4767cc2',
     ai_verified: true,
     ai_severity: 5,
-    ai_issue_type: "Road Damage",
-    status: "in_progress",
+    status: 'live',
     priority_score: 24,
-    ward: "Ameerpet",
-    resolution_photo_url: null,
-    created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-  },
+    created_at: new Date(Date.now() - 3600000 * 2).toISOString()
+  }
 ];
 
-const reportVotes = {
-  "10000000-0000-0000-0000-000000000001": new Set([
-    "33333333-3333-3333-3333-333333333333",
-  ]),
-  "10000000-0000-0000-0000-000000000002": new Set([
-    "11111111-1111-1111-1111-111111111111",
-  ]),
+const mockVotes = {
+  '10000000-0000-0000-0000-000000000001': new Set(['22222222-2222-2222-2222-222222222222']),
+  '10000000-0000-0000-0000-000000000002': new Set(['11111111-1111-1111-1111-111111111111'])
 };
 
-const statusHistory = [];
-const mockNotifications = [];
+const mockNotifications = new Set(); // Stores report_ids that triggered escalation
 
 const generateUuid = () => {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
 };
 
 // --- ENDPOINTS ---
 
-// Root / Health Check endpoint
-app.get("/", (req, res) => {
+// Root / Health Check
+app.get('/', (req, res) => {
   res.json({
     app: "Bharat Patrol Backend API",
-    mode: isConfigured
-      ? "Production (Supabase Connected)"
-      : "Development (Mock Fallback)",
+    mode: isConfigured ? "Production (Supabase Connected)" : "Development (Mock Fallback)",
     supabase_configured: isConfigured,
     status: "healthy",
-    timestamp: new Date().toISOString(),
+    timestamp: new Date().toISOString()
   });
 });
 
-// 1. POST /reports
-// Request Body: { user_id, lat, lng, category, photo_url }
-app.post("/reports", async (req, res) => {
-  const { user_id, lat, lng, category, photo_url } = req.body;
+// 1. POST /users (Signup)
+// Body: { name, phone }
+app.post('/users', async (req, res) => {
+  const { name, phone } = req.body;
 
-  if (!user_id || lat === undefined || lng === undefined) {
-    return res
-      .status(400)
-      .json({ error: "Missing required fields: user_id, lat, lng" });
+  if (!name || !phone) {
+    return res.status(400).json({ error: 'Missing name or phone fields' });
   }
 
   if (isConfigured && supabase) {
     try {
-      // Lookup user's ward
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("ward")
-        .eq("id", user_id)
+      // Avoid duplicate users by checking phone first
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('phone', phone)
         .maybeSingle();
 
-      const ward = userData?.ward || null;
+      if (fetchError) throw fetchError;
+      if (existingUser) {
+        return res.json({ id: existingUser.id, name: existingUser.name, phone: existingUser.phone });
+      }
 
-      // Insert new report
-      const { data, error } = await supabase
-        .from("reports")
-        .insert([
-          {
-            user_id,
-            lat: parseFloat(lat),
-            lng: parseFloat(lng),
-            category,
-            photo_url,
-            status: "pending",
-            ward,
-          },
-        ])
-        .select("id, status")
+      // Create new user
+      const { data: newUser, error: insertError } = await supabase
+        .from('users')
+        .insert([{ name, phone }])
+        .select()
         .single();
 
-      if (error) throw error;
-      return res.status(201).json({ id: data.id, status: data.status });
+      if (insertError) throw insertError;
+      return res.status(201).json({ id: newUser.id, name: newUser.name, phone: newUser.phone });
     } catch (err) {
-      console.error("Supabase error in POST /reports:", err);
+      console.error('Supabase error in POST /users:', err);
       return res.status(500).json({ error: err.message });
     }
   } else {
     // Fallback Mock Logic
-    const user = users.find((u) => u.id === user_id);
-    const ward = user ? user.ward : "Unknown Ward";
+    const existingUser = mockUsers.find(u => u.phone === phone);
+    if (existingUser) {
+      return res.json(existingUser);
+    }
 
+    const newUser = {
+      id: generateUuid(),
+      name,
+      phone
+    };
+    mockUsers.push(newUser);
+    return res.status(201).json(newUser);
+  }
+});
+
+// 2. POST /reports (Issue Submission + Inline AI Check)
+// Body: { user_id, lat, lng, category, photo_url }
+app.post('/reports', async (req, res) => {
+  const { user_id, lat, lng, category, photo_url } = req.body;
+
+  if (!user_id || lat === undefined || lng === undefined || !category || !photo_url) {
+    return res.status(400).json({ error: 'Missing required fields: user_id, lat, lng, category, photo_url' });
+  }
+
+  // 1. Run AI Photo Verification INLINE
+  console.log(`[AI Module] Inspecting photo for ${category} at ${lat}, ${lng}...`);
+  const aiResult = await verifyAndDescribePhoto(photo_url, category);
+  
+  const status = aiResult.verified ? 'live' : 'rejected';
+  const ai_severity = aiResult.severity;
+  const description = aiResult.description;
+  const ai_verified = aiResult.verified;
+
+  if (isConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('reports')
+        .insert([{
+          user_id,
+          lat: parseFloat(lat),
+          lng: parseFloat(lng),
+          category,
+          photo_url,
+          ai_verified,
+          ai_severity,
+          description,
+          status
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return res.status(201).json(data);
+    } catch (err) {
+      console.error('Supabase error in POST /reports:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  } else {
+    // Fallback Mock Logic
     const newReport = {
       id: generateUuid(),
       user_id,
       lat: parseFloat(lat),
       lng: parseFloat(lng),
       category,
-      description: "",
+      description,
       photo_url,
-      ai_verified: null,
-      ai_severity: null,
-      ai_issue_type: null,
-      status: "pending",
+      ai_verified,
+      ai_severity,
+      status,
       priority_score: 0,
-      ward,
-      resolution_photo_url: null,
-      created_at: new Date().toISOString(),
+      created_at: new Date().toISOString()
     };
-
-    reports.push(newReport);
-    reportVotes[newReport.id] = new Set();
-
-    return res.status(201).json({
-      id: newReport.id,
-      status: newReport.status,
-    });
+    mockReports.push(newReport);
+    mockVotes[newReport.id] = new Set();
+    
+    return res.status(201).json(newReport);
   }
 });
 
-// 2. POST /reports/:id/verify
-// Request Body: { ai_verified, ai_severity, ai_issue_type, description }
-app.post("/reports/:id/verify", async (req, res) => {
-  const { id } = req.params;
-  const { ai_verified, ai_severity, ai_issue_type, description } = req.body;
+// 3. GET /reports (Retrieves live verified reports, with filters and sorts)
+// Query params: sort=priority|date, category=xyz
+app.get('/reports', async (req, res) => {
+  const { sort, category } = req.query;
 
   if (isConfigured && supabase) {
     try {
-      const status = ai_verified ? "live" : "rejected";
+      let query = supabase
+        .from('reports')
+        .select('*, votes(count)')
+        .eq('status', 'live');
 
-      // Get old status first for history audit trail
-      const { data: currentReport, error: fetchError } = await supabase
-        .from("reports")
-        .select("status")
-        .eq("id", id)
-        .maybeSingle();
-
-      if (fetchError || !currentReport) {
-        return res.status(404).json({ error: "Report not found" });
-      }
-
-      // Update report details
-      const { data: updatedReport, error: updateError } = await supabase
-        .from("reports")
-        .update({
-          ai_verified: !!ai_verified,
-          ai_severity: ai_severity !== undefined ? parseInt(ai_severity) : null,
-          ai_issue_type: ai_issue_type || null,
-          description: description || null,
-          status,
-        })
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-
-      // Log status history
-      await supabase.from("status_history").insert([
-        {
-          report_id: id,
-          old_status: currentReport.status,
-          new_status: status,
-          changed_by: null, // System/AI update
-        },
-      ]);
-
-      return res.json(updatedReport);
-    } catch (err) {
-      console.error("Supabase error in POST /reports/:id/verify:", err);
-      return res.status(500).json({ error: err.message });
-    }
-  } else {
-    // Fallback Mock Logic
-    const reportIndex = reports.findIndex((r) => r.id === id);
-    if (reportIndex === -1) {
-      return res.status(404).json({ error: "Report not found" });
-    }
-
-    const report = reports[reportIndex];
-    report.ai_verified = !!ai_verified;
-    report.ai_severity =
-      ai_severity !== undefined ? parseInt(ai_severity) : null;
-    report.ai_issue_type = ai_issue_type || null;
-    if (description) {
-      report.description = description;
-    }
-
-    const oldStatus = report.status;
-    report.status = ai_verified ? "live" : "rejected";
-
-    statusHistory.push({
-      id: generateUuid(),
-      report_id: report.id,
-      old_status: oldStatus,
-      new_status: report.status,
-      changed_by: "00000000-0000-0000-0000-000000000000",
-      changed_at: new Date().toISOString(),
-    });
-
-    return res.json(report);
-  }
-});
-
-// 3. GET /reports
-// Query params: sort=priority|date, status=live|resolved|in_progress, category=xyz
-app.get("/reports", async (req, res) => {
-  const { sort, status, category } = req.query;
-
-  if (isConfigured && supabase) {
-    try {
-      // Build query to select report fields and count related votes
-      let query = supabase.from("reports").select("*, votes(count)");
-
-      // Apply category filter
       if (category) {
-        query = query.eq("category", category);
+        query = query.eq('category', category);
       }
 
-      // Apply status filter (comma separated values supported)
-      if (status) {
-        const statuses = status.split(",").map((s) => s.trim());
-        query = query.in("status", statuses);
-      }
-
-      // Apply sorting
-      if (sort === "priority") {
+      if (sort === 'priority') {
         query = query
-          .order("priority_score", { ascending: false })
-          .order("created_at", { ascending: false });
+          .order('priority_score', { ascending: false })
+          .order('created_at', { ascending: false });
       } else {
-        // Default: Sort by date
-        query = query.order("created_at", { ascending: false });
+        // Default sort: date (created_at DESC)
+        query = query.order('created_at', { ascending: false });
       }
 
       const { data, error } = await query;
       if (error) throw error;
 
-      // Map Supabase relation format to match requested exact JSON schema
-      const mappedReports = data.map((r) => {
-        const voteCountObj = r.votes && r.votes[0];
-        const vote_count = voteCountObj ? voteCountObj.count : 0;
-
-        // Exclude the raw votes relation array
+      const mappedReports = data.map(r => {
+        const votesObj = r.votes && r.votes[0];
+        const vote_count = votesObj ? votesObj.count : 0;
         const { votes, ...rest } = r;
         return {
           ...rest,
-          vote_count,
+          vote_count
         };
       });
 
       return res.json(mappedReports);
     } catch (err) {
-      console.error("Supabase error in GET /reports:", err);
+      console.error('Supabase error in GET /reports:', err);
       return res.status(500).json({ error: err.message });
     }
   } else {
     // Fallback Mock Logic
-    let filteredReports = [...reports];
+    let filtered = mockReports.filter(r => r.status === 'live');
 
     if (category) {
-      filteredReports = filteredReports.filter(
-        (r) =>
-          r.category && r.category.toLowerCase() === category.toLowerCase(),
-      );
+      filtered = filtered.filter(r => r.category && r.category.toLowerCase() === category.toLowerCase());
     }
 
-    if (status) {
-      const statuses = status.split(",").map((s) => s.trim().toLowerCase());
-      filteredReports = filteredReports.filter(
-        (r) => r.status && statuses.includes(r.status.toLowerCase()),
-      );
-    }
-
-    const mappedReports = filteredReports.map((r) => {
-      const voteSet = reportVotes[r.id] || new Set();
+    const mapped = filtered.map(r => {
+      const voteSet = mockVotes[r.id] || new Set();
       return {
         ...r,
-        vote_count: voteSet.size,
+        vote_count: voteSet.size
       };
     });
 
-    if (sort === "priority") {
-      mappedReports.sort((a, b) => {
+    if (sort === 'priority') {
+      mapped.sort((a, b) => {
         if (b.priority_score !== a.priority_score) {
           return b.priority_score - a.priority_score;
         }
         return new Date(b.created_at) - new Date(a.created_at);
       });
     } else {
-      mappedReports.sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at),
-      );
+      mapped.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     }
 
-    return res.json(mappedReports);
+    return res.json(mapped);
   }
 });
 
-// 4. POST /reports/:id/vote
-// Request Body: { user_id }
-app.post("/reports/:id/vote", async (req, res) => {
+// 4. POST /reports/:id/vote (Upvote issue + auto-escalation trigger)
+// Body: { user_id }
+app.post('/reports/:id/vote', async (req, res) => {
   const { id } = req.params;
   const { user_id } = req.body;
 
   if (!user_id) {
-    return res.status(400).json({ error: "Missing user_id" });
+    return res.status(400).json({ error: 'Missing user_id' });
   }
 
   if (isConfigured && supabase) {
     try {
       // 1. Insert vote. Rely on Postgres unique constraint to prevent double-voting
       const { error: insertError } = await supabase
-        .from("votes")
+        .from('votes')
         .insert([{ report_id: id, user_id }]);
 
       let isNewVote = false;
       if (!insertError) {
         isNewVote = true;
-      } else if (insertError.code === "23505") {
+      } else if (insertError.code === '23505') {
         // Unique violation code: user already voted. Handled gracefully.
         isNewVote = false;
       } else {
@@ -426,13 +324,13 @@ app.post("/reports/:id/vote", async (req, res) => {
 
       // 2. Fetch current priority score
       const { data: report, error: fetchError } = await supabase
-        .from("reports")
-        .select("priority_score")
-        .eq("id", id)
+        .from('reports')
+        .select('*')
+        .eq('id', id)
         .maybeSingle();
 
       if (fetchError || !report) {
-        return res.status(404).json({ error: "Report not found" });
+        return res.status(404).json({ error: 'Report not found' });
       }
 
       let currentScore = report.priority_score || 0;
@@ -441,86 +339,70 @@ app.post("/reports/:id/vote", async (req, res) => {
       if (isNewVote) {
         currentScore += 1;
         await supabase
-          .from("reports")
+          .from('reports')
           .update({ priority_score: currentScore })
-          .eq("id", id);
+          .eq('id', id);
       }
 
-      const escalation_ready = currentScore >= 25;
+      const crossedEscalationLimit = currentScore >= 25;
+      let escalation_fired = false;
 
-      // 4. Trigger Automatic WhatsApp Escalation if threshold crossed and not already sent
-      if (escalation_ready) {
-        try {
-          const { data: existingNotification, error: notifError } =
+      // 4. Trigger Automatic WhatsApp Escalation if crossed limit and not already sent
+      if (crossedEscalationLimit) {
+        // Check notifications table
+        const { data: existingNotification } = await supabase
+          .from('notifications')
+          .select('id')
+          .eq('report_id', id)
+          .maybeSingle();
+
+        if (!existingNotification) {
+          // Send alert inline
+          try {
+            const messageText = await draftEscalationMessage({
+              category: report.category || 'Civic Issue',
+              severity: report.ai_severity || 1,
+              voteCount: currentScore,
+              lat: report.lat,
+              lng: report.lng
+            });
+
+            const councillorPhone = process.env.COUNCILLOR_PHONE || '+919999999999';
+            await sendWhatsAppAlert(councillorPhone, messageText);
+
+            // Record notification
             await supabase
-              .from("notifications")
-              .select("id")
-              .eq("report_id", id)
-              .eq("type", "whatsapp")
-              .maybeSingle();
+              .from('notifications')
+              .insert([{ report_id: id }]);
 
-          if (!existingNotification && !notifError) {
-            // Fetch issue details for AI messaging
-            const { data: fullReport } = await supabase
-              .from("reports")
-              .select("ward, category, ai_severity")
-              .eq("id", id)
-              .maybeSingle();
-
-            if (fullReport) {
-              const area = fullReport.ward || "Unknown Ward";
-              const issueType = fullReport.category || "General Civic Issue";
-              const severity = fullReport.ai_severity || 1;
-
-              const messageText = await draftEscalationMessage({
-                area,
-                issueType,
-                severity,
-                voteCount: currentScore,
-              });
-
-              const councillorPhone =
-                process.env.COUNCILLOR_PHONE || "+919999999999";
-              await sendWhatsAppAlert(councillorPhone, messageText);
-
-              await supabase.from("notifications").insert([
-                {
-                  report_id: id,
-                  type: "whatsapp",
-                  recipient: councillorPhone,
-                },
-              ]);
-            }
+            escalation_fired = true;
+          } catch (escalationErr) {
+            console.error('[Escalation Error] Failed during inline WhatsApp escalation:', escalationErr);
           }
-        } catch (escalationErr) {
-          console.error(
-            "Error during WhatsApp escalation process:",
-            escalationErr,
-          );
         }
       }
 
       return res.json({
         priority_score: currentScore,
-        escalation_ready,
+        escalation_fired
       });
     } catch (err) {
-      console.error("Supabase error in POST /reports/:id/vote:", err);
+      console.error('Supabase error in POST /reports/:id/vote:', err);
       return res.status(500).json({ error: err.message });
     }
   } else {
     // Fallback Mock Logic
-    const reportIndex = reports.findIndex((r) => r.id === id);
+    const reportIndex = mockReports.findIndex(r => r.id === id);
     if (reportIndex === -1) {
-      return res.status(404).json({ error: "Report not found" });
+      return res.status(404).json({ error: 'Report not found' });
     }
 
-    const report = reports[reportIndex];
-    if (!reportVotes[id]) {
-      reportVotes[id] = new Set();
+    const report = mockReports[reportIndex];
+    if (!mockVotes[id]) {
+      mockVotes[id] = new Set();
     }
 
-    const votesSet = reportVotes[id];
+    const votesSet = mockVotes[id];
     let mockIsNewVote = false;
     if (!votesSet.has(user_id)) {
       votesSet.add(user_id);
@@ -528,339 +410,34 @@ app.post("/reports/:id/vote", async (req, res) => {
       mockIsNewVote = true;
     }
 
-    const escalation_ready = report.priority_score >= 25;
+    const crossedEscalationLimit = report.priority_score >= 25;
+    let escalation_fired = false;
 
     // Trigger Mock WhatsApp Escalation if threshold crossed and not already sent
-    if (escalation_ready && mockIsNewVote) {
-      const existingNotification = mockNotifications.find(
-        (n) => n.report_id === id && n.type === "whatsapp",
-      );
-      if (!existingNotification) {
-        const area = report.ward || "Unknown Ward";
-        const issueType = report.category || "General Civic Issue";
-        const severity = report.ai_severity || 1;
+    if (crossedEscalationLimit && mockIsNewVote) {
+      if (!mockNotifications.has(id)) {
+        mockNotifications.add(id);
+        escalation_fired = true;
 
         draftEscalationMessage({
-          area,
-          issueType,
-          severity,
+          category: report.category || 'Civic Issue',
+          severity: report.ai_severity || 1,
           voteCount: report.priority_score,
-        })
-          .then((messageText) => {
-            const councillorPhone =
-              process.env.COUNCILLOR_PHONE || "+919999999999";
-            return sendWhatsAppAlert(councillorPhone, messageText).then(() => {
-              mockNotifications.push({
-                id: generateUuid(),
-                report_id: id,
-                type: "whatsapp",
-                recipient: councillorPhone,
-                sent_at: new Date().toISOString(),
-              });
-            });
-          })
-          .catch((err) => {
-            console.error("Error during mock WhatsApp escalation:", err);
-          });
+          lat: report.lat,
+          lng: report.lng
+        }).then(messageText => {
+          const councillorPhone = process.env.COUNCILLOR_PHONE || '+919999999999';
+          return sendWhatsAppAlert(councillorPhone, messageText);
+        }).catch(err => {
+          console.error('Error during mock WhatsApp escalation:', err);
+        });
       }
     }
 
     return res.json({
       priority_score: report.priority_score,
-      escalation_ready,
+      escalation_fired
     });
-  }
-});
-
-// 5. PATCH /reports/:id/status
-// Request Body: { new_status, changed_by, resolution_photo_url (optional) }
-app.patch("/reports/:id/status", async (req, res) => {
-  const { id } = req.params;
-  const { new_status, changed_by, resolution_photo_url } = req.body;
-
-  if (!new_status || !changed_by) {
-    return res
-      .status(400)
-      .json({ error: "Missing required fields: new_status, changed_by" });
-  }
-
-  // Validate status schema values
-  const validStatuses = [
-    "pending",
-    "live",
-    "in_progress",
-    "resolved_pending_confirmation",
-    "resolved",
-    "reopened",
-    "rejected",
-  ];
-  if (!validStatuses.includes(new_status)) {
-    return res
-      .status(400)
-      .json({
-        error: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
-      });
-  }
-
-  // CRITICAL REQUIREMENT validation: resolved_pending_confirmation requires resolution_photo_url
-  if (new_status === "resolved_pending_confirmation" && !resolution_photo_url) {
-    return res.status(400).json({
-      error:
-        "Status 'resolved_pending_confirmation' requires a resolution_photo_url as evidence of work done.",
-    });
-  }
-
-  if (isConfigured && supabase) {
-    try {
-      // Get current status for status history
-      const { data: currentReport, error: fetchError } = await supabase
-        .from("reports")
-        .select("status")
-        .eq("id", id)
-        .maybeSingle();
-
-      if (fetchError || !currentReport) {
-        return res.status(404).json({ error: "Report not found" });
-      }
-
-      // Prepare updates
-      const updateFields = { status: new_status };
-      if (resolution_photo_url) {
-        updateFields.resolution_photo_url = resolution_photo_url;
-      }
-
-      // Update status
-      const { data: updatedReport, error: updateError } = await supabase
-        .from("reports")
-        .update(updateFields)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-
-      // Log status history audit trail
-      await supabase.from("status_history").insert([
-        {
-          report_id: id,
-          old_status: currentReport.status,
-          new_status: new_status,
-          changed_by: changed_by,
-        },
-      ]);
-
-      return res.json(updatedReport);
-    } catch (err) {
-      console.error("Supabase error in PATCH /reports/:id/status:", err);
-      return res.status(500).json({ error: err.message });
-    }
-  } else {
-    // Fallback Mock Logic
-    const reportIndex = reports.findIndex((r) => r.id === id);
-    if (reportIndex === -1) {
-      return res.status(404).json({ error: "Report not found" });
-    }
-
-    const report = reports[reportIndex];
-    const oldStatus = report.status;
-
-    report.status = new_status;
-    if (resolution_photo_url) {
-      report.resolution_photo_url = resolution_photo_url;
-    }
-
-    statusHistory.push({
-      id: generateUuid(),
-      report_id: id,
-      old_status: oldStatus,
-      new_status: new_status,
-      changed_by: changed_by,
-      changed_at: new Date().toISOString(),
-    });
-
-    return res.json(report);
-  }
-});
-
-// 6. POST /reports/:id/confirm-resolution
-// Request Body: { user_id, confirmed: true/false }
-app.post("/reports/:id/confirm-resolution", async (req, res) => {
-  const { id } = req.params;
-  const { user_id, confirmed } = req.body;
-
-  if (!user_id || confirmed === undefined) {
-    return res
-      .status(400)
-      .json({ error: "Missing required fields: user_id, confirmed" });
-  }
-
-  if (isConfigured && supabase) {
-    try {
-      // Fetch report to verify user permission (must match original reporter)
-      const { data: report, error: fetchError } = await supabase
-        .from("reports")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
-
-      if (fetchError || !report) {
-        return res.status(404).json({ error: "Report not found" });
-      }
-
-      // CRITICAL SECURITY constraint check: original reporter validation
-      if (report.user_id !== user_id) {
-        return res.status(403).json({
-          error:
-            "Access denied. Only the original reporter can confirm or reject the resolution of this report.",
-        });
-      }
-
-      const oldStatus = report.status;
-      const newStatus = confirmed ? "resolved" : "reopened";
-
-      // Update status
-      const { data: updatedReport, error: updateError } = await supabase
-        .from("reports")
-        .update({ status: newStatus })
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-
-      // Log status history
-      await supabase.from("status_history").insert([
-        {
-          report_id: id,
-          old_status: oldStatus,
-          new_status: newStatus,
-          changed_by: user_id,
-        },
-      ]);
-
-      return res.json(updatedReport);
-    } catch (err) {
-      console.error(
-        "Supabase error in POST /reports/:id/confirm-resolution:",
-        err,
-      );
-      return res.status(500).json({ error: err.message });
-    }
-  } else {
-    // Fallback Mock Logic
-    const reportIndex = reports.findIndex((r) => r.id === id);
-    if (reportIndex === -1) {
-      return res.status(404).json({ error: "Report not found" });
-    }
-
-    const report = reports[reportIndex];
-
-    if (report.user_id !== user_id) {
-      return res.status(403).json({
-        error:
-          "Access denied. Only the original reporter can confirm or reject the resolution of this report.",
-      });
-    }
-
-    const oldStatus = report.status;
-    report.status = confirmed ? "resolved" : "reopened";
-
-    statusHistory.push({
-      id: generateUuid(),
-      report_id: id,
-      old_status: oldStatus,
-      new_status: report.status,
-      changed_by: user_id,
-      changed_at: new Date().toISOString(),
-    });
-
-    return res.json(report);
-  }
-});
-
-// 7. POST /users (Signup Route)
-// Request Body: { id, phone, name, ward, role }
-app.post("/users", async (req, res) => {
-  const { id, phone, name, ward, role } = req.body;
-
-  if (!id || !phone || !name || !role) {
-    return res
-      .status(400)
-      .json({ error: "Missing required fields: id, phone, name, role" });
-  }
-
-  if (role !== "citizen" && role !== "official") {
-    return res
-      .status(400)
-      .json({ error: "Role must be either 'citizen' or 'official'" });
-  }
-
-  if (isConfigured && supabase) {
-    try {
-      const { data, error } = await supabase
-        .from("users")
-        .upsert([{ id, phone, name, ward, role }])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return res.status(201).json(data);
-    } catch (err) {
-      console.error("Supabase error in POST /users:", err);
-      return res.status(500).json({ error: err.message });
-    }
-  } else {
-    // Fallback Mock Logic
-    const existingUserIndex = users.findIndex((u) => u.id === id);
-    const newUser = {
-      id,
-      phone,
-      name,
-      ward,
-      role,
-      created_at: new Date().toISOString(),
-    };
-
-    if (existingUserIndex !== -1) {
-      users[existingUserIndex] = newUser;
-    } else {
-      users.push(newUser);
-    }
-
-    return res.status(201).json(newUser);
-  }
-});
-
-// Alias for convenience
-app.post("/signup", (req, res) => {
-  // Redirect POST body securely to /users
-  res.redirect(307, "/users");
-});
-
-// 8. GET /users/:id (Profile Fetch Route)
-app.get("/users/:id", async (req, res) => {
-  const { id } = req.params;
-
-  if (isConfigured && supabase) {
-    try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (!data) return res.status(404).json({ error: "User not found" });
-      return res.json(data);
-    } catch (err) {
-      console.error("Supabase error in GET /users/:id:", err);
-      return res.status(500).json({ error: err.message });
-    }
-  } else {
-    // Fallback Mock Logic
-    const user = users.find((u) => u.id === id);
-    if (!user) return res.status(404).json({ error: "User not found" });
-    return res.json(user);
   }
 });
 
