@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { supabase, isConfigured } = require('./supabaseClient');
+const { draftEscalationMessage } = require('./aiModule');
+const { sendWhatsAppAlert } = require('./escalationModule');
 
 dotenv.config();
 
@@ -86,6 +88,7 @@ const reportVotes = {
 };
 
 const statusHistory = [];
+const mockNotifications = [];
 
 const generateUuid = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -140,7 +143,7 @@ app.post('/reports', async (req, res) => {
           status: 'pending',
           ward
         }])
-        .select('id', 'status')
+        .select('id, status')
         .single();
 
       if (error) throw error;
@@ -406,6 +409,53 @@ app.post('/reports/:id/vote', async (req, res) => {
 
       const escalation_ready = currentScore >= 25;
 
+      // 4. Trigger Automatic WhatsApp Escalation if threshold crossed and not already sent
+      if (escalation_ready) {
+        try {
+          const { data: existingNotification, error: notifError } = await supabase
+            .from('notifications')
+            .select('id')
+            .eq('report_id', id)
+            .eq('type', 'whatsapp')
+            .maybeSingle();
+
+          if (!existingNotification && !notifError) {
+            // Fetch issue details for AI messaging
+            const { data: fullReport } = await supabase
+              .from('reports')
+              .select('ward, category, ai_severity')
+              .eq('id', id)
+              .maybeSingle();
+
+            if (fullReport) {
+              const area = fullReport.ward || 'Unknown Ward';
+              const issueType = fullReport.category || 'General Civic Issue';
+              const severity = fullReport.ai_severity || 1;
+
+              const messageText = await draftEscalationMessage({
+                area,
+                issueType,
+                severity,
+                voteCount: currentScore
+              });
+
+              const councillorPhone = process.env.COUNCILLOR_PHONE || '+919999999999';
+              await sendWhatsAppAlert(councillorPhone, messageText);
+
+              await supabase
+                .from('notifications')
+                .insert([{
+                  report_id: id,
+                  type: 'whatsapp',
+                  recipient: councillorPhone
+                }]);
+            }
+          }
+        } catch (escalationErr) {
+          console.error('Error during WhatsApp escalation process:', escalationErr);
+        }
+      }
+
       return res.json({
         priority_score: currentScore,
         escalation_ready
@@ -427,12 +477,44 @@ app.post('/reports/:id/vote', async (req, res) => {
     }
 
     const votesSet = reportVotes[id];
+    let mockIsNewVote = false;
     if (!votesSet.has(user_id)) {
       votesSet.add(user_id);
       report.priority_score += 1;
+      mockIsNewVote = true;
     }
 
     const escalation_ready = report.priority_score >= 25;
+
+    // Trigger Mock WhatsApp Escalation if threshold crossed and not already sent
+    if (escalation_ready && mockIsNewVote) {
+      const existingNotification = mockNotifications.find(n => n.report_id === id && n.type === 'whatsapp');
+      if (!existingNotification) {
+        const area = report.ward || 'Unknown Ward';
+        const issueType = report.category || 'General Civic Issue';
+        const severity = report.ai_severity || 1;
+
+        draftEscalationMessage({
+          area,
+          issueType,
+          severity,
+          voteCount: report.priority_score
+        }).then(messageText => {
+          const councillorPhone = process.env.COUNCILLOR_PHONE || '+919999999999';
+          return sendWhatsAppAlert(councillorPhone, messageText).then(() => {
+            mockNotifications.push({
+              id: generateUuid(),
+              report_id: id,
+              type: 'whatsapp',
+              recipient: councillorPhone,
+              sent_at: new Date().toISOString()
+            });
+          });
+        }).catch(err => {
+          console.error('Error during mock WhatsApp escalation:', err);
+        });
+      }
+    }
 
     return res.json({
       priority_score: report.priority_score,
