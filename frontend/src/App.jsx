@@ -4,6 +4,7 @@ import FilterBar from './components/FilterBar';
 import ReportForm from './components/ReportForm';
 import SidePanel from './components/SidePanel';
 import AuthModal from './components/AuthModal';
+import LegalModal from './components/LegalModal';
 import { INITIAL_REPORTS, CATEGORIES, WARDS_DATABASE } from './mockData';
 import { 
   AlertCircle, CheckCircle2, Info, RefreshCw, X, Shield, 
@@ -87,6 +88,10 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalTab, setAuthModalTab] = useState('signin'); // 'signin' | 'signup'
   const [pendingAction, setPendingAction] = useState(null); // { type: 'vote'|'report', payload }
+
+  // Legal & Compliance Modal States
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState('tos'); // 'tos'|'privacy'|'licenses'|'ai'|'rti'
 
   // AI Chatbot State
   const [chatInput, setChatInput] = useState('');
@@ -1064,14 +1069,71 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
             </div>
           </div>
 
-          {/* Footer developed by CGG logo */}
-          <footer className="pt-6 pb-12 text-center space-y-2 border-t border-slate-200/50">
-            <span className="text-[10px] text-slate-400 uppercase font-mono font-bold tracking-widest block">Designed & Developed By</span>
-            <div className="flex items-center justify-center gap-1.5 text-teal-700 font-display font-black tracking-wide text-xs">
-              <span className="bg-teal-600 text-white w-5.5 h-5.5 rounded-lg flex items-center justify-center text-[10px]">CGG</span>
-              <span>CENTRE FOR GOOD GOVERNANCE</span>
+          {/* 6. AUTHORITATIVE MUNICIPAL & LEGAL FOOTER */}
+          <footer className="bg-slate-900 text-slate-300 pt-12 pb-16 px-6 sm:px-12 border-t border-slate-800 mt-12 shadow-2xl font-body">
+            <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 pb-12 border-b border-slate-800/80 text-left">
+              
+              {/* Col 1: Brand & Mission */}
+              <div className="md:col-span-1 space-y-3">
+                <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setViewMode('dashboard')}>
+                  <img src="/logo.jpeg" alt="TraceSpark" className="w-8 h-8 rounded-xl object-cover shadow-md" />
+                  <span className="font-display font-extrabold text-lg text-white tracking-tight">TraceSpark</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  India's first AI-Powered Civic Accountability & SLA Enforcement Gateway. Bridging citizen crowdsourcing, Llama 3.2 Vision inspection, and automated 25-vote SLA dispatches for Greater Hyderabad Municipal Corporation (GHMC).
+                </p>
+                <div className="pt-2 flex items-center gap-2 text-[10px] text-teal-400 font-mono font-bold">
+                  <span className="h-2 w-2 rounded-full bg-teal-400 animate-pulse"></span>
+                  <span>All 8 Municipal Gateways Online</span>
+                </div>
+              </div>
+
+              {/* Col 2: Municipal & RTI */}
+              <div className="space-y-2.5 text-xs">
+                <h4 className="font-mono text-[10px] uppercase tracking-widest text-slate-400 font-extrabold">Municipal & Legal</h4>
+                <ul className="space-y-2 font-medium text-slate-300">
+                  <li><button onClick={() => { setLegalModalTab('rti'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Right to Information (RTI Act 2005)</button></li>
+                  <li><button onClick={() => { setLegalModalTab('rti'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">GHMC Citizen Charter & SLAs</button></li>
+                  <li><button onClick={() => { setLegalModalTab('tos'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Public Grievance Policy (CPGRAMS)</button></li>
+                  <li><button onClick={() => { setLegalModalTab('privacy'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">GPS Ward Proximity Math</button></li>
+                </ul>
+              </div>
+
+              {/* Col 3: Legal, Terms & Privacy */}
+              <div className="space-y-2.5 text-xs">
+                <h4 className="font-mono text-[10px] uppercase tracking-widest text-slate-400 font-extrabold">Compliance & Terms</h4>
+                <ul className="space-y-2 font-medium text-slate-300">
+                  <li><button onClick={() => { setLegalModalTab('tos'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Terms of Service (ToS)</button></li>
+                  <li><button onClick={() => { setLegalModalTab('privacy'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Privacy Policy (DPDP Act 2023)</button></li>
+                  <li><button onClick={() => { setLegalModalTab('privacy'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Google OAuth 2.0 Security</button></li>
+                  <li><button onClick={() => { setLegalModalTab('tos'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Anti-Spam & Vote Integrity</button></li>
+                </ul>
+              </div>
+
+              {/* Col 4: Open Source & AI Licenses */}
+              <div className="space-y-2.5 text-xs">
+                <h4 className="font-mono text-[10px] uppercase tracking-widest text-slate-400 font-extrabold">Licenses & AI</h4>
+                <ul className="space-y-2 font-medium text-slate-300">
+                  <li><button onClick={() => { setLegalModalTab('licenses'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">MIT License (Core Platform)</button></li>
+                  <li><button onClick={() => { setLegalModalTab('ai'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Meta Llama 3.2 Community License</button></li>
+                  <li><button onClick={() => { setLegalModalTab('licenses'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">OpenStreetMap / ODbL GIS Data</button></li>
+                  <li><button onClick={() => { setLegalModalTab('ai'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Autonomous Vision Grading</button></li>
+                </ul>
+              </div>
+
             </div>
-            <span className="text-[9px] text-slate-400 block font-medium">Knowledge • Technology • People</span>
+
+            {/* Bottom Bar: Copyright & Credits */}
+            <div className="max-w-6xl mx-auto pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
+              <div>
+                © 2026 TraceSpark Civic Technologies Inc. Built for Greater Hyderabad Municipal Corporation (GHMC). All rights reserved.
+              </div>
+              <div className="flex items-center gap-2 bg-slate-800/80 px-3.5 py-1.5 rounded-xl border border-slate-700/60 text-slate-400 text-[10px]">
+                <span>Designed & Developed by</span>
+                <span className="bg-teal-600 text-white font-bold px-1.5 py-0.5 rounded text-[9px] tracking-wider">CGG</span>
+                <span className="font-semibold text-slate-300">Centre for Good Governance</span>
+              </div>
+            </div>
           </footer>
 
         </main>
@@ -1221,6 +1283,14 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
             setIsAuthModalOpen(false);
             setPendingAction(null);
           }}
+        />
+      )}
+
+      {/* 8.5 LEGAL & COMPLIANCE MODAL */}
+      {isLegalModalOpen && (
+        <LegalModal
+          initialTab={legalModalTab}
+          onClose={() => setIsLegalModalOpen(false)}
         />
       )}
 
