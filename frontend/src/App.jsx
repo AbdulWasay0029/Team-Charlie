@@ -148,7 +148,7 @@ export default function App() {
   }, [filters, sortBy]);
 
   // Handle Signup
-  const handleSignup = async (name, phone) => {
+  const handleSignup = async (name, phone, authMetadata = {}) => {
     setSignupLoading(true);
     try {
       let userObj = null;
@@ -156,24 +156,27 @@ export default function App() {
         userObj = {
           id: `usr_${Math.random().toString(36).substr(2, 9)}`,
           name,
-          phone
+          phone,
+          verified: true,
+          ...authMetadata
         };
       } else {
         const res = await fetch(`${API_BASE_URL}/users`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, phone })
+          body: JSON.stringify({ name, phone, ...authMetadata })
         });
         
         if (!res.ok) throw new Error("Signup failed. Please try again.");
-        userObj = await res.json();
+        const data = await res.json();
+        userObj = { ...data, verified: true, ...authMetadata };
       }
       
       localStorage.setItem('tracespark_user', JSON.stringify(userObj));
       localStorage.setItem('bharat_patrol_user', JSON.stringify(userObj));
       setCurrentUser(userObj);
       setIsAuthModalOpen(false);
-      showToast(`Welcome to TraceSpark, ${userObj.name}!`, "success");
+      showToast(`Welcome to TraceSpark, ${userObj.name}! (${userObj.loginType === 'google' ? 'Google Verified' : 'OTP Verified'})`, "success");
 
       // Execute deferred pending action
       if (pendingAction) {
@@ -362,7 +365,7 @@ export default function App() {
   };
 
   // AI Chatbot message sender
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
@@ -371,50 +374,104 @@ export default function App() {
     setChatInput('');
     setChatLoading(true);
 
+    const lower = userMsg.toLowerCase();
+    let actionObj = null;
+
+    // Determine if query implies a quick action button (reporting or viewing map)
+    if (lower.includes('pothole') || lower.includes('road') || lower.includes('tarmac') || lower.includes('crack')) {
+      actionObj = { label: `Pin Road Damage on Map`, category: 'road_damage', type: 'report' };
+    } else if (lower.includes('drain') || lower.includes('sewage') || lower.includes('mosquito') || lower.includes('manhole') || lower.includes('overflow')) {
+      actionObj = { label: `Pin Open Drain on Map`, category: 'open_drain', type: 'report' };
+    } else if (lower.includes('light') || lower.includes('dark') || lower.includes('streetlight') || lower.includes('lamp') || lower.includes('night')) {
+      actionObj = { label: `Pin Streetlight on Map`, category: 'streetlight', type: 'report' };
+    } else if (lower.includes('garbage') || lower.includes('dump') || lower.includes('trash') || lower.includes('waste') || lower.includes('bin')) {
+      actionObj = { label: `Pin Garbage Pile on Map`, category: 'garbage', type: 'report' };
+    } else if (lower.includes('water') || lower.includes('leak') || lower.includes('pipe') || lower.includes('burst') || lower.includes('flooding')) {
+      actionObj = { label: `Pin Water Leak on Map`, category: 'water_leak', type: 'report' };
+    } else if (lower.includes('encroach') || lower.includes('footpath') || lower.includes('vendor') || lower.includes('illegal') || lower.includes('block')) {
+      actionObj = { label: `Pin Encroachment on Map`, category: 'encroachment', type: 'report' };
+    } else if (lower.includes('tree') || lower.includes('branch') || lower.includes('fallen') || lower.includes('storm')) {
+      actionObj = { label: `Pin Fallen Tree on Map`, category: 'fallen_tree', type: 'report' };
+    } else if (lower.includes('bus') || lower.includes('shelter') || lower.includes('bench') || lower.includes('stop')) {
+      actionObj = { label: `Pin Bus Stop Issue on Map`, category: 'bus_stop', type: 'report' };
+    } else if (lower.includes('urgent') || lower.includes('top') || lower.includes('highest') || lower.includes('priority') || lower.includes('critical') || lower.includes('escalat')) {
+      const topReport = [...reports].sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0))[0];
+      if (topReport) {
+        const catLabel = CATEGORIES[topReport.category]?.label || topReport.category;
+        actionObj = { label: `View ${catLabel} on Map`, category: topReport.category, type: 'view_report', targetReport: topReport };
+      }
+    }
+
+    try {
+      if (API_BASE_URL) {
+        const topReport = [...reports].sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0))[0];
+        const res = await fetch(`${API_BASE_URL}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: userMsg,
+            context: { totalReports: reports.length, topReport }
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.reply) {
+            setChatMessages(prev => [...prev, { sender: 'ai', text: data.reply, action: actionObj }]);
+            setChatLoading(false);
+            return;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Backend chat API offline, switching to contextual civic engine:", err);
+    }
+
+    // Client-Side Intelligent Dynamic Civic Engine (when backend API is offline/mock)
     setTimeout(() => {
       setChatLoading(false);
-      const lower = userMsg.toLowerCase();
-      let aiText = "Namaste! I can assist you with reporting civic issues, checking ward councillor details, or tracking urgent community complaints. Choose an option or tap the map to report.";
-      let actionObj = null;
+      let aiText = "";
 
-      if (lower.includes('urgent') || lower.includes('top') || lower.includes('highest') || lower.includes('priority') || lower.includes('critical') || lower.includes('escalat') || lower.includes('status')) {
+      if (lower.includes('hi') || lower.includes('hello') || lower.includes('hey') || lower.includes('help') || lower.includes('what can you do') || lower.includes('who are you')) {
+        aiText = `Namaste! 🙏 I am TraceSpark AI, your civic accountability assistant for Hyderabad (GHMC). I can help you with:\n\n1️⃣ **Find Ward Councillors**: Ask *"Who is the councillor for Charminar or Ward 112?"*\n2️⃣ **Track Urgent Hazards**: Ask *"What is the most critical issue right now?"*\n3️⃣ **Check Live Stats**: Ask *"How many reports are live?"*\n4️⃣ **Report Hazards**: Tell me *"there is a broken streetlight"* or *"pothole"* and I'll drop a pin!`;
+      } else if (lower.includes('urgent') || lower.includes('top') || lower.includes('highest') || lower.includes('priority') || lower.includes('critical') || lower.includes('escalat')) {
         const topReport = [...reports].sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0))[0];
         if (topReport) {
           const catLabel = CATEGORIES[topReport.category]?.label || topReport.category;
           const votesNeeded = Math.max(0, 25 - (topReport.priority_score || 0));
-          aiText = `Currently, our most urgent community grievance is a ${catLabel} in ${topReport.ward} with 🔥 ${topReport.priority_score} verified citizen votes! ${votesNeeded > 0 ? `Only ${votesNeeded} more vote(s) needed to trigger an automated WhatsApp alert to the Councillor.` : 'WhatsApp escalation alert has been dispatched!'}`;
-          actionObj = { label: `View ${catLabel} on Map`, category: topReport.category, type: 'view_report', targetReport: topReport };
+          aiText = `Currently, our #1 most critical hazard is a **${catLabel}** in **${topReport.ward}** with 🔥 **${topReport.priority_score} citizen upvotes**!\n\n${votesNeeded > 0 ? `👉 Only **${votesNeeded} more vote(s)** needed to trigger an automated WhatsApp SLA escalation to the Zonal Commissioner!` : '✅ **SLA Alert Fired!** Official WhatsApp notification has been dispatched to the municipal ward office.'}`;
         } else {
-          aiText = "All community grievances are currently under control or resolved! Would you like to report a new issue?";
+          aiText = "All community grievances are currently under control or resolved! Would you like to report a new infrastructure issue?";
         }
-      } else if (lower.includes('councillor') || lower.includes('ward') || lower.includes('contact') || lower.includes('who') || lower.includes('responsible') || lower.includes('ghmc') || lower.includes('office')) {
-        aiText = "TraceSpark covers all 150 wards under GHMC (Hyderabad). In Hitech City (Ward 112), your Councillor is Sri Ch. Ram Mohan. When any verified report reaches 25 upvotes, our AI engine automatically generates an SLA dispatch and sends an immediate WhatsApp alert to the Councillor!";
-      } else if (lower.includes('how') || lower.includes('work') || lower.includes('ai') || lower.includes('vision') || lower.includes('verify') || lower.includes('help')) {
-        aiText = "We use Llama 3 Vision AI to analyze uploaded photos in real-time. It verifies if the image depicts a real infrastructure hazard in India. Once verified, complaints go live on the Map where citizens upvote them to trigger Councillor dispatches!";
-      } else if (lower.includes('pothole') || lower.includes('road') || lower.includes('tarmac') || lower.includes('crack')) {
-        actionObj = { label: `Pin Road Damage on Map`, category: 'road_damage', type: 'report' };
-        aiText = "I've detected a potential Road Damage issue. Let's get your location and open the report form immediately!";
-      } else if (lower.includes('drain') || lower.includes('sewage') || lower.includes('mosquito') || lower.includes('manhole') || lower.includes('overflow')) {
-        actionObj = { label: `Pin Open Drain on Map`, category: 'open_drain', type: 'report' };
-        aiText = "I've detected an Open Drain grievance. Drainage overflow poses health risks. Let's get your location and drop a pin!";
-      } else if (lower.includes('light') || lower.includes('dark') || lower.includes('streetlight') || lower.includes('lamp') || lower.includes('night')) {
-        actionObj = { label: `Pin Streetlight on Map`, category: 'streetlight', type: 'report' };
-        aiText = "I've detected a Broken Streetlight issue. Dark lanes threaten citizen safety. Let's get your location and report this!";
-      } else if (lower.includes('garbage') || lower.includes('dump') || lower.includes('trash') || lower.includes('waste') || lower.includes('bin')) {
-        actionObj = { label: `Pin Garbage Pile on Map`, category: 'garbage', type: 'report' };
-        aiText = "I've detected a Garbage Pile grievance. Overflowing bins are health hazards. Let's get your location and map it!";
-      } else if (lower.includes('water') || lower.includes('leak') || lower.includes('pipe') || lower.includes('burst') || lower.includes('flooding')) {
-        actionObj = { label: `Pin Water Leak on Map`, category: 'water_leak', type: 'report' };
-        aiText = "I've detected a Water Pipe Leak. Clean water waste damages road tarmac. Let's get your location and map it immediately!";
-      } else if (lower.includes('encroach') || lower.includes('footpath') || lower.includes('vendor') || lower.includes('illegal') || lower.includes('block')) {
-        actionObj = { label: `Pin Encroachment on Map`, category: 'encroachment', type: 'report' };
-        aiText = "I've detected an Encroachment issue. Footpath obstruction forces pedestrians onto busy roads. Let's get your location and map it!";
-      } else if (lower.includes('tree') || lower.includes('branch') || lower.includes('fallen') || lower.includes('storm')) {
-        actionObj = { label: `Pin Fallen Tree on Map`, category: 'fallen_tree', type: 'report' };
-        aiText = "I've detected a Fallen Tree hazard. Obstructions block emergency vehicles. Let's get your location and report this!";
-      } else if (lower.includes('bus') || lower.includes('shelter') || lower.includes('bench') || lower.includes('stop')) {
-        actionObj = { label: `Pin Bus Stop Issue on Map`, category: 'bus_stop', type: 'report' };
-        aiText = "I've detected a Bus Stop grievance. Broken shelters affect public transit commuters. Let's get your location and map it!";
+      } else if (lower.includes('councillor') || lower.includes('ward') || lower.includes('contact') || lower.includes('who') || lower.includes('responsible') || lower.includes('ghmc') || lower.includes('office') || lower.includes('zonal') || lower.includes('commissioner')) {
+        // Search if a specific ward is mentioned
+        let matchedWardKey = Object.keys(WARDS_DATABASE).find(k => lower.includes(k.toLowerCase()) || lower.includes(k.split(' ')[0].toLowerCase()));
+        if (!matchedWardKey) {
+          if (lower.includes('112') || lower.includes('hitech')) matchedWardKey = 'Ward 112 (Hitech City)';
+          else if (lower.includes('80') || lower.includes('charminar')) matchedWardKey = 'Ward 80 (Charminar)';
+          else if (lower.includes('95') || lower.includes('khairatabad')) matchedWardKey = 'Ward 95 (Khairatabad)';
+          else if (lower.includes('101') || lower.includes('jubilee')) matchedWardKey = 'Ward 101 (Jubilee Hills)';
+          else if (lower.includes('120') || lower.includes('kukatpally')) matchedWardKey = 'Ward 120 (Kukatpally)';
+          else if (lower.includes('85') || lower.includes('koti')) matchedWardKey = 'Ward 85 (Koti & Abids)';
+          else if (lower.includes('98') || lower.includes('gachibowli')) matchedWardKey = 'Ward 98 (Gachibowli)';
+          else if (lower.includes('104') || lower.includes('begumpet')) matchedWardKey = 'Ward 104 (Begumpet)';
+          else matchedWardKey = 'Ward 112 (Hitech City)'; // default illustration
+        }
+        const wardInfo = WARDS_DATABASE[matchedWardKey];
+        const wardReportsCount = reports.filter(r => r.ward === matchedWardKey).length;
+        aiText = `🏢 **Municipal Ward Directory (${matchedWardKey})**:\n\n• **Zonal Commissioner**: ${wardInfo.councillor_name}\n• **Office Address**: ${wardInfo.office_address}\n• **Official Phone**: ${wardInfo.councillor_phone}\n• **Active Reports**: ${wardReportsCount} citizen complaint(s)\n\nUnder GHMC SLA guidelines, when any report reaches 25 upvotes, an instant WhatsApp alert is dispatched directly to this office!`;
+      } else if (lower.includes('stat') || lower.includes('how many') || lower.includes('total') || lower.includes('summary') || lower.includes('count') || lower.includes('number') || lower.includes('status')) {
+        const liveCount = reports.filter(r => r.status === 'live' || r.status === 'in_progress').length;
+        const resolvedCount = reports.filter(r => r.status === 'resolved').length;
+        aiText = `📊 **TraceSpark Live Civic Stats (Hyderabad)**:\n\n• **Total Submissions**: ${reports.length} verified reports\n• **Live & In-Progress**: ${liveCount} active hazards\n• **Resolved Issues**: ${resolvedCount} completed repairs\n• **AI Verification Rate**: 100% automated vision inspection\n\nYou can filter these reports by category or ward using the dashboard tools!`;
+      } else if (lower.includes('vote') || lower.includes('25') || lower.includes('threshold') || lower.includes('happen') || lower.includes('sla') || lower.includes('rule') || lower.includes('upvote')) {
+        aiText = `⚡ **How SLA Escalations Work**:\n\n1️⃣ A citizen captures a photo of a civic hazard.\n2️⃣ Our **Llama 3 Vision AI** verifies the issue and assigns a severity rating (1-5).\n3️⃣ The report goes live on the heatmap. As locals upvote it, the priority score rises.\n4️⃣ At exactly **25 verified citizen votes**, an automated **Twilio WhatsApp & Email dispatch** is triggered instantly to the Zonal Commissioner of that ward!`;
+      } else if (lower.includes('near') || lower.includes('location') || lower.includes('map') || lower.includes('where') || lower.includes('gps')) {
+        aiText = `📍 All active community grievances are plotted on our interactive heatmap! Currently, we are tracking **${reports.length} verified hazards** across Hyderabad. You can tap any pin on the map to inspect evidence photos, check SLA timers, or cast your vote!`;
+      } else if (actionObj) {
+        aiText = `I have identified your report request for **${CATEGORIES[actionObj.category]?.label || actionObj.category}**. Physical infrastructure hazards require municipal attention. Click the button below or tap any location on the map to open the verification submission form!`;
+      } else {
+        // Dynamic contextual fallback for any custom query
+        aiText = `Regarding your inquiry about "${userMsg}": TraceSpark tracks municipal infrastructure health across 150 GHMC wards in Hyderabad. We currently have **${reports.length} active citizen reports** on file.\n\nYou can explore live complaints on the heatmap, check Zonal Commissioner contacts, or tap the map to report a new hazard instantly!`;
       }
 
       setChatMessages(prev => [
@@ -425,7 +482,7 @@ export default function App() {
           action: actionObj
         }
       ]);
-    }, 1200);
+    }, 600);
   };
 
   const handleChatAction = (category, actionType = 'report', targetReport = null) => {
@@ -484,36 +541,54 @@ export default function App() {
 
   const getWhatsAppMessageText = (alert) => {
     const catLabel = CATEGORIES[alert.category]?.label || alert.category;
+    const councillor = WARDS_DATABASE[alert.ward] || {
+      councillor_name: "Sri K. Venkatesh (Zonal Commissioner)",
+      councillor_phone: "+91 94400 08000",
+      councillor_email: "councillor.ghmc@gov.in",
+      office_address: "GHMC Municipal Ward Office"
+    };
+
     return `🚨 *TRACESPARK URGENT CIVIC ESCALATION* 🚨
 
-*Attention Ward Councillor, ${alert.ward}*
+*Attention Ward Councillor:*
+👤 ${councillor.councillor_name}
+📍 ${alert.ward}
+🏢 ${councillor.office_address}
+📞 Official Contact: ${councillor.councillor_phone}
 
-An infrastructure issue in your constituency has crossed the community threshold of 25+ votes:
+*Grievance Details:*
+• *Issue*: ${catLabel}
+• *Description*: ${alert.description}
+• *Verified Citizen Votes*: 🔥 ${alert.priority_score} (Threshold Reached!)
+• *AI Severity*: Level ${alert.ai_severity || 5}/5
+• *Status*: Live / SLA Urgent Dispatch Required
 
-*Issue*: ${catLabel}
-*Details*: ${alert.description}
-*Current Votes*: 🔥 ${alert.priority_score} verified citizens
-*Status*: Live / Urgent Dispatch Required
-
-This issue poses a public risk. An alert is sent automatically using the Twilio Sandbox API.`;
+An alert has been dispatched automatically via Twilio WhatsApp Gateway.`;
   };
 
   const getEmailMessageText = (alert) => {
     const catLabel = CATEGORIES[alert.category]?.label || alert.category;
-    return `To: commissioner@ghmc.gov.in, councillor.${alert.ward.toLowerCase().replace(/\s+/g, '')}@ghmc.gov.in
-Subject: URGENT: Civic Escalation - ${catLabel} - ${alert.ward} (25+ Citizen Votes)
+    const councillor = WARDS_DATABASE[alert.ward] || {
+      councillor_name: "Sri K. Venkatesh",
+      councillor_phone: "+91 94400 08000",
+      councillor_email: "councillor@ghmc.gov.in"
+    };
 
-Dear Commissioner and Local Councillor,
+    return `To: commissioner@ghmc.gov.in, ${councillor.councillor_email}
+Subject: URGENT ESCALATION: ${catLabel} in ${alert.ward} (${alert.priority_score}+ Citizen Votes)
 
-This is an automated dispatch from the TraceSpark Civic Accountability Platform.
+Dear ${councillor.councillor_name} (Ward Councillor, ${alert.ward}),
 
-A public grievance has reached the critical citizen threshold of 25 upvotes:
-- Issue: ${catLabel}
-- Location: GPS Coordinates (${alert.description})
-- Ward: ${alert.ward}
-- Verification: AI Verified Photo Evidence
+This is an automated SLA escalation from the TraceSpark Civic Accountability Portal.
 
-Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to resolve this complaint.`;
+A public grievance in your constituency has crossed the mandatory citizen threshold of 25 upvotes:
+- Issue Type: ${catLabel}
+- Ward / Constituency: ${alert.ward}
+- Official Contact on File: ${councillor.councillor_phone}
+- Description & Coordinates: ${alert.description}
+- Verification: 100% AI Vision Checked
+
+Under GHMC Service Level Agreement guidelines, immediate municipal action is requested.`;
   };
 
   return (
@@ -616,11 +691,16 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
                   👋
                 </div>
                 <div>
-                  <h2 className="text-slate-800 font-display font-black text-xl md:text-2xl leading-none">
-                    Namaste, {currentUser ? currentUser.name : "Citizen (Guest)"}
+                  <h2 className="text-slate-800 font-display font-black text-xl md:text-2xl leading-none flex items-center gap-2">
+                    <span>Namaste, {currentUser ? currentUser.name : "Citizen (Guest)"}</span>
+                    {currentUser?.verified && (
+                      <span className="bg-teal-50 text-teal-600 border border-teal-200 text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full shadow-2xs">
+                        ✓ {currentUser.loginType === 'google' ? 'Google Verified' : 'OTP Verified'}
+                      </span>
+                    )}
                   </h2>
-                  <p className="text-slate-400 font-mono text-[10px] tracking-wider uppercase mt-1">
-                    {currentUser ? `+91 •••••• ${currentUser.phone.slice(-4)}` : "Guest Access Mode • Verification Required to Vote"}
+                  <p className="text-slate-400 font-mono text-[10px] tracking-wider uppercase mt-1.5">
+                    {currentUser ? `${currentUser.email || `+91 •••••• ${currentUser.phone.slice(-4)}`} • Verified Citizen` : "Guest Access Mode • Verification Required to Vote"}
                   </p>
                 </div>
               </div>
@@ -971,19 +1051,6 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
       ) : (
         /* 4. ACTIVE MAP OVERLAY VIEW */
         <div className="flex-1 w-full h-full relative flex">
-          
-          {/* Back to dashboard button overlay */}
-          <button
-            onClick={() => {
-              setViewMode('dashboard');
-              showToast("Returned to Dashboard Portal", "info");
-            }}
-            className="absolute top-24 left-4 z-[1010] bg-white hover:bg-slate-50 text-slate-800 font-extrabold py-2.5 px-4 rounded-xl border border-slate-200 transition shadow-xl cursor-pointer flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider"
-          >
-            <ChevronRight className="h-4.5 w-4.5 rotate-180" />
-            Dashboard
-          </button>
-
           {/* Filter Bar overlay inside map view */}
           <FilterBar
             filters={filters}
@@ -992,6 +1059,10 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
             setSortBy={setSortBy}
             onRefresh={() => fetchReports(true)}
             isPolling={isPolling}
+            onBackToDashboard={() => {
+              setViewMode('dashboard');
+              showToast("Returned to Dashboard Portal", "info");
+            }}
           />
 
           {/* Leaflet map container */}
@@ -1002,38 +1073,12 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
             onVote={handleVote}
             onConfirmResolution={() => {}}
             showHeatmap={showHeatmap}
+            onToggleHeatmap={() => {
+              setShowHeatmap(!showHeatmap);
+              showToast(showHeatmap ? "Heatmap disabled" : "Heatmap density overlay enabled", "info");
+            }}
+            onOpenLeaderboard={() => setIsSidePanelOpen(true)}
           />
-
-          {/* Floating Controls Overlay */}
-          <div className="absolute top-44 right-4 z-[1000] flex flex-col gap-3 font-mono uppercase tracking-widest text-[9px]">
-            {/* Toggle Heatmap */}
-            <button
-              onClick={() => {
-                setShowHeatmap(!showHeatmap);
-                showToast(showHeatmap ? "Heatmap disabled" : "Heatmap density overlay enabled", "info");
-              }}
-              className={`p-3 rounded-xl shadow-2xl border font-bold flex items-center justify-center gap-2 transition cursor-pointer backdrop-blur-md ${
-                showHeatmap 
-                  ? 'bg-orange-500 border-transparent text-white shadow-orange-500/20' 
-                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-              }`}
-              title="Density Heatmap"
-            >
-              <Flame className={`h-5 w-5 ${showHeatmap ? 'animate-pulse text-white' : 'text-orange-500'}`} />
-              <span className="hidden md:inline">Heatmap</span>
-            </button>
-
-            {/* Toggle Citizen SidePanel */}
-            <button
-              onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}
-              className="p-3 rounded-xl shadow-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2 transition cursor-pointer backdrop-blur-md"
-              title="Citizen Leaderboard"
-            >
-              <Award className="h-5 w-5 text-orange-500" />
-              <span className="hidden md:inline">Leaderboard</span>
-            </button>
-          </div>
-
         </div>
       )}
 
@@ -1044,6 +1089,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
         reports={reports}
         currentUser={currentUser}
         onLoginClick={() => setIsAuthModalOpen(true)}
+        onLogout={handleLogout}
       />
 
       {/* 6. REPORT FORM MODAL */}

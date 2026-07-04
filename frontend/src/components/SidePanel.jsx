@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { MOCK_LEADERBOARD, CATEGORIES } from '../mockData';
 import { X, Award, History, TrendingUp, ShieldCheck, MapPin, AlertCircle } from 'lucide-react';
 
-export default function SidePanel({ isOpen, onClose, reports, currentUser, onLoginClick }) {
+export default function SidePanel({ isOpen, onClose, reports, currentUser, onLoginClick, onLogout }) {
   const [activeTab, setActiveTab] = useState('leaderboard'); // 'leaderboard' or 'history'
 
   const userReports = currentUser 
@@ -29,14 +29,32 @@ export default function SidePanel({ isOpen, onClose, reports, currentUser, onLog
       <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
         <div className="flex items-center gap-2">
           <Award className="h-5.5 w-5.5 text-orange-500" />
-          <h2 className="text-slate-800 font-display font-extrabold text-sm uppercase tracking-wider">Citizen Center</h2>
+          <div>
+            <h2 className="text-slate-800 font-display font-extrabold text-sm uppercase tracking-wider">Citizen Center</h2>
+            {currentUser && (
+              <span className="text-[9px] text-teal-600 font-mono font-bold uppercase block">
+                👤 {currentUser.name} {currentUser.verified && "✓"}
+              </span>
+            )}
+          </div>
         </div>
-        <button 
-          onClick={onClose}
-          className="text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-200 transition cursor-pointer"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          {currentUser && onLogout && (
+            <button
+              onClick={onLogout}
+              className="text-[9px] font-mono font-bold uppercase tracking-wider bg-rose-50 text-rose-600 hover:bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-200 transition cursor-pointer"
+              title="Sign Out"
+            >
+              Logout
+            </button>
+          )}
+          <button 
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-200 transition cursor-pointer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       {/* Critical Pitch Stats (Warning Banner) */}

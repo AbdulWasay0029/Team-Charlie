@@ -100,3 +100,78 @@ export const MOCK_LEADERBOARD = [
   { rank: 4, name: "Sai Teja", ward: "Ward 101 (Jubilee Hills)", points: 290, reportsCount: 12, badges: ["🌱 EcoWarrior"] },
   { rank: 5, name: "Divya N", ward: "Ward 104 (Begumpet)", points: 240, reportsCount: 10, badges: [] }
 ];
+
+export const WARDS_DATABASE = {
+  "Ward 112 (Hitech City)": {
+    id: "112",
+    name: "Hitech City",
+    zone: "Serilingampally Zone",
+    councillor_name: "Sri Ch. Ram Mohan",
+    councillor_phone: "+91 94400 11200",
+    councillor_email: "councillor.112@ghmc.gov.in",
+    office_address: "GHMC Ward Office, Cyber Towers Rd, Hitech City"
+  },
+  "Ward 95 (Khairatabad)": {
+    id: "95",
+    name: "Khairatabad",
+    zone: "Khairatabad Zone",
+    councillor_name: "Smt. P. Vijaya Lakshmi",
+    councillor_phone: "+91 94400 09500",
+    councillor_email: "councillor.95@ghmc.gov.in",
+    office_address: "GHMC Ward Office, Khairatabad Circle No 17"
+  },
+  "Ward 80 (Charminar)": {
+    id: "80",
+    name: "Charminar",
+    zone: "Charminar Zone",
+    councillor_name: "Sri K. Venkatesh",
+    councillor_phone: "+91 94400 08000",
+    councillor_email: "councillor.80@ghmc.gov.in",
+    office_address: "GHMC Ward Office, Sardar Mahal, Charminar Circle"
+  },
+  "Ward 101 (Jubilee Hills)": {
+    id: "101",
+    name: "Jubilee Hills",
+    zone: "Serilingampally Zone",
+    councillor_name: "Sri V. Krishna Mohan",
+    councillor_phone: "+91 94400 10100",
+    councillor_email: "councillor.101@ghmc.gov.in",
+    office_address: "GHMC Ward Office, Road No. 36, Jubilee Hills"
+  },
+  "Ward 120 (Kukatpally)": {
+    id: "120",
+    name: "Kukatpally",
+    zone: "Kukatpally Zone",
+    councillor_name: "Sri M. Satyanarayana",
+    councillor_phone: "+91 94400 12000",
+    councillor_email: "councillor.120@ghmc.gov.in",
+    office_address: "GHMC Ward Office, JNTU Road, Kukatpally"
+  },
+  "Ward 85 (Koti)": {
+    id: "85",
+    name: "Koti",
+    zone: "Charminar Zone",
+    councillor_name: "Smt. K. Saritha",
+    councillor_phone: "+91 94400 08500",
+    councillor_email: "councillor.85@ghmc.gov.in",
+    office_address: "GHMC Ward Office, Sultan Bazar, Koti"
+  },
+  "Ward 98 (Gachibowli)": {
+    id: "98",
+    name: "Gachibowli",
+    zone: "Serilingampally Zone",
+    councillor_name: "Sri R. Pratap Reddy",
+    councillor_phone: "+91 94400 09800",
+    councillor_email: "councillor.98@ghmc.gov.in",
+    office_address: "GHMC Ward Office, DLF Rd, Gachibowli"
+  },
+  "Ward 104 (Begumpet)": {
+    id: "104",
+    name: "Begumpet",
+    zone: "Secunderabad Zone",
+    councillor_name: "Smt. T. Maheshwari",
+    councillor_phone: "+91 94400 10400",
+    councillor_email: "councillor.104@ghmc.gov.in",
+    office_address: "GHMC Ward Office, Prakash Nagar, Begumpet"
+  }
+};

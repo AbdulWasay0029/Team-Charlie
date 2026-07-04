@@ -101,7 +101,7 @@ async function verifyAndDescribePhoto(imageUrl, category) {
 }
 
 /**
- * FUNCTION 2: draftEscalationMessage({category, severity, voteCount, lat, lng})
+ * FUNCTION 2: draftEscalationMessage({category, severity, voteCount, lat, lng, ward})
  * Uses a text-only model to draft a concise, professional WhatsApp message to a ward councillor.
  * 
  * @param {object} params
@@ -110,16 +110,17 @@ async function verifyAndDescribePhoto(imageUrl, category) {
  * @param {number} params.voteCount - Number of upvotes from citizens
  * @param {number} params.lat - Latitude coordinate
  * @param {number} params.lng - Longitude coordinate
+ * @param {string} [params.ward] - The ward name or constituency
  * @returns {Promise<string>} Plain text WhatsApp message
  */
-async function draftEscalationMessage({ category, severity, voteCount, lat, lng }) {
+async function draftEscalationMessage({ category, severity, voteCount, lat, lng, ward = 'Local Ward' }) {
   if (!isGroqConfigured || !groq) {
     console.log('[AI Module] Falling back to mock escalation message.');
-    return `🚨 TRACESPARK ESCALATION ALERT 🚨\n\nDear Councillor,\n\nA community issue has crossed the critical threshold of 25 civic votes in your ward, triggering an automatic escalation.\n\n📍 Location: Lat ${lat}, Lng ${lng}\n⚠️ Issue Type: ${category}\n🔥 AI Severity Index: ${severity}/10\n📈 Verified Citizen Votes: ${voteCount}\n\nPlease review this issue and dispatch local municipal field workers to resolve this at the earliest.`;
+    return `🚨 TRACESPARK ESCALATION ALERT 🚨\n\nDear Councillor (${ward}),\n\nA community issue has crossed the critical threshold of 25 civic votes in your ward, triggering an automatic SLA escalation.\n\n📍 Ward: ${ward}\n📌 Location: Lat ${lat}, Lng ${lng}\n⚠️ Issue Type: ${category}\n🔥 AI Severity Index: ${severity}/10\n📈 Verified Citizen Votes: ${voteCount}\n\nPlease review this issue and dispatch local municipal field workers to resolve this at the earliest.`;
   }
 
   try {
-    const prompt = `Generate a WhatsApp message to a ward councillor about this civic issue. Category: ${category}. Severity: ${severity}/10. Votes: ${voteCount}. Location: Latitude ${lat}, Longitude ${lng}. Keep it under 150 words. Professional but urgent tone. Plain text only, no markdown.`;
+    const prompt = `Generate a WhatsApp message to a ward councillor about this civic issue. Constituency/Ward: ${ward}. Category: ${category}. Severity: ${severity}/10. Votes: ${voteCount}. Location: Latitude ${lat}, Longitude ${lng}. Keep it under 150 words. Professional but urgent tone. Plain text only, no markdown.`;
 
     const response = await groq.chat.completions.create({
       model: TEXT_MODEL,
@@ -135,11 +136,49 @@ async function draftEscalationMessage({ category, severity, voteCount, lat, lng 
   } catch (error) {
     console.error("[AI Module Error] draftEscalationMessage failed:", error.message || error);
     // Return high quality pre-formatted fallback text
-    return `🚨 *URGENT CIVIC ESCALATION* 🚨\n\nDear Councillor,\n\nThis is to report an urgent civic issue in our ward.\n\n📍 *Location:* Lat ${lat}, Lng ${lng}\n🛠️ *Issue:* ${category}\n⚠️ *Severity:* ${severity}/10\n📈 *Citizen Votes:* ${voteCount}\n\nResidents are experiencing disruption due to this problem. Requesting your prompt intervention to address it.\n\nThank you.`;
+    return `🚨 *URGENT CIVIC ESCALATION* 🚨\n\nDear Councillor (${ward}),\n\nThis is to report an urgent civic issue in your ward.\n\n📍 *Ward:* ${ward}\n📌 *Location:* Lat ${lat}, Lng ${lng}\n🛠️ *Issue:* ${category}\n⚠️ *Severity:* ${severity}/10\n📈 *Citizen Votes:* ${voteCount}\n\nResidents are experiencing disruption due to this problem. Requesting your prompt intervention to address it.\n\nThank you.`;
+  }
+}
+
+/**
+ * FUNCTION 3: chatWithCivicAssistant(message, context)
+ * Uses Groq LLM to provide intelligent, contextual answers to citizen queries about reports, wards, and SLAs.
+ */
+async function chatWithCivicAssistant(message, context = {}) {
+  if (!isGroqConfigured || !groq) {
+    return null; // Fallback to client-side intelligent contextual engine
+  }
+
+  try {
+    const systemPrompt = `You are TraceSpark AI, an intelligent civic accountability assistant for India (specifically GHMC / Hyderabad).
+Current System Context:
+- Total Active Reports: ${context.totalReports || 12}
+- Top Urgent Issue: ${context.topReport ? `${context.topReport.category} in ${context.topReport.ward} (${context.topReport.priority_score} votes)` : 'None'}
+- Ward SLAs: Automated WhatsApp alerts dispatch to Zonal Commissioners at 25 verified citizen upvotes.
+Instructions:
+1. Answer the citizen's query concisely, professionally, and warmly in 2-4 short sentences.
+2. Use formatting and emojis where helpful.
+3. If the citizen wants to report a physical infrastructure hazard (road damage, garbage, water leak, open drain, broken streetlight, encroachment, fallen tree, bus stop), encourage them to tap the map or select the category pin!`;
+
+    const response = await groq.chat.completions.create({
+      model: TEXT_MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: message }
+      ],
+      temperature: 0.6,
+      max_tokens: 250
+    });
+
+    return (response.choices[0]?.message?.content || "").trim();
+  } catch (err) {
+    console.error("[AI Module Error] chatWithCivicAssistant failed:", err.message);
+    return null;
   }
 }
 
 module.exports = {
   verifyAndDescribePhoto,
-  draftEscalationMessage
+  draftEscalationMessage,
+  chatWithCivicAssistant
 };

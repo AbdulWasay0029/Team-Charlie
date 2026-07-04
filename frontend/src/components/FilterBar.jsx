@@ -8,14 +8,25 @@ export default function FilterBar({
   sortBy,
   setSortBy,
   onRefresh,
-  isPolling
+  isPolling,
+  onBackToDashboard
 }) {
   return (
-    <div className="absolute top-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-4xl z-[1000] transition-all duration-300 font-body">
+    <div className="absolute top-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-5xl z-[1000] transition-all duration-300 font-body">
       <div className="bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-xl p-3 md:p-4 flex flex-col md:flex-row gap-3.5 items-center justify-between">
         
-        {/* Brand Logo and Title */}
+        {/* Left Section: Back Button + Brand Logo and Title */}
         <div className="flex items-center gap-3 w-full md:w-auto">
+          {onBackToDashboard && (
+            <button
+              onClick={onBackToDashboard}
+              className="bg-slate-50 hover:bg-slate-100 text-slate-700 font-extrabold py-2 px-3 rounded-xl border border-slate-200 transition shadow-sm cursor-pointer flex items-center gap-1 text-xs font-mono uppercase tracking-wider shrink-0"
+              title="Return to Dashboard"
+            >
+              <span className="text-sm">⬅</span>
+              <span className="hidden sm:inline">Dashboard</span>
+            </button>
+          )}
           <img src="/logo.jpeg" alt="TraceSpark" className="w-9 h-9 rounded-xl object-cover shadow-md select-none" />
           <div className="text-left">
             <h1 className="text-slate-900 font-display font-extrabold text-lg leading-none tracking-tight flex items-center gap-1.5">

@@ -161,22 +161,61 @@ function MapClickEvents({ onMapClick }) {
   return null;
 }
 
-// Sub-component for Recenter to User Location button
-function RecenterControl({ userPos }) {
+// Sub-component to auto-zoom to user's location when map opens
+function AutoZoomToUser({ userPos }) {
+  const map = useMap();
+  useEffect(() => {
+    if (userPos) {
+      map.flyTo(userPos, 15, { duration: 1.5 });
+    }
+  }, [userPos, map]);
+  return null;
+}
+
+// Sub-component for Unified GIS Control Dock (bottom-right)
+function MapToolDock({ userPos, showHeatmap, onToggleHeatmap, onOpenLeaderboard }) {
   const map = useMap();
   return (
-    <div className="absolute top-28 right-4 z-[1000] font-mono uppercase tracking-widest text-[9px]">
+    <div className="absolute bottom-8 right-6 z-[1000] flex flex-col gap-2.5 font-mono uppercase tracking-widest text-[9px] select-none">
+      {/* 1. Recenter to My Location */}
       <button
+        type="button"
         onClick={() => {
           if (userPos) {
             map.flyTo(userPos, 15, { duration: 1.5 });
           }
         }}
-        className="p-3 bg-white hover:bg-slate-50 text-slate-700 rounded-xl shadow-2xl border border-slate-200 flex items-center justify-center gap-2 font-bold cursor-pointer transition backdrop-blur-md"
+        className="p-3 bg-white/95 hover:bg-white text-slate-800 rounded-2xl shadow-xl border border-slate-200/80 flex items-center justify-center gap-2 font-extrabold cursor-pointer transition-all duration-200 hover:scale-105 backdrop-blur-md group"
         title="Recenter to My Location"
       >
-        <span className="text-sm">🧭</span>
-        <span className="hidden md:inline">My Location</span>
+        <span className="text-base">🧭</span>
+        <span className="hidden md:inline font-mono">My Location</span>
+      </button>
+
+      {/* 2. Toggle Heatmap */}
+      <button
+        type="button"
+        onClick={onToggleHeatmap}
+        className={`p-3 rounded-2xl shadow-xl border font-extrabold flex items-center justify-center gap-2 transition-all duration-200 hover:scale-105 cursor-pointer backdrop-blur-md ${
+          showHeatmap 
+            ? 'bg-orange-500 border-transparent text-white shadow-orange-500/30' 
+            : 'bg-white/95 hover:bg-white border-slate-200/80 text-slate-800'
+        }`}
+        title="Density Heatmap Overlay"
+      >
+        <span className="text-base">🔥</span>
+        <span className="hidden md:inline font-mono">Heatmap</span>
+      </button>
+
+      {/* 3. Toggle Citizen Leaderboard */}
+      <button
+        type="button"
+        onClick={onOpenLeaderboard}
+        className="p-3 bg-white/95 hover:bg-white text-slate-800 rounded-2xl shadow-xl border border-slate-200/80 flex items-center justify-center gap-2 font-extrabold cursor-pointer transition-all duration-200 hover:scale-105 backdrop-blur-md"
+        title="Citizen Leaderboard"
+      >
+        <span className="text-base">🏆</span>
+        <span className="hidden md:inline font-mono">Leaderboard</span>
       </button>
     </div>
   );
@@ -188,7 +227,9 @@ export default function MapView({
   onMapClick, 
   onVote, 
   onConfirmResolution,
-  showHeatmap 
+  showHeatmap,
+  onToggleHeatmap,
+  onOpenLeaderboard
 }) {
   const [userPos, setUserPos] = useState(HYDERABAD_CENTER);
 
@@ -226,8 +267,16 @@ export default function MapView({
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
 
-        {/* Recenter to User Location Control */}
-        <RecenterControl userPos={userPos} />
+        {/* Auto Zoom to User Location when Map Opens */}
+        <AutoZoomToUser userPos={userPos} />
+
+        {/* Unified GIS Control Dock (bottom-right) */}
+        <MapToolDock 
+          userPos={userPos} 
+          showHeatmap={showHeatmap} 
+          onToggleHeatmap={onToggleHeatmap} 
+          onOpenLeaderboard={onOpenLeaderboard} 
+        />
 
         {/* Dynamic Density Heatmap Overlay */}
         {showHeatmap && heatmapPoints.length > 0 && (

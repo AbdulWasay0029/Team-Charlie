@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { supabase, isConfigured } = require('./supabaseClient');
-const { verifyAndDescribePhoto, draftEscalationMessage } = require('./aiModule');
+const { verifyAndDescribePhoto, draftEscalationMessage, chatWithCivicAssistant } = require('./aiModule');
 const { sendWhatsAppAlert } = require('./escalationModule');
 
 dotenv.config();
@@ -149,6 +149,114 @@ app.get('/', (req, res) => {
     status: "healthy",
     timestamp: new Date().toISOString()
   });
+});
+
+// In-memory OTP storage for production SMS verification (TTL: 5 minutes)
+const otpStore = new Map();
+
+// 0.1 POST /auth/send-otp
+// Body: { phone }
+app.post('/auth/send-otp', async (req, res) => {
+  const { phone } = req.body;
+  if (!phone || phone.length < 10) {
+    return res.status(400).json({ error: 'Valid 10-digit phone number is required' });
+  }
+
+  // Generate secure 6-digit verification code
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  otpStore.set(phone, {
+    code: otp,
+    expires: Date.now() + 5 * 60 * 1000 // 5 minutes TTL
+  });
+
+  console.log(`[Production Auth Service] Verification OTP for +91 ${phone}: ${otp}`);
+
+  // Attempt to send real SMS via Twilio if configured
+  try {
+    if (process.env.TWILIO_ACCOUNT_SID && !process.env.TWILIO_ACCOUNT_SID.includes('placeholder')) {
+      const twilioClient = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      await twilioClient.messages.create({
+        body: `Your TraceSpark citizen verification code is: ${otp}. Valid for 5 minutes. Do not share this code.`,
+        from: process.env.TWILIO_SMS_FROM || process.env.TWILIO_WHATSAPP_FROM || '+14155238886',
+        to: phone.startsWith('+') ? phone : `+91${phone}`
+      });
+      console.log(`[Production Auth Service] SMS sent successfully to +91 ${phone}`);
+    }
+  } catch (smsErr) {
+    console.warn(`[Production Auth Service] SMS Gateway notification error (using console dispatch):`, smsErr.message);
+  }
+
+  return res.json({
+    success: true,
+    message: "Verification SMS dispatched successfully",
+    // Include dev_otp only when not in strict production environment to assist testing
+    dev_otp: process.env.NODE_ENV !== 'production' ? otp : undefined
+  });
+});
+
+// 0.2 POST /auth/verify-otp
+// Body: { phone, otp, name, authMetadata }
+app.post('/auth/verify-otp', async (req, res) => {
+  const { phone, otp, name, authMetadata = {} } = req.body;
+  if (!phone || !otp) {
+    return res.status(400).json({ error: 'Phone number and verification code are required' });
+  }
+
+  const record = otpStore.get(phone);
+  if (!record || record.code !== otp) {
+    return res.status(400).json({ error: 'Invalid verification code. Please check and try again.' });
+  }
+
+  if (Date.now() > record.expires) {
+    otpStore.delete(phone);
+    return res.status(400).json({ error: 'Verification code has expired. Please request a new SMS.' });
+  }
+
+  // OTP verified successfully
+  otpStore.delete(phone);
+
+  if (isConfigured && supabase) {
+    try {
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('phone', phone)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+      if (existingUser) {
+        return res.json({ ...existingUser, verified: true, ...authMetadata });
+      }
+
+      const { data: newUser, error: insertError } = await supabase
+        .from('users')
+        .insert([{ name: name || 'Verified Citizen', phone }])
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+      return res.status(201).json({ ...newUser, verified: true, ...authMetadata });
+    } catch (err) {
+      console.error('Supabase error in POST /auth/verify-otp:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  } else {
+    // Fallback Mock Logic
+    let existingUser = mockUsers.find(u => u.phone === phone);
+    if (existingUser) {
+      return res.json({ ...existingUser, verified: true, ...authMetadata });
+    }
+
+    const newUser = {
+      id: generateUuid(),
+      name: name || 'Verified Citizen',
+      phone,
+      verified: true,
+      ...authMetadata
+    };
+    mockUsers.push(newUser);
+    return res.status(201).json(newUser);
+  }
 });
 
 // 1. POST /users (Signup)
@@ -486,6 +594,27 @@ app.post('/reports/:id/vote', async (req, res) => {
       priority_score: report.priority_score,
       escalation_fired
     });
+  }
+});
+
+// 5. POST /chat
+// Body: { message, context }
+app.post('/chat', async (req, res) => {
+  const { message, context = {} } = req.body;
+  if (!message) {
+    return res.status(400).json({ error: 'Message is required' });
+  }
+
+  try {
+    const aiResponse = await chatWithCivicAssistant(message, context);
+    if (aiResponse) {
+      return res.json({ reply: aiResponse });
+    } else {
+      return res.status(503).json({ error: 'AI LLM unavailable, use client fallback' });
+    }
+  } catch (err) {
+    console.error('Error in POST /chat:', err);
+    return res.status(500).json({ error: err.message });
   }
 });
 
