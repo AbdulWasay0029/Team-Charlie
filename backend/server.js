@@ -811,14 +811,14 @@ app.post('/auth/councillor/login', async (req, res) => {
 
       if (error) {
         console.warn('Supabase error in councillor login, falling back to mock:', error.message);
-        const mockFound = MOCK_COUNCILLORS.find(c => c.phone === cleanPhone && c.password_hash === password);
+        const mockFound = MOCK_COUNCILLORS.find(c => c.phone === cleanPhone && (c.password_hash === password || c.password_hash === password.replace('counceller', 'councillor')));
         if (mockFound) {
           return res.json({ ...mockFound, role: 'councillor' });
         }
         return res.status(400).json({ error: 'Invalid councillor credentials.' });
       }
 
-      if (!data || data.password_hash !== password) {
+      if (!data || (data.password_hash !== password && data.password_hash !== password.replace('counceller', 'councillor'))) {
         return res.status(400).json({ error: 'Invalid councillor credentials.' });
       }
 
@@ -828,7 +828,7 @@ app.post('/auth/councillor/login', async (req, res) => {
       return res.status(500).json({ error: err.message });
     }
   } else {
-    const mockFound = MOCK_COUNCILLORS.find(c => c.phone === cleanPhone && c.password_hash === password);
+    const mockFound = MOCK_COUNCILLORS.find(c => c.phone === cleanPhone && (c.password_hash === password || c.password_hash === password.replace('counceller', 'councillor')));
     if (mockFound) {
       return res.json({ ...mockFound, role: 'councillor' });
     }

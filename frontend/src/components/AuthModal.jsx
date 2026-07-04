@@ -233,7 +233,7 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
           { id: 'c5', name: "Sri M. Satyanarayana", phone: "+919440012000", ward: "Ward 120 (Kukatpally)", password_hash: "councillor120" },
           { id: 'c6', name: "Smt. K. Saritha", phone: "+919440008500", ward: "Ward 85 (Koti)", password_hash: "councillor85" }
         ];
-        const found = mockCouncillors.find(c => c.phone === finalPhone && c.password_hash === password);
+        const found = mockCouncillors.find(c => c.phone === finalPhone && (c.password_hash === password || c.password_hash === password.replace('counceller', 'councillor')));
         if (found) {
           onSignup(found.name, found.phone, {
             id: found.id,
