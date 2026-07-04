@@ -4,6 +4,7 @@ import L from 'leaflet';
 import { CATEGORIES } from '../mockData';
 import ReportPopup from './ReportPopup';
 import HeatmapLayer from './HeatmapLayer';
+import { Layers, ShieldAlert, Zap, Clock, Cpu, Filter } from 'lucide-react';
 
 // Helper to calculate distance in meters between two lat/lng points
 const getDistanceMeters = (lat1, lon1, lat2, lon2) => {
@@ -317,9 +318,13 @@ export default function MapView({
   onToggleHeatmap,
   onOpenHistory,
   votedReportIds = [],
-  mapCenter = null
+  mapCenter = null,
+  onOpenImage,
+  activeCategoryFilter = 'all',
+  onSelectCategoryFilter
 }) {
   const [userPos, setUserPos] = useState(HYDERABAD_CENTER);
+  const [mapLayer, setMapLayer] = useState('voyager'); // 'voyager' | 'dark' | 'satellite'
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -341,19 +346,100 @@ export default function MapView({
     .filter(r => r.status !== 'resolved')
     .map(r => [r.lat, r.lng, Math.min(1.0, (r.priority_score || 1) / 25)]);
 
+  // Stats calculation for Top Civic Pulse Ticker
+  const escalatedCount = reports.filter(r => (r.priority_score || 0) >= 25 && r.status !== 'resolved').length;
+  const totalVotes = reports.reduce((acc, r) => acc + (r.priority_score || 0), 0);
+
   return (
-    <div className="w-full h-full relative z-0">
+    <div className="w-full h-full relative z-0 flex flex-col font-body">
+      
+      {/* 1. TOP CIVIC PULSE TICKER BAR (GIS HUD) */}
+      <div 
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+        onDoubleClick={(e) => e.stopPropagation()}
+        className="absolute top-4 left-4 right-4 z-[1000] max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2 bg-slate-900/90 border border-slate-800/90 px-4 py-2.5 rounded-2xl shadow-2xl backdrop-blur-lg text-slate-200 select-none"
+      >
+        <div className="flex items-center gap-4 flex-wrap text-xs font-mono">
+          <div className="flex items-center gap-2 bg-red-950/40 border border-red-900/40 px-3 py-1 rounded-xl text-red-400 font-extrabold animate-pulse">
+            <ShieldAlert className="w-4 h-4 shrink-0" />
+            <span>🚨 {escalatedCount} Active Escalations</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-slate-300 font-bold hidden sm:flex">
+            <Zap className="w-4 h-4 text-orange-400" />
+            <span>⚡ {totalVotes} Upvotes Cast</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-slate-300 font-bold hidden md:flex">
+            <Clock className="w-4 h-4 text-teal-400" />
+            <span>⏱️ Avg SLA: <strong className="text-white">2.4 Days</strong></span>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-emerald-400 font-bold hidden lg:flex">
+            <Cpu className="w-4 h-4" />
+            <span>🤖 TraceSpark AI Sentinel: <strong className="uppercase">Online</strong></span>
+          </div>
+        </div>
+
+        {/* Tile Layer Switcher Dock */}
+        <div className="flex items-center bg-slate-950 border border-slate-800 p-1 rounded-xl text-[11px] font-mono font-bold">
+          <button
+            type="button"
+            onClick={() => setMapLayer('voyager')}
+            className={`px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 ${
+              mapLayer === 'voyager' ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+            }`}
+            title="Light Street Map"
+          >
+            ☀️ <span className="hidden sm:inline">Light</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMapLayer('dark')}
+            className={`px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 ${
+              mapLayer === 'dark' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+            }`}
+            title="Dark Command Map"
+          >
+            🌙 <span className="hidden sm:inline">Dark</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMapLayer('satellite')}
+            className={`px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 ${
+              mapLayer === 'satellite' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+            }`}
+            title="Satellite Imagery"
+          >
+            🛰️ <span className="hidden sm:inline">Satellite</span>
+          </button>
+        </div>
+      </div>
+
       <MapContainer
         center={HYDERABAD_CENTER}
         zoom={13}
-        className="w-full h-full"
+        className="w-full h-full flex-1"
         zoomControl={false}
       >
-        {/* OpenStreetMap Light Voyager Styled Tile Server */}
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-        />
+        {/* Dynamic Tile Layer Server */}
+        {mapLayer === 'satellite' ? (
+          <TileLayer
+            attribution='&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          />
+        ) : mapLayer === 'dark' ? (
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          />
+        ) : (
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          />
+        )}
 
         {/* Auto Zoom to User Location when Map Opens */}
         <AutoZoomToUser userPos={userPos} />
@@ -411,27 +497,74 @@ export default function MapView({
                 onVote={onVote}
                 onConfirmResolution={onConfirmResolution}
                 hasVoted={votedReportIds.includes(report.id)}
+                onOpenImage={onOpenImage}
               />
             </Popup>
           </Marker>
         ))}
       </MapContainer>
 
-      {/* Floating Instructions Banner (Bottom Left) */}
+      {/* 2. INTERACTIVE CATEGORY LEGEND & FILTER DOCK (BOTTOM LEFT) */}
       <div 
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
         onDoubleClick={(e) => e.stopPropagation()}
-        className="absolute bottom-4 left-4 bg-white border border-slate-200 rounded-xl py-2 px-3 shadow-xl z-[1000] text-xs select-none max-w-[280px] text-slate-700 font-body"
+        className="absolute bottom-4 left-4 z-[1000] bg-slate-900/95 border border-slate-800/90 rounded-2xl p-3 shadow-2xl backdrop-blur-md select-none max-w-[340px] sm:max-w-[480px] text-slate-200 font-body transition-all"
       >
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-orange-500 animate-ping"></div>
-          <p className="text-slate-800 font-bold">Grievance Map Mode</p>
+        <div className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-slate-800 text-xs font-bold">
+          <div className="flex items-center gap-1.5 text-slate-300">
+            <Filter className="w-3.5 h-3.5 text-orange-400" />
+            <span className="uppercase tracking-wider font-display font-black text-[11px]">Civic Hazard Legend & Live Filters</span>
+          </div>
+          {activeCategoryFilter !== 'all' && (
+            <button
+              type="button"
+              onClick={() => onSelectCategoryFilter && onSelectCategoryFilter('all')}
+              className="text-[10px] text-orange-400 hover:text-orange-300 font-mono underline cursor-pointer"
+            >
+              Reset Filter
+            </button>
+          )}
         </div>
-        <p className="text-slate-500 mt-1 leading-normal text-left font-medium">
-          Tap anywhere on the map to drop a new complaint pin.
-        </p>
+
+        <div className="flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto pr-1">
+          <button
+            type="button"
+            onClick={() => onSelectCategoryFilter && onSelectCategoryFilter('all')}
+            className={`px-2 py-1 rounded-xl text-[10px] font-mono font-extrabold border transition cursor-pointer flex items-center gap-1 ${
+              activeCategoryFilter === 'all'
+                ? 'bg-orange-500 border-orange-400 text-white shadow-sm'
+                : 'bg-slate-950/80 border-slate-800 hover:border-slate-700 text-slate-300'
+            }`}
+          >
+            <span>🌐 All Hazards ({reports.length})</span>
+          </button>
+
+          {Object.entries(CATEGORIES).map(([key, cat]) => {
+            const count = reports.filter(r => r.category === key).length;
+            const isSelected = activeCategoryFilter === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => onSelectCategoryFilter && onSelectCategoryFilter(key)}
+                className={`px-2 py-1 rounded-xl text-[10px] font-mono font-extrabold border transition cursor-pointer flex items-center gap-1 ${
+                  isSelected
+                    ? 'bg-orange-500 border-orange-400 text-white shadow-sm scale-105'
+                    : 'bg-slate-950/80 border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white'
+                }`}
+              >
+                <span>{cat.icon}</span>
+                <span>{cat.label}</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[9px] ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
+
     </div>
   );
 }

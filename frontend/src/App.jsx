@@ -8,6 +8,7 @@ import LegalModal from './components/LegalModal';
 import CouncillorDashboard from './components/CouncillorDashboard';
 import ChatWidget from './components/ChatWidget';
 import TransparencyPage from './components/TransparencyPage';
+import ImageLightbox from './components/ImageLightbox';
 import { INITIAL_REPORTS, CATEGORIES, WARDS_DATABASE } from './mockData';
 import { 
   AlertCircle, CheckCircle2, Info, RefreshCw, X, Shield, 
@@ -80,6 +81,7 @@ export default function App() {
   // Interactive Overlays
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [escalationAlert, setEscalationAlert] = useState(null); // holds report details when 25 votes hit
+  const [lightboxData, setLightboxData] = useState(null);
   
   // Signup State (Reads from LocalStorage)
   const [currentUser, setCurrentUser] = useState(() => {
@@ -342,6 +344,7 @@ export default function App() {
           const newMockReport = {
             id: tempLocalId,
             user_id: userId,
+            reporter_name: currentUser?.name ? `${currentUser.name} (Verified Citizen)` : 'Verified Citizen',
             lat: formData.lat,
             lng: formData.lng,
             category: formData.category,
@@ -385,6 +388,7 @@ export default function App() {
         } else {
           const mappedReport = {
             ...reportRow,
+            reporter_name: reportRow.reporter_name || (currentUser?.name ? `${currentUser.name} (Verified Citizen)` : 'Verified Citizen'),
             priority_score: reportRow.priority_score !== undefined ? reportRow.priority_score : 0,
             ward: getMockWard(reportRow.lat, reportRow.lng)
           };
@@ -733,13 +737,22 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
 
   if (councillorUser) {
     return (
-      <CouncillorDashboard 
-        councillor={councillorUser} 
-        onLogout={handleCouncillorLogout} 
-        showToast={showToast} 
-        darkMode={darkMode}
-        toggleDarkMode={toggleDarkMode}
-      />
+      <>
+        <CouncillorDashboard 
+          councillor={councillorUser} 
+          onLogout={handleCouncillorLogout} 
+          showToast={showToast} 
+          darkMode={darkMode}
+          toggleDarkMode={toggleDarkMode}
+          onOpenImage={(data) => setLightboxData(data)}
+        />
+        {lightboxData && (
+          <ImageLightbox
+            {...lightboxData}
+            onClose={() => setLightboxData(null)}
+          />
+        )}
+      </>
     );
   }
 
@@ -1282,6 +1295,9 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
             onOpenHistory={() => setIsSidePanelOpen(true)}
             votedReportIds={votedReportIds}
             mapCenter={mapCenter}
+            onOpenImage={(data) => setLightboxData(data)}
+            activeCategoryFilter={filters.category}
+            onSelectCategoryFilter={(cat) => setFilters(prev => ({ ...prev, category: cat }))}
           />
         </div>
       )}
@@ -1294,6 +1310,7 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
         currentUser={currentUser}
         onLoginClick={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
+        onOpenImage={(data) => setLightboxData(data)}
       />
 
       {/* 6. REPORT FORM MODAL */}
@@ -1451,6 +1468,14 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
         onChatAction={handleChatAction}
         showToast={showToast}
       />
+
+      {/* 10. IMAGE LIGHTBOX MODAL */}
+      {lightboxData && (
+        <ImageLightbox
+          {...lightboxData}
+          onClose={() => setLightboxData(null)}
+        />
+      )}
 
     </div>
   );

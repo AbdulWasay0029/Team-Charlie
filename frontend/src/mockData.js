@@ -3,6 +3,7 @@ export const INITIAL_REPORTS = [
   {
     id: '10000000-0000-0000-0000-000000000001',
     user_id: '11111111-1111-1111-1111-111111111111',
+    reporter_name: 'Rahul Sharma (Verified Citizen)',
     lat: 17.3850,
     lng: 78.4867,
     category: 'garbage',
@@ -17,6 +18,7 @@ export const INITIAL_REPORTS = [
   {
     id: '10000000-0000-0000-0000-000000000002',
     user_id: '22222222-2222-2222-2222-222222222222',
+    reporter_name: 'Smt. Priya Reddy',
     lat: 17.4060,
     lng: 78.4680,
     category: 'road_damage',
@@ -31,6 +33,7 @@ export const INITIAL_REPORTS = [
   {
     id: '10000000-0000-0000-0000-000000000003',
     user_id: '11111111-1111-1111-1111-111111111111',
+    reporter_name: 'Anvesh Kumar',
     lat: 17.4480,
     lng: 78.3770,
     category: 'open_drain',
@@ -45,6 +48,7 @@ export const INITIAL_REPORTS = [
   {
     id: '10000000-0000-0000-0000-000000000004',
     user_id: '22222222-2222-2222-2222-222222222222',
+    reporter_name: 'Syed Imran',
     lat: 17.4100,
     lng: 78.4500,
     category: 'streetlight',
@@ -59,6 +63,7 @@ export const INITIAL_REPORTS = [
   {
     id: '10000000-0000-0000-0000-000000000005',
     user_id: '11111111-1111-1111-1111-111111111111',
+    reporter_name: 'Vikramaditya Rao',
     lat: 17.4390,
     lng: 78.4740,
     category: 'water_leak',
@@ -80,17 +85,15 @@ export const CATEGORIES = {
   water_leak: { label: "Water Leakage", icon: "💧", color: "cyan", desc: "Wastage + road damage combo" },
   encroachment: { label: "Encroachment", icon: "🚧", color: "purple", desc: "Footpath blocked, pedestrian risk" },
   fallen_tree: { label: "Fallen Tree", icon: "🌳", color: "emerald", desc: "Post-rain emergency hazard" },
-  bus_stop: { label: "Bus Stop Issue", icon: "🚌", color: "indigo", desc: "Broken shelter, missing benches" }
+  bus_stop: { label: "Bus Stop Issue", icon: "🚌", color: "indigo", desc: "Broken shelter, missing benches" },
+  others: { label: "Other Hazard", icon: "⚠️", color: "amber", desc: "General civic nuisance or unlisted hazard" }
 };
 
 export const STATUS_OPTIONS = [
-  { value: "pending", label: "Pending Verification" },
-  { value: "live", label: "Live Complaints" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "resolved_pending_confirmation", label: "Pending Citizen Confirmation" },
-  { value: "resolved", label: "Resolved" },
-  { value: "reopened", label: "Reopened" },
-  { value: "rejected", label: "Rejected" }
+  { value: "live", label: "⚡ Live & Verified" },
+  { value: "in_progress", label: "🚧 In Progress" },
+  { value: "resolved", label: "✅ Resolved" },
+  { value: "pending", label: "🔍 Pending Verification" }
 ];
 
 export const WARDS_DATABASE = {

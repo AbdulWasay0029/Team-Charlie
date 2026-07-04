@@ -24,7 +24,8 @@ export default function ReportForm({ lat, lng, onSubmit, onClose, initialCategor
       water_leak: { severity: 6, desc: "Fractured pipeline causing sidewalk flooding. Clean water wastage." },
       encroachment: { severity: 4, desc: "Unauthorized roadside stall blocking pedestrian right-of-way." },
       fallen_tree: { severity: 8, desc: "Fallen foliage blocking two-way thoroughfare. Active tree limb hazards." },
-      bus_stop: { severity: 3, desc: "Structural damage to bus terminal seating shelter. Minor cosmetic repair." }
+      bus_stop: { severity: 3, desc: "Structural damage to bus terminal seating shelter. Minor cosmetic repair." },
+      others: { severity: 5, desc: "General civic hazard or unlisted nuisance detected. Automated AI classification complete." }
     };
     return details[catKey] || { severity: 5, desc: "Civic hazard identified. AI inspection verification complete." };
   };

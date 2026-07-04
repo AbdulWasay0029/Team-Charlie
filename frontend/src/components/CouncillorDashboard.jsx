@@ -4,7 +4,7 @@ import { CATEGORIES } from '../mockData';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-export default function CouncillorDashboard({ councillor, onLogout, showToast, darkMode, toggleDarkMode }) {
+export default function CouncillorDashboard({ councillor, onLogout, showToast, darkMode, toggleDarkMode, onOpenImage }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -328,18 +328,35 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast, d
                     isResolved ? 'border-teal-950/60 opacity-80' : 'border-slate-800/80'
                   }`}>
                     {/* Image Header */}
-                    <div className="relative h-44 bg-slate-900 shrink-0">
+                    <div 
+                      onClick={() => onOpenImage && onOpenImage({
+                        imageUrl: report.photo_url,
+                        category: cat.label,
+                        description: report.description,
+                        ward: report.ward,
+                        status: report.status,
+                        reporterName: report.reporter_name || 'Verified Citizen',
+                        priorityScore: report.priority_score
+                      })}
+                      className="relative h-44 bg-slate-900 shrink-0 cursor-pointer group"
+                    >
                       <img 
                         src={report.photo_url} 
                         alt={cat.label} 
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                         onError={(e) => {
                           e.target.src = "https://images.unsplash.com/photo-1599740831464-54c86b24d775?auto=format&fit=crop&w=400&q=80";
                         }}
                       />
                       
+                      {/* Hover zoom hint */}
+                      <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white font-mono text-xs font-bold gap-1.5 backdrop-blur-xs z-20">
+                        <ImageIcon className="w-4 h-4 text-orange-400" />
+                        <span>Click to Expand</span>
+                      </div>
+
                       {/* Top status badges */}
-                      <div className="absolute top-2 left-2 flex gap-1 items-center">
+                      <div className="absolute top-2 left-2 flex gap-1 items-center z-10">
                         {isResolved ? (
                           <span className="bg-teal-500 text-white text-[8px] font-bold px-2 py-0.5 rounded-full font-mono uppercase tracking-wider border border-teal-400/20">Resolved</span>
                         ) : (
@@ -351,7 +368,7 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast, d
                       </div>
 
                       {/* Bottom Category Overlay */}
-                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent p-3 pt-6 flex items-end justify-between">
+                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent p-3 pt-6 flex items-end justify-between z-10">
                         <div className="flex items-center gap-1.5">
                           <span className="text-lg bg-slate-900/70 p-1 rounded-xl border border-white/5">{cat.icon}</span>
                           <div className="text-left">
@@ -382,6 +399,12 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast, d
                             Map <ExternalLink className="w-2.5 h-2.5" />
                           </a>
                         </div>
+
+                        {/* Reporter Info */}
+                        <div className="flex items-center gap-1.5 text-[9px] font-mono text-slate-400 pt-1">
+                          <span className="text-teal-400 font-bold">👤</span>
+                          <span className="font-semibold">Reported by: <strong className="text-slate-300">{report.reporter_name || 'Verified Citizen'}</strong></span>
+                        </div>
                       </div>
 
                       {/* Card Footer Actions */}
@@ -389,14 +412,20 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast, d
                         {isResolved ? (
                           <div className="flex flex-col text-left">
                             <span className="text-[8px] text-slate-500 uppercase font-mono tracking-wider">Proof of Work</span>
-                            <a
-                              href={report.resolution_photo_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[10px] text-teal-400 font-bold hover:underline flex items-center gap-1 mt-0.5 font-mono uppercase"
+                            <button
+                              type="button"
+                              onClick={() => onOpenImage && onOpenImage({
+                                imageUrl: report.resolution_photo_url,
+                                category: `${cat.label} (Resolution Proof)`,
+                                description: "Resolved by Municipal Ward Operations Team.",
+                                ward: report.ward,
+                                status: 'resolved',
+                                reporterName: `Zonal Officer (${councillor.name})`
+                              })}
+                              className="text-[10px] text-teal-400 font-bold hover:underline flex items-center gap-1 mt-0.5 font-mono uppercase cursor-pointer"
                             >
                               <ImageIcon className="w-3 h-3" /> View Proof
-                            </a>
+                            </button>
                           </div>
                         ) : (
                           <div className={`border rounded-lg py-0.5 px-2 text-[9px] font-mono font-bold uppercase tracking-wider ${sla.color}`}>

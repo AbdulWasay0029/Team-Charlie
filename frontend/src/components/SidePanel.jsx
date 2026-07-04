@@ -2,7 +2,7 @@ import React from 'react';
 import { CATEGORIES } from '../mockData';
 import { X, History, ShieldCheck, MapPin, AlertCircle, Image } from 'lucide-react';
 
-export default function SidePanel({ isOpen, onClose, reports, currentUser, onLoginClick, onLogout }) {
+export default function SidePanel({ isOpen, onClose, reports, currentUser, onLoginClick, onLogout, onOpenImage }) {
   const userReports = currentUser 
     ? reports.filter(r => r.user_id === currentUser.id) 
     : [];
@@ -140,16 +140,62 @@ export default function SidePanel({ isOpen, onClose, reports, currentUser, onLog
                       </div>
                     </div>
 
+                    {/* Reporter Identity & Photo Trigger */}
+                    <div className="mt-3 pt-2.5 border-t border-slate-850/80 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 text-[9px] font-mono text-slate-400">
+                        <span className="text-teal-400 font-bold">👤</span>
+                        <span className="truncate max-w-[150px] font-semibold">{report.reporter_name || (currentUser ? currentUser.name : 'Verified Citizen')}</span>
+                      </div>
+                      {report.photo_url && (
+                        <button
+                          type="button"
+                          onClick={() => onOpenImage && onOpenImage({
+                            imageUrl: report.photo_url,
+                            category: cat.label,
+                            description: report.description,
+                            ward: report.ward,
+                            status: report.status,
+                            reporterName: report.reporter_name || (currentUser ? currentUser.name : 'Verified Citizen'),
+                            priorityScore: report.priority_score
+                          })}
+                          className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 px-2 py-1 rounded-lg text-[9px] font-mono font-bold border border-slate-700 transition cursor-pointer"
+                        >
+                          <Image className="w-3 h-3 text-orange-400" />
+                          <span>View Evidence</span>
+                        </button>
+                      )}
+                    </div>
+
                     {/* Before & After Proof comparisons */}
                     {isResolved && report.resolution_photo_url && (
-                      <div className="mt-4 pt-3 border-t border-slate-850/80">
+                      <div className="mt-3 pt-3 border-t border-slate-850/80">
                         <span className="text-[8px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-2 block">Before / After Comparison</span>
                         <div className="grid grid-cols-2 gap-2 bg-slate-950 p-2 rounded-xl border border-slate-850/60 shrink-0 select-none">
-                          <div className="relative rounded overflow-hidden aspect-video bg-slate-900">
+                          <div 
+                            onClick={() => onOpenImage && onOpenImage({
+                              imageUrl: report.photo_url,
+                              category: `${cat.label} (Before)`,
+                              description: report.description,
+                              ward: report.ward,
+                              status: report.status,
+                              reporterName: report.reporter_name || 'Verified Citizen'
+                            })}
+                            className="relative rounded overflow-hidden aspect-video bg-slate-900 cursor-pointer hover:opacity-90 transition"
+                          >
                             <img src={report.photo_url} className="w-full h-full object-cover" alt="Before" />
                             <span className="absolute bottom-1 left-1 bg-red-600/80 backdrop-blur-xs text-white text-[7px] px-1 rounded font-mono font-bold uppercase tracking-wider">Before</span>
                           </div>
-                          <div className="relative rounded overflow-hidden aspect-video bg-slate-900">
+                          <div 
+                            onClick={() => onOpenImage && onOpenImage({
+                              imageUrl: report.resolution_photo_url,
+                              category: `${cat.label} (After Resolution)`,
+                              description: "Resolved by Municipal Ward Operations Team.",
+                              ward: report.ward,
+                              status: 'resolved',
+                              reporterName: "GHMC Ward Officer"
+                            })}
+                            className="relative rounded overflow-hidden aspect-video bg-slate-900 cursor-pointer hover:opacity-90 transition"
+                          >
                             <img src={report.resolution_photo_url} className="w-full h-full object-cover" alt="After" />
                             <span className="absolute bottom-1 left-1 bg-emerald-600/80 backdrop-blur-xs text-white text-[7px] px-1 rounded font-mono font-bold uppercase tracking-wider">After</span>
                           </div>
