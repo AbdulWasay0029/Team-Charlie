@@ -707,6 +707,81 @@ app.post('/reports/:id/confirm-resolution', async (req, res) => {
   }
 });
 
+// 7. POST /users (Signup Route)
+// Request Body: { id, phone, name, ward, role }
+app.post('/users', async (req, res) => {
+  const { id, phone, name, ward, role } = req.body;
+
+  if (!id || !phone || !name || !role) {
+    return res.status(400).json({ error: 'Missing required fields: id, phone, name, role' });
+  }
+
+  if (role !== 'citizen' && role !== 'official') {
+    return res.status(400).json({ error: "Role must be either 'citizen' or 'official'" });
+  }
+
+  if (isConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .upsert([{ id, phone, name, ward, role }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return res.status(201).json(data);
+    } catch (err) {
+      console.error('Supabase error in POST /users:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  } else {
+    // Fallback Mock Logic
+    const existingUserIndex = users.findIndex(u => u.id === id);
+    const newUser = { id, phone, name, ward, role, created_at: new Date().toISOString() };
+    
+    if (existingUserIndex !== -1) {
+      users[existingUserIndex] = newUser;
+    } else {
+      users.push(newUser);
+    }
+
+    return res.status(201).json(newUser);
+  }
+});
+
+// Alias for convenience
+app.post('/signup', (req, res) => {
+  // Redirect POST body securely to /users
+  res.redirect(307, '/users');
+});
+
+// 8. GET /users/:id (Profile Fetch Route)
+app.get('/users/:id', async (req, res) => {
+  const { id } = req.params;
+
+  if (isConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) return res.status(404).json({ error: 'User not found' });
+      return res.json(data);
+    } catch (err) {
+      console.error('Supabase error in GET /users/:id:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  } else {
+    // Fallback Mock Logic
+    const user = users.find(u => u.id === id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    return res.json(user);
+  }
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Bharat Patrol backend server listening on port ${PORT}`);
