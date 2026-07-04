@@ -55,36 +55,11 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
     fileInputRef.current?.click();
   };
 
-  // Demo image selector (critical for presentation without local photos)
-  const selectDemoImage = (type) => {
-    if (type === 'selfie') {
-      // Unsplash face photo
-      const url = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
-      setPhotoPreview(url);
-      setPhotoUrl(url);
-    } else {
-      // Unsplash pothole / issue photos matching category
-      let url = "https://images.unsplash.com/photo-1515162305285-0293e4767cc2?auto=format&fit=crop&w=400&q=80";
-      if (category === 'open_drain') {
-        url = "https://images.unsplash.com/photo-1584824486509-112e4181ff6b?auto=format&fit=crop&w=400&q=80";
-      } else if (category === 'garbage') {
-        url = "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=400&q=80";
-      } else if (category === 'streetlight') {
-        url = "https://images.unsplash.com/photo-1509021436665-8f07dbf5bf1d?auto=format&fit=crop&w=400&q=80";
-      } else if (category === 'water_leak') {
-        url = "https://images.unsplash.com/photo-1508189860359-777d945909ef?auto=format&fit=crop&w=400&q=80";
-      } else if (category === 'encroachment') {
-        url = "https://images.unsplash.com/photo-1536647249037-37597eceab53?auto=format&fit=crop&w=400&q=80";
-      }
-      setPhotoPreview(url);
-      setPhotoUrl(url);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!photoUrl) {
-      alert("Please select a photo or use a demo image.");
+      alert("Please select or capture a photo.");
       return;
     }
     
@@ -190,23 +165,6 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
                   <span className="text-[9px] text-slate-400 font-mono uppercase tracking-wider">Compresses file automatically</span>
                 </button>
 
-                {/* Demo Simulators */}
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => selectDemoImage('issue')}
-                    className="bg-slate-100 hover:bg-slate-200 border border-slate-200/60 text-slate-700 rounded-xl p-2.5 text-[10px] font-bold font-mono uppercase tracking-wide transition cursor-pointer text-center"
-                  >
-                    📸 Demo: Category Photo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => selectDemoImage('selfie')}
-                    className="bg-slate-100 hover:bg-slate-200 border border-slate-200/60 text-slate-700 rounded-xl p-2.5 text-[10px] font-bold font-mono uppercase tracking-wide transition cursor-pointer text-center"
-                  >
-                    🤳 Demo: Selfie Fail
-                  </button>
-                </div>
               </div>
             ) : (
               <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-100 aspect-video group">

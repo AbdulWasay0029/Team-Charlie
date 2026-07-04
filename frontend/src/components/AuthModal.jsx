@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { User, Phone, Loader2, ArrowRight } from 'lucide-react';
+import { User, Phone, Loader2, ArrowRight, X } from 'lucide-react';
 
-export default function AuthModal({ onSignup, loading }) {
+export default function AuthModal({ onSignup, loading, onClose }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
 
@@ -19,9 +19,22 @@ export default function AuthModal({ onSignup, loading }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-sky-100 via-slate-50 to-emerald-50 z-[5000] flex items-center justify-center p-4 font-body select-none">
-      <div className="bg-white border border-slate-100 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-250 p-6 md:p-8 space-y-6">
+    <div className={`fixed inset-0 z-[5000] flex items-center justify-center p-4 font-body select-none ${
+      onClose ? 'bg-slate-900/60 backdrop-blur-sm' : 'bg-gradient-to-br from-sky-100 via-slate-50 to-emerald-50'
+    }`}>
+      <div className="bg-white border border-slate-100 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden relative my-auto animate-in fade-in zoom-in-95 duration-250 p-6 md:p-8 space-y-6">
         
+        {/* Close Button (if dismissible) */}
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 bg-slate-50 border border-slate-200 p-1.5 rounded-full transition cursor-pointer"
+          >
+            <X className="h-4.5 w-4.5" />
+          </button>
+        )}
+
         {/* Logo and Brand Heading */}
         <div className="space-y-4 text-center">
           <div className="flex justify-center">
@@ -101,6 +114,19 @@ export default function AuthModal({ onSignup, loading }) {
             )}
           </button>
         </form>
+
+        {/* Optional Skip Button */}
+        {onClose && (
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-xs text-slate-450 hover:text-slate-700 underline font-mono uppercase font-bold tracking-wider cursor-pointer"
+            >
+              Skip and browse as Guest
+            </button>
+          </div>
+        )}
 
         {/* Disclaimer / Information */}
         <p className="text-[9px] leading-relaxed text-slate-400 text-center font-mono">
