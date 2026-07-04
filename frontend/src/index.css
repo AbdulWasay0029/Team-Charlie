@@ -22,25 +22,25 @@ html, body, #root {
   overflow-x: hidden;
   overflow-y: auto;
   font-family: var(--font-body);
-  background: linear-gradient(135deg, #f0f9ff 0%, #f8fafc 50%, #ecfdf5 100%);
-  color: #1e293b;
+  background-color: #050814; /* Deep command room dark navy */
+  color: #f1f5f9;
 }
 
 /* Map sizing */
 .leaflet-container {
   width: 100%;
   height: 100%;
-  background-color: #cbd5e1;
+  background-color: #0b0f19;
 }
 
-/* Custom Leaflet popup design to fit our beautiful light-themed government aesthetic */
+/* Custom Leaflet popup design to fit our beautiful dark control room aesthetic */
 .leaflet-popup-content-wrapper {
-  background: rgba(255, 255, 255, 0.95) !important;
+  background: rgba(15, 23, 42, 0.95) !important;
   backdrop-filter: blur(8px);
-  color: #0f172a !important;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
   padding: 0 !important;
 }
 
@@ -50,13 +50,13 @@ html, body, #root {
 }
 
 .leaflet-popup-tip {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border-left: 1px solid rgba(15, 23, 42, 0.08);
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(15, 23, 42, 0.95) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .leaflet-popup-close-button {
-  color: #64748b !important;
+  color: #94a3b8 !important;
   font-size: 16px !important;
   top: 8px !important;
   right: 8px !important;
@@ -64,7 +64,7 @@ html, body, #root {
 }
 
 .leaflet-popup-close-button:hover {
-  color: #ea580c !important;
+  color: #f97316 !important;
 }
 
 /* Custom Marker styles */
@@ -75,7 +75,7 @@ html, body, #root {
 @keyframes pinPulse {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.5);
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4);
   }
   70% {
     transform: scale(1.05);
@@ -100,11 +100,11 @@ html, body, #root {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #1e293b;
   border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #334155;
 }
 
 /* Horizontal scrolling helper */

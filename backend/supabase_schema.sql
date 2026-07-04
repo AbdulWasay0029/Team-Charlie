@@ -46,3 +46,30 @@ CREATE TABLE IF NOT EXISTS notifications (
 -- Indexes for fast lookup
 CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
 CREATE INDEX IF NOT EXISTS idx_votes_report_user ON votes(report_id, user_id);
+
+-- =========================================================================
+-- TraceSpark / Bharat Patrol v2 Migrations
+-- =========================================================================
+
+-- 5. Create councillors table (pre-provisioned ward representatives)
+CREATE TABLE IF NOT EXISTS councillors (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    phone TEXT UNIQUE NOT NULL,
+    ward TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 6. Add resolution columns to reports table
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMPTZ;
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS resolution_photo_url TEXT;
+ALTER TABLE reports ADD COLUMN IF NOT EXISTS resolved_by UUID REFERENCES councillors(id);
+
+-- 7. Update status check constraint to include 'resolved'
+ALTER TABLE reports DROP CONSTRAINT IF EXISTS reports_status_check;
+ALTER TABLE reports ADD CONSTRAINT reports_status_check CHECK (status IN ('pending', 'live', 'rejected', 'resolved'));
+
+-- 8. Index for councillor lookup
+CREATE INDEX IF NOT EXISTS idx_councillors_phone ON councillors(phone);
+CREATE INDEX IF NOT EXISTS idx_reports_resolved_by ON reports(resolved_by);

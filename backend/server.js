@@ -46,6 +46,33 @@ app.use(cors({
   credentials: true
 }));
 
+// --- HELPER FUNCTION AND DATA MAPPING FOR COUNCILLORS ---
+const getMockWard = (lat, lng) => {
+  const wards = [
+    "Ward 112 (Hitech City)",
+    "Ward 95 (Khairatabad)",
+    "Ward 80 (Charminar)",
+    "Ward 101 (Jubilee Hills)",
+    "Ward 120 (Kukatpally)",
+    "Ward 85 (Koti)",
+    "Ward 98 (Gachibowli)",
+    "Ward 104 (Begumpet)"
+  ];
+  const index = Math.abs(Math.floor(lat * 1000 + lng * 1000)) % wards.length;
+  return wards[index];
+};
+
+const MOCK_COUNCILLORS = [
+  { id: 'c1', name: "Sri Ch. Ram Mohan", phone: "+919440011200", ward: "Ward 112 (Hitech City)", password_hash: "councillor112" },
+  { id: 'c2', name: "Smt. P. Vijaya Lakshmi", phone: "+919440009500", ward: "Ward 95 (Khairatabad)", password_hash: "councillor95" },
+  { id: 'c3', name: "Sri K. Venkatesh", phone: "+919440008000", ward: "Ward 80 (Charminar)", password_hash: "councillor80" },
+  { id: 'c4', name: "Sri V. Krishna Mohan", phone: "+919440010100", ward: "Ward 101 (Jubilee Hills)", password_hash: "councillor101" },
+  { id: 'c5', name: "Sri M. Satyanarayana", phone: "+919440012000", ward: "Ward 120 (Kukatpally)", password_hash: "councillor120" },
+  { id: 'c6', name: "Smt. K. Saritha", phone: "+919440008500", ward: "Ward 85 (Koti)", password_hash: "councillor85" },
+  { id: 'c7', name: "Sri D. Gachibowli", phone: "+919440009800", password_hash: "councillor98", ward: "Ward 98 (Gachibowli)" },
+  { id: 'c8', name: "Smt. E. Begumpet", phone: "+919440010400", password_hash: "councillor104", ward: "Ward 104 (Begumpet)" }
+];
+
 // --- STATEFUL IN-MEMORY MOCK DATA (Phase 1 Fallback) ---
 const mockUsers = [
   { id: '11111111-1111-1111-1111-111111111111', phone: '9999999999', name: 'Sameer Ansari' },
@@ -398,9 +425,10 @@ app.post('/reports', async (req, res) => {
   const aiResult = await verifyAndDescribePhoto(photo_url, category);
   
   const status = aiResult.verified ? 'live' : 'rejected';
-  const ai_severity = aiResult.severity;
+  const ai_severity = aiResult.severity || 1;
   const description = aiResult.description;
   const ai_verified = aiResult.verified;
+  const initialPriorityScore = ai_severity * 3;
 
   if (isConfigured && supabase) {
     try {
@@ -415,13 +443,42 @@ app.post('/reports', async (req, res) => {
           ai_verified,
           ai_severity,
           description,
-          status
+          status,
+          priority_score: initialPriorityScore
         }])
         .select()
         .single();
 
       if (error) throw error;
-      return res.status(201).json(data);
+
+      let escalation_fired = false;
+      if (initialPriorityScore >= 25 && status === 'live') {
+        try {
+          const wardName = getMockWard(parseFloat(lat), parseFloat(lng));
+          const messageText = await draftEscalationMessage({
+            category: category || 'Civic Issue',
+            severity: ai_severity,
+            voteCount: 0,
+            lat: parseFloat(lat),
+            lng: parseFloat(lng),
+            ward: wardName
+          });
+
+          const councillor = MOCK_COUNCILLORS.find(c => c.ward === wardName);
+          const councillorPhone = (councillor ? councillor.phone : null) || process.env.COUNCILLOR_PHONE || '+919999999999';
+          await sendWhatsAppAlert(councillorPhone, messageText);
+
+          await supabase
+            .from('notifications')
+            .insert([{ report_id: data.id }]);
+
+          escalation_fired = true;
+        } catch (escalationErr) {
+          console.error('[Escalation Error] Failed during inline WhatsApp escalation:', escalationErr);
+        }
+      }
+
+      return res.status(201).json({ ...data, escalation_fired });
     } catch (err) {
       console.error('Supabase error in POST /reports:', err);
       return res.status(500).json({ error: err.message });
@@ -439,13 +496,34 @@ app.post('/reports', async (req, res) => {
       ai_verified,
       ai_severity,
       status,
-      priority_score: 0,
+      priority_score: initialPriorityScore,
       created_at: new Date().toISOString()
     };
     mockReports.push(newReport);
     mockVotes[newReport.id] = new Set();
     
-    return res.status(201).json(newReport);
+    let escalation_fired = false;
+    if (initialPriorityScore >= 25 && status === 'live') {
+      mockNotifications.add(newReport.id);
+      escalation_fired = true;
+      const wardName = getMockWard(parseFloat(lat), parseFloat(lng));
+      draftEscalationMessage({
+        category: category || 'Civic Issue',
+        severity: ai_severity,
+        voteCount: 0,
+        lat: parseFloat(lat),
+        lng: parseFloat(lng),
+        ward: wardName
+      }).then(messageText => {
+        const councillor = MOCK_COUNCILLORS.find(c => c.ward === wardName);
+        const councillorPhone = (councillor ? councillor.phone : null) || process.env.COUNCILLOR_PHONE || '+919999999999';
+        return sendWhatsAppAlert(councillorPhone, messageText);
+      }).catch(err => {
+        console.error('Error during mock WhatsApp escalation:', err);
+      });
+    }
+
+    return res.status(201).json({ ...newReport, escalation_fired });
   }
 });
 
@@ -550,7 +628,7 @@ app.post('/reports/:id/vote', async (req, res) => {
         throw insertError;
       }
 
-      // 2. Fetch current priority score
+      // 2. Fetch current report details
       const { data: report, error: fetchError } = await supabase
         .from('reports')
         .select('*')
@@ -561,21 +639,29 @@ app.post('/reports/:id/vote', async (req, res) => {
         return res.status(404).json({ error: 'Report not found' });
       }
 
-      let currentScore = report.priority_score || 0;
+      // 3. Count total votes from table
+      const { count: voteCount, error: countError } = await supabase
+        .from('votes')
+        .select('*', { count: 'exact', head: true })
+        .eq('report_id', id);
 
-      // 3. If it was a new vote, increment the score
+      if (countError) throw countError;
+
+      const aiSeverity = report.ai_severity || 1;
+      const newScore = (voteCount * 1) + (aiSeverity * 3);
+
+      // 4. If it was a new vote, update score in DB
       if (isNewVote) {
-        currentScore += 1;
         await supabase
           .from('reports')
-          .update({ priority_score: currentScore })
+          .update({ priority_score: newScore })
           .eq('id', id);
       }
 
-      const crossedEscalationLimit = currentScore >= 25;
+      const crossedEscalationLimit = newScore >= 25;
       let escalation_fired = false;
 
-      // 4. Trigger Automatic WhatsApp Escalation if crossed limit and not already sent
+      // 5. Trigger Automatic WhatsApp Escalation if crossed limit and not already sent
       if (crossedEscalationLimit) {
         // Check notifications table
         const { data: existingNotification } = await supabase
@@ -585,17 +671,19 @@ app.post('/reports/:id/vote', async (req, res) => {
           .maybeSingle();
 
         if (!existingNotification) {
-          // Send alert inline
           try {
+            const wardName = getMockWard(report.lat, report.lng);
             const messageText = await draftEscalationMessage({
               category: report.category || 'Civic Issue',
-              severity: report.ai_severity || 1,
-              voteCount: currentScore,
+              severity: aiSeverity,
+              voteCount: voteCount,
               lat: report.lat,
-              lng: report.lng
+              lng: report.lng,
+              ward: wardName
             });
 
-            const councillorPhone = process.env.COUNCILLOR_PHONE || '+919999999999';
+            const councillor = MOCK_COUNCILLORS.find(c => c.ward === wardName);
+            const councillorPhone = (councillor ? councillor.phone : null) || process.env.COUNCILLOR_PHONE || '+919999999999';
             await sendWhatsAppAlert(councillorPhone, messageText);
 
             // Record notification
@@ -611,7 +699,7 @@ app.post('/reports/:id/vote', async (req, res) => {
       }
 
       return res.json({
-        priority_score: currentScore,
+        priority_score: newScore,
         escalation_fired,
         isNewVote
       });
@@ -635,11 +723,15 @@ app.post('/reports/:id/vote', async (req, res) => {
     let mockIsNewVote = false;
     if (!votesSet.has(user_id)) {
       votesSet.add(user_id);
-      report.priority_score += 1;
       mockIsNewVote = true;
     }
 
-    const crossedEscalationLimit = report.priority_score >= 25;
+    const voteCount = votesSet.size;
+    const aiSeverity = report.ai_severity || 1;
+    const newScore = voteCount + (aiSeverity * 3);
+    report.priority_score = newScore;
+
+    const crossedEscalationLimit = newScore >= 25;
     let escalation_fired = false;
 
     // Trigger Mock WhatsApp Escalation if threshold crossed and not already sent
@@ -647,15 +739,18 @@ app.post('/reports/:id/vote', async (req, res) => {
       if (!mockNotifications.has(id)) {
         mockNotifications.add(id);
         escalation_fired = true;
+        const wardName = getMockWard(report.lat, report.lng);
 
         draftEscalationMessage({
           category: report.category || 'Civic Issue',
-          severity: report.ai_severity || 1,
-          voteCount: report.priority_score,
+          severity: aiSeverity,
+          voteCount: voteCount,
           lat: report.lat,
-          lng: report.lng
+          lng: report.lng,
+          ward: wardName
         }).then(messageText => {
-          const councillorPhone = process.env.COUNCILLOR_PHONE || '+919999999999';
+          const councillor = MOCK_COUNCILLORS.find(c => c.ward === wardName);
+          const councillorPhone = (councillor ? councillor.phone : null) || process.env.COUNCILLOR_PHONE || '+919999999999';
           return sendWhatsAppAlert(councillorPhone, messageText);
         }).catch(err => {
           console.error('Error during mock WhatsApp escalation:', err);
@@ -664,7 +759,7 @@ app.post('/reports/:id/vote', async (req, res) => {
     }
 
     return res.json({
-      priority_score: report.priority_score,
+      priority_score: newScore,
       escalation_fired,
       isNewVote: mockIsNewVote
     });
@@ -691,6 +786,166 @@ app.get('/users/:userId/votes', async (req, res) => {
   } else {
     return res.json([]);
   }
+});
+
+// 4.2 POST /auth/councillor/login (Councillor portal mobile & password login)
+app.post('/auth/councillor/login', async (req, res) => {
+  const { phone, password } = req.body;
+  if (!phone || !password) {
+    return res.status(400).json({ error: 'Mobile number and password are required' });
+  }
+
+  // Normalize phone formatting
+  let cleanPhone = phone.replace(/\s+/g, '');
+  if (!cleanPhone.startsWith('+91')) {
+    cleanPhone = '+91' + cleanPhone.replace(/^0+/, '');
+  }
+
+  if (isConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('councillors')
+        .select('*')
+        .eq('phone', cleanPhone)
+        .maybeSingle();
+
+      if (error) {
+        console.warn('Supabase error in councillor login, falling back to mock:', error.message);
+        const mockFound = MOCK_COUNCILLORS.find(c => c.phone === cleanPhone && c.password_hash === password);
+        if (mockFound) {
+          return res.json({ ...mockFound, role: 'councillor' });
+        }
+        return res.status(400).json({ error: 'Invalid councillor credentials.' });
+      }
+
+      if (!data || data.password_hash !== password) {
+        return res.status(400).json({ error: 'Invalid councillor credentials.' });
+      }
+
+      return res.json({ ...data, role: 'councillor' });
+    } catch (err) {
+      console.error('Councillor login error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  } else {
+    const mockFound = MOCK_COUNCILLORS.find(c => c.phone === cleanPhone && c.password_hash === password);
+    if (mockFound) {
+      return res.json({ ...mockFound, role: 'councillor' });
+    }
+    return res.status(400).json({ error: 'Invalid councillor credentials.' });
+  }
+});
+
+// 4.3 POST /reports/:id/resolve (Resolve civic issue with photo proof)
+app.post('/reports/:id/resolve', async (req, res) => {
+  const { id } = req.params;
+  const { resolution_photo_url, resolved_by } = req.body;
+
+  if (!resolution_photo_url || !resolved_by) {
+    return res.status(400).json({ error: 'Missing required fields: resolution_photo_url, resolved_by' });
+  }
+
+  if (isConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('reports')
+        .update({
+          status: 'resolved',
+          resolved_at: new Date().toISOString(),
+          resolution_photo_url,
+          resolved_by
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return res.json(data);
+    } catch (err) {
+      console.error('Supabase error in POST /reports/:id/resolve:', err);
+      // Resilient fallback in case table columns don't exist yet
+      const report = mockReports.find(r => r.id === id);
+      if (report) {
+        report.status = 'resolved';
+        report.resolved_at = new Date().toISOString();
+        report.resolution_photo_url = resolution_photo_url;
+        report.resolved_by = resolved_by;
+        return res.json(report);
+      }
+      return res.status(500).json({ error: err.message });
+    }
+  } else {
+    const report = mockReports.find(r => r.id === id);
+    if (!report) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    report.status = 'resolved';
+    report.resolved_at = new Date().toISOString();
+    report.resolution_photo_url = resolution_photo_url;
+    report.resolved_by = resolved_by;
+
+    return res.json(report);
+  }
+});
+
+// 4.4 GET /wards/:ward/stats (Aggregate ward-level metrics for transparency)
+app.get('/wards/:ward/stats', async (req, res) => {
+  const { ward } = req.params;
+
+  let allReports = [];
+  if (isConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('reports')
+        .select('*')
+        .neq('status', 'rejected');
+      if (error) throw error;
+      allReports = data;
+    } catch (err) {
+      console.error('Supabase error fetching reports for stats:', err);
+      allReports = mockReports.filter(r => r.status !== 'rejected');
+    }
+  } else {
+    allReports = mockReports.filter(r => r.status !== 'rejected');
+  }
+
+  const wardReports = allReports.filter(r => getMockWard(r.lat, r.lng) === ward);
+
+  const totalReports = wardReports.length;
+  const totalEscalated = wardReports.filter(r => r.priority_score >= 25 && r.status !== 'resolved').length;
+  const totalResolved = wardReports.filter(r => r.status === 'resolved').length;
+  const totalPending = wardReports.filter(r => r.status === 'live' && r.priority_score < 25).length;
+
+  let totalResolutionTimeMs = 0;
+  let resolvedCount = 0;
+
+  wardReports.forEach(r => {
+    if (r.status === 'resolved' && r.resolved_at && r.created_at) {
+      const duration = new Date(r.resolved_at) - new Date(r.created_at);
+      totalResolutionTimeMs += duration;
+      resolvedCount++;
+    }
+  });
+
+  const avgResolutionTimeDays = resolvedCount > 0 
+    ? parseFloat((totalResolutionTimeMs / (1000 * 60 * 60 * 24) / resolvedCount).toFixed(1)) 
+    : 0.5; // default minimum response speed placeholder for demo if resolved immediately
+
+  const categoryCounts = {};
+  wardReports.forEach(r => {
+    categoryCounts[r.category] = (categoryCounts[r.category] || 0) + 1;
+  });
+
+  return res.json({
+    ward,
+    totalReports,
+    totalEscalated,
+    totalResolved,
+    totalPending,
+    avgResolutionTimeDays,
+    categoryCounts
+  });
 });
 
 // 5. POST /chat

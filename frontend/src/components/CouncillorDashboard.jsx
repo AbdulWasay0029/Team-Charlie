@@ -1,0 +1,451 @@
+import React, { useState, useEffect } from 'react';
+import { LogOut, CheckCircle, AlertCircle, Clock, BarChart3, Image, ClipboardCheck, ArrowRight, ShieldCheck, Calendar, MapPin, ExternalLink, X } from 'lucide-react';
+import { CATEGORIES } from '../mockData';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
+export default function CouncillorDashboard({ councillor, onLogout, showToast }) {
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalReports: 0,
+    totalEscalated: 0,
+    totalResolved: 0,
+    totalPending: 0,
+    avgResolutionTimeDays: 0
+  });
+
+  // Resolution Modal State
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [proofPhotoUrl, setProofPhotoUrl] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const fetchWardData = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch reports
+      let allReports = [];
+      if (API_BASE_URL) {
+        const res = await fetch(`${API_BASE_URL}/reports`);
+        if (res.ok) {
+          allReports = await res.json();
+        }
+      } else {
+        // Fallback or Mock
+        allReports = [];
+      }
+
+      // Helper function matching backend
+      const getMockWard = (lat, lng) => {
+        const wards = [
+          "Ward 112 (Hitech City)",
+          "Ward 95 (Khairatabad)",
+          "Ward 80 (Charminar)",
+          "Ward 101 (Jubilee Hills)",
+          "Ward 120 (Kukatpally)",
+          "Ward 85 (Koti)",
+          "Ward 98 (Gachibowli)",
+          "Ward 104 (Begumpet)"
+        ];
+        const index = Math.abs(Math.floor(lat * 1000 + lng * 1000)) % wards.length;
+        return wards[index];
+      };
+
+      // Filter reports for this councillor's ward
+      const wardReports = allReports.filter(r => getMockWard(r.lat, r.lng) === councillor.ward);
+      
+      // Sort escalated first, then by priority score desc
+      const sorted = [...wardReports].sort((a, b) => {
+        if (a.status === 'resolved' && b.status !== 'resolved') return 1;
+        if (a.status !== 'resolved' && b.status === 'resolved') return -1;
+        return (b.priority_score || 0) - (a.priority_score || 0);
+      });
+
+      setReports(sorted);
+
+      // 2. Fetch stats
+      if (API_BASE_URL) {
+        const statsRes = await fetch(`${API_BASE_URL}/wards/${encodeURIComponent(councillor.ward)}/stats`);
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setStats(statsData);
+        }
+      } else {
+        // Compute stats locally
+        const total = wardReports.length;
+        const resolved = wardReports.filter(r => r.status === 'resolved').length;
+        const escalated = wardReports.filter(r => r.priority_score >= 25 && r.status !== 'resolved').length;
+        const pending = wardReports.filter(r => r.status === 'live' && r.priority_score < 25).length;
+        setStats({
+          totalReports: total,
+          totalResolved: resolved,
+          totalEscalated: escalated,
+          totalPending: pending,
+          avgResolutionTimeDays: 0.5
+        });
+      }
+    } catch (err) {
+      console.error("Error loading councillor dashboard data:", err);
+      showToast("Failed to refresh ward dashboard", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWardData();
+  }, [councillor]);
+
+  const handleResolveSubmit = async (e) => {
+    e.preventDefault();
+    if (!proofPhotoUrl.trim()) {
+      showToast("Please provide a proof photo URL.", "info");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      if (API_BASE_URL) {
+        const res = await fetch(`${API_BASE_URL}/reports/${selectedReport.id}/resolve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            resolution_photo_url: proofPhotoUrl.trim(),
+            resolved_by: councillor.id
+          })
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to submit resolution.");
+        }
+
+        showToast("Issue successfully marked as resolved!", "success");
+        setSelectedReport(null);
+        setProofPhotoUrl('');
+        fetchWardData();
+      } else {
+        showToast("Resolution completed successfully (Mock Mode).", "success");
+        setSelectedReport(null);
+        setProofPhotoUrl('');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "Error resolving issue.", "error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Get SLA aging text and color
+  const getSLADuration = (createdAt) => {
+    const createdDate = new Date(createdAt);
+    const diffTime = Math.abs(new Date() - createdDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    let color = 'text-emerald-600 bg-emerald-50 border-emerald-100';
+    if (diffDays >= 7) {
+      color = 'text-rose-600 bg-rose-50 border-rose-100 animate-pulse';
+    } else if (diffDays >= 3) {
+      color = 'text-amber-600 bg-amber-50 border-amber-100';
+    }
+    
+    return {
+      text: `${diffDays} ${diffDays === 1 ? 'day' : 'days'} outstanding`,
+      color
+    };
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-body pb-12">
+      {/* Header Bar */}
+      <header className="bg-slate-900/80 border-b border-slate-800/80 sticky top-0 z-40 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-lg font-display font-black leading-tight bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Bharat Patrol Councillor</h1>
+              <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest mt-0.5">{councillor.ward}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="hidden md:block text-right">
+              <p className="text-xs font-bold text-slate-200">Welcome, {councillor.name}</p>
+              <p className="text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-wider">Pre-Provisioned Authority</p>
+            </div>
+            <button
+              onClick={onLogout}
+              className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700/80 text-slate-300 hover:text-white border border-slate-700 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 mt-8 space-y-8">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 shadow-xl flex items-center gap-4">
+            <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/10">
+              <ClipboardCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Total Reports</p>
+              <h3 className="text-2xl font-black text-slate-100 font-mono mt-0.5">{stats.totalReports}</h3>
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 shadow-xl flex items-center gap-4">
+            <div className="p-3 bg-orange-500/10 text-orange-400 rounded-xl border border-orange-500/10">
+              <AlertCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Active Escalated</p>
+              <h3 className="text-2xl font-black text-orange-400 font-mono mt-0.5">{stats.totalEscalated}</h3>
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 shadow-xl flex items-center gap-4">
+            <div className="p-3 bg-teal-500/10 text-teal-400 rounded-xl border border-teal-500/10">
+              <CheckCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Resolved SLA</p>
+              <h3 className="text-2xl font-black text-teal-400 font-mono mt-0.5">{stats.totalResolved}</h3>
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 shadow-xl flex items-center gap-4">
+            <div className="p-3 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/10">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Avg Resolution</p>
+              <h3 className="text-2xl font-black text-sky-400 font-mono mt-0.5">
+                {stats.avgResolutionTimeDays} {stats.avgResolutionTimeDays === 1 ? 'day' : 'days'}
+              </h3>
+            </div>
+          </div>
+        </div>
+
+        {/* Complaints Section */}
+        <div className="bg-slate-900 border border-slate-800/80 rounded-3xl p-6 shadow-xl space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-800/60 pb-5">
+            <div>
+              <h2 className="text-base font-display font-extrabold text-slate-200">Grievance Escalation Registry</h2>
+              <p className="text-[11px] font-mono text-slate-400 mt-0.5">Pending municipal intervention and resolution proof uploads</p>
+            </div>
+            <button
+              onClick={fetchWardData}
+              className="text-xs font-mono font-bold text-emerald-400 hover:text-emerald-300 underline cursor-pointer"
+            >
+              Sync Registry
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="py-20 text-center flex flex-col items-center gap-3">
+              <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin"></div>
+              <p className="text-slate-400 text-xs font-mono">Synchronizing Ward Complaint Database...</p>
+            </div>
+          ) : reports.length === 0 ? (
+            <div className="py-20 text-center space-y-3">
+              <span className="text-4xl">🏝️</span>
+              <h3 className="text-sm font-bold text-slate-300">All Clear! No grievances escalated.</h3>
+              <p className="text-xs text-slate-500 max-w-xs mx-auto">Either no complaints have been reported, or none have crossed the SLA priority score threshold yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {reports.map((report) => {
+                const cat = CATEGORIES[report.category] || { label: report.category, icon: '📍' };
+                const isResolved = report.status === 'resolved';
+                const sla = getSLADuration(report.created_at);
+
+                return (
+                  <div key={report.id} className={`bg-slate-950 border rounded-2xl overflow-hidden shadow-md flex flex-col h-[400px] transition-all hover:border-slate-700/80 ${
+                    isResolved ? 'border-teal-950/60 opacity-80' : 'border-slate-800/80'
+                  }`}>
+                    {/* Photo Header */}
+                    <div className="relative h-44 bg-slate-900 shrink-0">
+                      <img
+                        src={report.photo_url}
+                        alt={cat.label}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = "https://images.unsplash.com/photo-1599740831464-54c86b24d775?auto=format&fit=crop&w=400&q=80";
+                        }}
+                      />
+                      
+                      {/* Top status badges */}
+                      <div className="absolute top-2 left-2 flex gap-1 items-center">
+                        {isResolved ? (
+                          <span className="bg-teal-500 text-white text-[8px] font-bold px-2 py-0.5 rounded-full font-mono uppercase tracking-wider border border-teal-400/20">Resolved</span>
+                        ) : (
+                          <span className="bg-orange-500 text-white text-[8px] font-bold px-2 py-0.5 rounded-full font-mono uppercase tracking-wider border border-orange-400/20 animate-pulse">Escalated</span>
+                        )}
+                        <span className="bg-slate-900/80 backdrop-blur-xs text-slate-200 border border-slate-700/50 text-[8px] font-bold px-2 py-0.5 rounded-full font-mono uppercase tracking-wider">
+                          Severity {report.ai_severity || 1}/10
+                        </span>
+                      </div>
+
+                      {/* Bottom Category Overlay */}
+                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent p-3 pt-6 flex items-end justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-lg bg-slate-900/70 p-1 rounded-xl border border-white/5">{cat.icon}</span>
+                          <div className="text-left">
+                            <h4 className="text-xs font-black text-slate-100 uppercase tracking-tight">{cat.label}</h4>
+                            <p className="text-[8px] text-slate-400 font-mono mt-0.5">PRIORITY RATING: {report.priority_score || 0}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Details Container */}
+                    <div className="p-4 flex flex-col flex-1 min-h-0 justify-between">
+                      <div className="space-y-3 min-h-0 overflow-y-auto">
+                        <p className="text-xs text-slate-400 leading-relaxed text-left">
+                          {report.description || "Civic hazard reported nearby. Verified by AI. Councillor resolution required."}
+                        </p>
+
+                        {/* Location GPS */}
+                        <div className="flex items-center gap-1.5 text-[9px] font-mono text-slate-500 bg-slate-900/50 p-2 rounded-xl border border-slate-800/40">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="truncate">Lat {report.lat.toFixed(5)}, Lng {report.lng.toFixed(5)}</span>
+                          <a 
+                            href={`https://www.google.com/maps/search/?api=1&query=${report.lat},${report.lng}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="ml-auto text-emerald-400 hover:text-emerald-300 flex items-center gap-0.5"
+                          >
+                            Map <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        </div>
+                      </div>
+
+                      {/* Card Footer Actions */}
+                      <div className="border-t border-slate-900 pt-3 mt-2 flex items-center justify-between shrink-0">
+                        {isResolved ? (
+                          <div className="flex flex-col text-left">
+                            <span className="text-[8px] text-slate-500 uppercase font-mono tracking-wider">Proof of Work</span>
+                            <a
+                              href={report.resolution_photo_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-teal-400 font-bold hover:underline flex items-center gap-1 mt-0.5 font-mono uppercase"
+                            >
+                              <Image className="w-3 h-3" /> View Proof
+                            </a>
+                          </div>
+                        ) : (
+                          <div className={`border rounded-lg py-0.5 px-2 text-[9px] font-mono font-bold uppercase tracking-wider ${sla.color}`}>
+                            {sla.text}
+                          </div>
+                        )}
+
+                        {isResolved ? (
+                          <div className="flex items-center gap-1 text-teal-400 text-xs font-mono font-bold uppercase tracking-wider">
+                            <CheckCircle className="w-4 h-4 shrink-0" /> Closed
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setSelectedReport(report)}
+                            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-mono font-extrabold text-[10px] uppercase tracking-wider py-1.5 px-3 rounded-xl transition-all hover:scale-105 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                          >
+                            Mark Resolved <ArrowRight className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Resolution Proof Upload Modal */}
+      {selectedReport && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[1000] p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative text-left">
+            <button 
+              onClick={() => setSelectedReport(null)}
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-300 p-1.5 rounded-full hover:bg-slate-800 transition-all cursor-pointer"
+            >
+              <X className="w-4.5 h-4.5" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/15 shrink-0">
+                <ClipboardCheck className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-display font-extrabold text-slate-100">Upload Resolution Proof</h3>
+                <p className="text-[9px] font-mono text-slate-400 uppercase tracking-widest mt-0.5">SLA Closed Loop Workflow</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleResolveSubmit} className="space-y-4 font-sans">
+              <div>
+                <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  Resolution Proof Image URL
+                </label>
+                <input
+                  type="url"
+                  required
+                  value={proofPhotoUrl}
+                  onChange={(e) => setProofPhotoUrl(e.target.value)}
+                  placeholder="https://example.com/resolved-pothole.jpg"
+                  className="w-full pl-3 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 font-medium text-xs focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-slate-650"
+                />
+              </div>
+
+              {/* Quick Dummy Image Presets for Hackathon Demo */}
+              <div className="space-y-1.5">
+                <span className="block text-[9px] font-mono font-bold uppercase tracking-wider text-slate-600">Quick Presets (Demo)</span>
+                <div className="grid grid-cols-2 gap-2 text-[8px] font-mono font-bold text-slate-400 uppercase">
+                  <button
+                    type="button"
+                    onClick={() => setProofPhotoUrl('https://images.unsplash.com/photo-1599740831464-54c86b24d775')}
+                    className="p-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-lg text-left cursor-pointer transition truncate"
+                  >
+                    🛠️ Pothole Fixed
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setProofPhotoUrl('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe')}
+                    className="p-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-lg text-left cursor-pointer transition truncate"
+                  >
+                    💡 Streetlight Lit
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-2.5 px-4 rounded-xl font-mono font-extrabold text-xs uppercase tracking-wider bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/15 flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 mt-1 cursor-pointer"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Resolving Issue...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Submit Resolution</span>
+                    <CheckCircle className="w-3.5 h-3.5" />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

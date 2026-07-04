@@ -98,9 +98,22 @@ const createCustomIcon = (report) => {
   const catEmoji = CATEGORIES[report.category]?.icon || iconEmoji;
   const count = report.clusteredReports ? report.clusteredReports.length : 1;
 
+  // Dynamic sizing based on AI severity rating
+  const severity = report.ai_severity || 5;
+  let size = 36;
+  let textScale = 'text-base';
+  if (severity >= 8) {
+    size = 46;
+    textScale = 'text-xl';
+  } else if (severity <= 3) {
+    size = 28;
+    textScale = 'text-xs';
+  }
+
   const html = `
-    <div class="relative flex items-center justify-center w-9 h-9 rounded-full ${statusBorder} ${pinBgColor} text-white shadow-xl ${animationClass} select-none transition-all duration-300 hover:scale-110" style="box-shadow: 0 0 12px ${pulseColor}; transform: translateY(-4px)">
-      <span class="text-base">${catEmoji}</span>
+    <div class="relative flex items-center justify-center rounded-full ${statusBorder} ${pinBgColor} text-white shadow-xl ${animationClass} select-none transition-all duration-300 hover:scale-110" 
+      style="width: ${size}px; height: ${size}px; box-shadow: 0 0 ${severity >= 8 ? '20px 6px' : '12px'} ${pulseColor}; transform: translateY(-4px)">
+      <span class="${textScale}">${catEmoji}</span>
       ${count > 1 ? `
         <span class="absolute -top-2 -left-2 bg-indigo-600 text-white font-mono font-black text-[9px] px-1.5 py-0.5 rounded-full shadow border border-white z-10 animate-pulse">
           ${count}
@@ -118,9 +131,9 @@ const createCustomIcon = (report) => {
   return L.divIcon({
     html: html,
     className: 'custom-leaflet-marker',
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -36]
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size],
+    popupAnchor: [0, -size]
   });
 };
 
@@ -170,6 +183,17 @@ function AutoZoomToUser({ userPos }) {
       map.flyTo(userPos, 15, { duration: 1.5 });
     }
   }, [userPos, map]);
+  return null;
+}
+
+// Sub-component to fly to a target coordinate programmatically
+function RecenterMap({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) {
+      map.flyTo(center, 16, { duration: 1.5 });
+    }
+  }, [center, map]);
   return null;
 }
 
@@ -292,7 +316,8 @@ export default function MapView({
   showHeatmap,
   onToggleHeatmap,
   onOpenHistory,
-  votedReportIds = []
+  votedReportIds = [],
+  mapCenter = null
 }) {
   const [userPos, setUserPos] = useState(HYDERABAD_CENTER);
 
@@ -332,6 +357,9 @@ export default function MapView({
 
         {/* Auto Zoom to User Location when Map Opens */}
         <AutoZoomToUser userPos={userPos} />
+
+        {/* Programmatic map recenter hook */}
+        <RecenterMap center={mapCenter} />
 
         {/* Custom Zoom Control Widget (bottom-left) */}
         <CustomZoomWidget />
