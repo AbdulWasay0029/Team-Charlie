@@ -140,18 +140,18 @@ html.light, html.light body, html.light #root {
   color: #0f172a !important;
 }
 
-/* Cards & Dashboard Overrides */
-html.light .bg-slate-950 {
-  background-color: #f1f5f9 !important;
-}
+/* Background Overrides */
 html.light .bg-slate-955 {
   background-color: #ffffff !important;
 }
 html.light .bg-slate-900 {
-  background-color: #ffffff !important;
+  background-color: #ffffff !important; /* Original card bg white */
 }
 html.light .bg-slate-900\/80 {
   background-color: rgba(255, 255, 255, 0.85) !important;
+}
+html.light .bg-slate-905 {
+  background-color: #f1f5f9 !important;
 }
 html.light .bg-slate-950\/80 {
   background-color: rgba(241, 245, 249, 0.85) !important;
@@ -159,16 +159,25 @@ html.light .bg-slate-950\/80 {
 html.light .bg-slate-950\/50 {
   background-color: rgba(241, 245, 249, 0.5) !important;
 }
+html.light .bg-slate-900\/90 {
+  background-color: #f1f5f9 !important;
+}
 html.light .bg-slate-900\/50 {
   background-color: rgba(255, 255, 255, 0.5) !important;
 }
 html.light .bg-slate-850 {
-  background-color: #cbd5e1 !important;
+  background-color: #e2e8f0 !important;
+}
+html.light .bg-slate-950 {
+  background-color: #f8fafc !important; /* Original landing bg slate-50/slate-100 */
 }
 
 /* Border Overrides */
 html.light .border-slate-800 {
   border-color: #cbd5e1 !important;
+}
+html.light .border-slate-800\/85 {
+  border-color: rgba(203, 213, 225, 0.85) !important;
 }
 html.light .border-slate-800\/80 {
   border-color: rgba(203, 213, 225, 0.8) !important;
@@ -190,10 +199,16 @@ html.light .text-slate-200 {
 html.light .text-slate-300 {
   color: #334155 !important;
 }
+html.light .text-slate-350 {
+  color: #475569 !important;
+}
 html.light .text-slate-400 {
   color: #475569 !important;
 }
 html.light .text-slate-450 {
+  color: #475569 !important;
+}
+html.light .text-slate-455 {
   color: #475569 !important;
 }
 html.light .text-slate-500 {
@@ -201,6 +216,56 @@ html.light .text-slate-500 {
 }
 html.light .text-slate-650 {
   color: #64748b !important;
+}
+html.light .text-white {
+  color: #0f172a !important;
+}
+
+/* Icon / Pastel Background Overrides for Grid Cards */
+html.light .bg-red-950\/20 {
+  background-color: #fee2e2 !important;
+  color: #dc2626 !important;
+}
+html.light .border-red-900\/30 {
+  border-color: #fca5a5 !important;
+}
+html.light .bg-blue-950\/20 {
+  background-color: #dbeafe !important;
+  color: #2563eb !important;
+}
+html.light .border-blue-900\/30 {
+  border-color: #93c5fd !important;
+}
+html.light .bg-orange-950\/20 {
+  background-color: #ffedd5 !important;
+  color: #ea580c !important;
+}
+html.light .border-orange-900\/30 {
+  border-color: #fdba74 !important;
+}
+html.light .bg-purple-950\/20 {
+  background-color: #f3e8ff !important;
+  color: #7c3aed !important;
+}
+html.light .border-purple-900\/30 {
+  border-color: #d8b4fe !important;
+}
+html.light .bg-emerald-950\/35 {
+  background-color: #d1fae5 !important;
+  color: #059669 !important;
+}
+html.light .border-emerald-900\/35 {
+  border-color: #6ee7b7 !important;
+}
+html.light .text-emerald-455 {
+  color: #059669 !important;
+}
+html.light .bg-teal-950\/20 {
+  background-color: #ccfbf1 !important;
+  color: #0d9488 !important;
+}
+html.light .border-teal-900\/30 {
+  border-color: #5eead4 !important;
 }
 
 /* Leaflet Popup overrides for Light Mode */
