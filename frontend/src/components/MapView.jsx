@@ -248,7 +248,7 @@ function CustomZoomWidget() {
 }
 
 // Sub-component for Unified GIS Control Dock (bottom-right)
-function MapToolDock({ userPos, showHeatmap, onToggleHeatmap, onOpenHistory }) {
+function MapToolDock({ userPos, showHeatmap, onToggleHeatmap, onOpenHistory, mapLayer, setMapLayer }) {
   const map = useMap();
   const dockRef = useRef(null);
 
