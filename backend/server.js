@@ -101,7 +101,7 @@ const generateUuid = () => {
 // Root / Health Check
 app.get('/', (req, res) => {
   res.json({
-    app: "Bharat Patrol Backend API",
+    app: "TraceSpark Backend API",
     mode: isConfigured ? "Production (Supabase Connected)" : "Development (Mock Fallback)",
     supabase_configured: isConfigured,
     status: "healthy",
@@ -449,5 +449,5 @@ app.post('/reports/:id/vote', async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Bharat Patrol backend server listening on port ${PORT}`);
+  console.log(`TraceSpark backend server listening on port ${PORT}`);
 });

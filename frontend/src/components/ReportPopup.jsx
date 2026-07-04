@@ -4,7 +4,13 @@ import { ThumbsUp, Calendar, ShieldCheck, ShieldAlert, AlertTriangle } from 'luc
 
 export default function ReportPopup({ report, onVote }) {
   const [voting, setVoting] = useState(false);
-  const categoryInfo = CATEGORIES[report.category] || { label: report.category, icon: '📍' };
+  const [photoIdx, setPhotoIdx] = useState(0);
+  
+  const clustered = report.clusteredReports || [report];
+  const currentReport = clustered[photoIdx] || report;
+  const totalPhotos = clustered.length;
+
+  const categoryInfo = CATEGORIES[currentReport.category] || { label: currentReport.category, icon: '📍' };
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -15,7 +21,7 @@ export default function ReportPopup({ report, onVote }) {
       case 'rejected':
         return <span className="bg-rose-50 border border-rose-200 text-rose-600 text-[9px] px-2.5 py-0.5 rounded-full font-bold font-mono uppercase tracking-wider">AI Rejected</span>;
       default:
-        return <span className="bg-slate-105 border border-slate-200 text-slate-500 text-[9px] px-2.5 py-0.5 rounded-full font-bold font-mono uppercase tracking-wider">{status}</span>;
+        return <span className="bg-slate-100 border border-slate-200 text-slate-500 text-[9px] px-2.5 py-0.5 rounded-full font-bold font-mono uppercase tracking-wider">{status}</span>;
     }
   };
 
@@ -24,11 +30,11 @@ export default function ReportPopup({ report, onVote }) {
     if (score >= 8) {
       return <span className="bg-red-100 text-red-700 border border-red-200 text-[8px] px-2 py-0.5 rounded-full font-extrabold uppercase font-mono tracking-wider">Critical ({score})</span>;
     } else if (score >= 5) {
-      return <span className="bg-orange-100 text-orange-700 border border-orange-250 text-[8px] px-2 py-0.5 rounded-full font-extrabold uppercase font-mono tracking-wider">High ({score})</span>;
+      return <span className="bg-orange-100 text-orange-700 border border-orange-200 text-[8px] px-2 py-0.5 rounded-full font-extrabold uppercase font-mono tracking-wider">High ({score})</span>;
     } else if (score >= 3) {
-      return <span className="bg-yellow-100 text-yellow-705 border border-yellow-200 text-[8px] px-2 py-0.5 rounded-full font-extrabold uppercase font-mono tracking-wider">Medium ({score})</span>;
+      return <span className="bg-yellow-100 text-yellow-700 border border-yellow-200 text-[8px] px-2 py-0.5 rounded-full font-extrabold uppercase font-mono tracking-wider">Medium ({score})</span>;
     } else {
-      return <span className="bg-slate-100 text-slate-650 border border-slate-200 text-[8px] px-2 py-0.5 rounded-full font-extrabold uppercase font-mono tracking-wider">Low ({score})</span>;
+      return <span className="bg-slate-100 text-slate-600 border border-slate-200 text-[8px] px-2 py-0.5 rounded-full font-extrabold uppercase font-mono tracking-wider">Low ({score})</span>;
     }
   };
 
@@ -36,7 +42,7 @@ export default function ReportPopup({ report, onVote }) {
     if (voting) return;
     setVoting(true);
     try {
-      await onVote(report.id);
+      await onVote(currentReport.id);
     } catch (err) {
       console.error(err);
     } finally {
@@ -44,8 +50,8 @@ export default function ReportPopup({ report, onVote }) {
     }
   };
 
-  const formattedDate = report.created_at 
-    ? new Date(report.created_at).toLocaleDateString('en-IN', {
+  const formattedDate = currentReport.created_at 
+    ? new Date(currentReport.created_at).toLocaleDateString('en-IN', {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
@@ -57,19 +63,52 @@ export default function ReportPopup({ report, onVote }) {
   return (
     <div className="w-80 flex flex-col max-h-[420px] text-slate-800 font-body bg-white rounded-2xl overflow-hidden shadow-xl">
       {/* Photo Header */}
-      <div className="relative h-40 w-full overflow-hidden bg-slate-100">
+      <div className="relative h-40 w-full overflow-hidden bg-slate-100 group">
         <img 
-          src={report.photo_url} 
+          src={currentReport.photo_url} 
           alt={categoryInfo.label} 
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
           onError={(e) => {
-            // fallback if base64 upload or preset image breaks
             e.target.src = "https://images.unsplash.com/photo-1599740831464-54c86b24d775?auto=format&fit=crop&w=400&q=80";
           }}
         />
-        <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
-          {getStatusBadge(report.status)}
+        
+        {/* Top Badges */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1 items-start z-10">
+          {getStatusBadge(currentReport.status)}
         </div>
+        
+        {totalPhotos > 1 && (
+          <div className="absolute top-2 right-2 z-10 bg-black/70 backdrop-blur-md text-white text-[9px] px-2 py-0.5 rounded-full font-bold font-mono border border-white/20">
+            📸 {photoIdx + 1}/{totalPhotos} Stacked
+          </div>
+        )}
+
+        {/* Carousel Navigation Buttons */}
+        {totalPhotos > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPhotoIdx((photoIdx - 1 + totalPhotos) % totalPhotos);
+              }}
+              className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-6 h-6 rounded-full flex items-center justify-center z-10 transition cursor-pointer text-xs font-bold"
+            >
+              ◀
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPhotoIdx((photoIdx + 1) % totalPhotos);
+              }}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white w-6 h-6 rounded-full flex items-center justify-center z-10 transition cursor-pointer text-xs font-bold"
+            >
+              ▶
+            </button>
+          </>
+        )}
         
         {/* Category Label Overlay */}
         <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent p-3 pt-8 flex items-end justify-between text-white">
@@ -77,10 +116,10 @@ export default function ReportPopup({ report, onVote }) {
             <span className="text-xl bg-slate-900/40 p-1.5 rounded-xl border border-white/10 backdrop-blur-xs">{categoryInfo.icon}</span>
             <div className="text-left">
               <h3 className="font-display font-extrabold text-sm leading-none text-white tracking-tight uppercase">{categoryInfo.label}</h3>
-              <p className="text-[9px] text-slate-300 font-mono tracking-wider mt-0.5">{report.ward || "Hyderabad Division"}</p>
+              <p className="text-[9px] text-slate-300 font-mono tracking-wider mt-0.5">{currentReport.ward || "Hyderabad Division"}</p>
             </div>
           </div>
-          {getSeverityBadge(report.ai_severity)}
+          {getSeverityBadge(currentReport.ai_severity)}
         </div>
       </div>
 
@@ -89,7 +128,7 @@ export default function ReportPopup({ report, onVote }) {
         
         {/* Description */}
         <p className="text-xs text-slate-600 leading-relaxed text-left font-medium">
-          {report.description || 'AI description processing...'}
+          {currentReport.description || 'AI description processing...'}
         </p>
 
         {/* Info Grid */}
@@ -97,14 +136,14 @@ export default function ReportPopup({ report, onVote }) {
           <div className="flex flex-col text-left">
             <span className="text-slate-400 uppercase font-bold tracking-wider">Reported On</span>
             <span className="text-slate-700 flex items-center gap-1 mt-0.5 font-bold">
-              <Calendar className="h-3 w-3 text-slate-450" />
+              <Calendar className="h-3 w-3 text-slate-400" />
               {formattedDate}
             </span>
           </div>
           <div className="flex flex-col text-left">
             <span className="text-slate-400 uppercase font-bold tracking-wider">AI Check</span>
             <span className="text-slate-700 flex items-center gap-1 mt-0.5 font-bold">
-              {report.ai_verified ? (
+              {currentReport.ai_verified ? (
                 <>
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
                   <span className="text-emerald-600 font-extrabold uppercase">Verified</span>
@@ -124,14 +163,14 @@ export default function ReportPopup({ report, onVote }) {
           <div className="flex flex-col text-left">
             <span className="text-[9px] text-slate-400 uppercase font-mono font-bold tracking-widest">Priority Score</span>
             <span className="text-slate-800 font-extrabold text-sm flex items-center gap-1 font-mono">
-              🔥 {report.priority_score || 0} votes
-              {(report.priority_score || 0) >= 25 && (
+              🔥 {currentReport.priority_score || 0} votes
+              {(currentReport.priority_score || 0) >= 25 && (
                 <span className="bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.2 rounded font-mono uppercase tracking-wide shrink-0 animate-pulse">Escalated</span>
               )}
             </span>
           </div>
 
-          {report.status !== 'rejected' && (
+          {currentReport.status !== 'rejected' && (
             <button
               type="button"
               onClick={handleVote}

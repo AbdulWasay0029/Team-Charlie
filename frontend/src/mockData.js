@@ -1,4 +1,4 @@
-// Expanded Mock data representing reports for Bharat Patrol
+// Expanded Mock data representing reports for TraceSpark
 export const INITIAL_REPORTS = [];
 
 export const CATEGORIES = {

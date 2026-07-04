@@ -16,18 +16,16 @@ export default function FilterBar({
         
         {/* Brand Logo and Title */}
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="bg-gradient-to-tr from-orange-500 to-red-600 w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-md font-display font-extrabold text-base select-none">
-            BP
-          </div>
+          <img src="/logo.jpeg" alt="TraceSpark" className="w-9 h-9 rounded-xl object-cover shadow-md select-none" />
           <div className="text-left">
             <h1 className="text-slate-900 font-display font-extrabold text-lg leading-none tracking-tight flex items-center gap-1.5">
-              Bharat Patrol
+              TraceSpark
               <span className="bg-teal-500/10 text-teal-600 text-[10px] px-2 py-0.5 rounded-full border border-teal-500/20 font-bold uppercase tracking-wider">
                 Live
               </span>
             </h1>
             <p className="text-slate-400 text-[9px] font-mono tracking-wider uppercase mt-0.5">
-              GHMC Citizen Accountability
+              AI Civic Accountability Portal
             </p>
           </div>
         </div>

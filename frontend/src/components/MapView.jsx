@@ -5,6 +5,49 @@ import { CATEGORIES } from '../mockData';
 import ReportPopup from './ReportPopup';
 import HeatmapLayer from './HeatmapLayer';
 
+// Helper to calculate distance in meters between two lat/lng points
+const getDistanceMeters = (lat1, lon1, lat2, lon2) => {
+  const R = 6371e3;
+  const φ1 = lat1 * Math.PI/180;
+  const φ2 = lat2 * Math.PI/180;
+  const Δφ = (lat2-lat1) * Math.PI/180;
+  const Δλ = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ/2) * Math.sin(Δλ/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
+
+// Group reports within 100 meters
+const clusterReports = (reportsList) => {
+  if (!reportsList || !Array.isArray(reportsList)) return [];
+  const clusters = [];
+  const visited = new Set();
+
+  reportsList.forEach((report, idx) => {
+    if (visited.has(report.id)) return;
+    const cluster = { ...report, clusteredReports: [report] };
+    visited.add(report.id);
+
+    for (let i = idx + 1; i < reportsList.length; i++) {
+      const other = reportsList[i];
+      if (!visited.has(other.id)) {
+        const dist = getDistanceMeters(report.lat, report.lng, other.lat, other.lng);
+        if (dist <= 100) {
+          cluster.clusteredReports.push(other);
+          visited.add(other.id);
+          if ((other.priority_score || 0) > (cluster.priority_score || 0)) {
+            cluster.priority_score = other.priority_score;
+          }
+        }
+      }
+    }
+    clusters.push(cluster);
+  });
+  return clusters;
+};
+
 // Center map on Hyderabad (default city)
 const HYDERABAD_CENTER = [17.3850, 78.4867];
 
@@ -27,14 +70,14 @@ const createCustomIcon = (report) => {
     pulseColor = 'rgba(37, 99, 235, 0.6)';
     animationClass = 'animate-pulse';
   } else if (report.status === 'resolved_pending_confirmation') {
-    pinBgColor = 'bg-amber-500 border-amber-455';
+    pinBgColor = 'bg-amber-500 border-amber-400';
     pulseColor = 'rgba(245, 158, 11, 0.8)';
     animationClass = 'animate-pulse';
   } else if (report.status === 'resolved') {
     pinBgColor = 'bg-slate-400 border-slate-300 opacity-60';
     pulseColor = 'rgba(148, 163, 184, 0.2)';
   } else if (report.status === 'reopened') {
-    pinBgColor = 'bg-red-655 border-red-500';
+    pinBgColor = 'bg-red-600 border-red-500';
     pulseColor = 'rgba(239, 68, 68, 0.8)';
     animationClass = 'animate-bounce';
   } else {
@@ -53,10 +96,16 @@ const createCustomIcon = (report) => {
   }
 
   const catEmoji = CATEGORIES[report.category]?.icon || iconEmoji;
+  const count = report.clusteredReports ? report.clusteredReports.length : 1;
 
   const html = `
     <div class="relative flex items-center justify-center w-9 h-9 rounded-full ${statusBorder} ${pinBgColor} text-white shadow-xl ${animationClass} select-none transition-all duration-300 hover:scale-110" style="box-shadow: 0 0 12px ${pulseColor}; transform: translateY(-4px)">
       <span class="text-base">${catEmoji}</span>
+      ${count > 1 ? `
+        <span class="absolute -top-2 -left-2 bg-indigo-600 text-white font-mono font-black text-[9px] px-1.5 py-0.5 rounded-full shadow border border-white z-10 animate-pulse">
+          ${count}
+        </span>
+      ` : ''}
       ${report.status === 'resolved_pending_confirmation' ? `
         <span class="absolute -top-1 -right-1 flex h-3 w-3">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -106,6 +155,8 @@ export default function MapView({
   onConfirmResolution,
   showHeatmap 
 }) {
+  const clusteredReportsList = clusterReports(reports);
+
   const heatmapPoints = reports
     .filter(r => r.status !== 'resolved')
     .map(r => [r.lat, r.lng, Math.min(1.0, (r.priority_score || 1) / 25)]);
@@ -138,7 +189,7 @@ export default function MapView({
         )}
 
         {/* Render Report Markers */}
-        {reports.map((report) => (
+        {clusteredReportsList.map((report) => (
           <Marker
             key={report.id}
             position={[report.lat, report.lng]}

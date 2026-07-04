@@ -1,4 +1,4 @@
-// Escalation Module for Bharat Patrol
+// Escalation Module for TraceSpark
 // Integrates with Twilio WhatsApp Gateway with console dispatches fallback
 
 const twilio = require('twilio');
@@ -61,7 +61,7 @@ async function sendWhatsAppAlert(toPhoneNumber, messageText) {
 }
 
 function printConsoleFallback(to, text, reason) {
-  console.log('\n--- BHARAT PATROL WHATSAPP ESCALATION (CONSOLE FALLBACK) ---');
+  console.log('\n--- TRACESPARK WHATSAPP ESCALATION (CONSOLE FALLBACK) ---');
   console.log(`Reason: ${reason}`);
   console.log(`To: ${to}`);
   console.log(`Message:\n${text}`);

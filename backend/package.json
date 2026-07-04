@@ -1,7 +1,7 @@
 {
-  "name": "bharat-patrol-backend",
+  "name": "tracespark-backend",
   "version": "1.0.0",
-  "description": "Backend API for Bharat Patrol - civic issue reporting app",
+  "description": "Backend API for TraceSpark - AI civic accountability platform",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

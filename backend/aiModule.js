@@ -1,4 +1,4 @@
-// AI Module for Bharat Patrol
+// AI Module for TraceSpark
 // Integrates Groq Vision and Text APIs with fallback protection
 // Fixed and verified working model mappings for llama-4-scout-17b and llama3-8b-8192
 
@@ -115,7 +115,7 @@ async function verifyAndDescribePhoto(imageUrl, category) {
 async function draftEscalationMessage({ category, severity, voteCount, lat, lng }) {
   if (!isGroqConfigured || !groq) {
     console.log('[AI Module] Falling back to mock escalation message.');
-    return `🚨 BHARAT PATROL ESCALATION ALERT 🚨\n\nDear Councillor,\n\nA community issue has crossed the critical threshold of 25 civic votes in your ward, triggering an automatic escalation.\n\n📍 Location: Lat ${lat}, Lng ${lng}\n⚠️ Issue Type: ${category}\n🔥 AI Severity Index: ${severity}/10\n📈 Verified Citizen Votes: ${voteCount}\n\nPlease review this issue and dispatch local municipal field workers to resolve this at the earliest.`;
+    return `🚨 TRACESPARK ESCALATION ALERT 🚨\n\nDear Councillor,\n\nA community issue has crossed the critical threshold of 25 civic votes in your ward, triggering an automatic escalation.\n\n📍 Location: Lat ${lat}, Lng ${lng}\n⚠️ Issue Type: ${category}\n🔥 AI Severity Index: ${severity}/10\n📈 Verified Citizen Votes: ${voteCount}\n\nPlease review this issue and dispatch local municipal field workers to resolve this at the earliest.`;
   }
 
   try {

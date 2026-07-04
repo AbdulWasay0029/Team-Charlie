@@ -118,3 +118,19 @@ html, body, #root {
 .featured-scroll-container::-webkit-scrollbar {
   display: none; /* Safari and Chrome */
 }
+
+/* Marquee infinite scroll animation */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 25s linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+

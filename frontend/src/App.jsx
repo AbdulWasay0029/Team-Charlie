@@ -8,7 +8,7 @@ import { INITIAL_REPORTS, CATEGORIES } from './mockData';
 import { 
   AlertCircle, CheckCircle2, Info, RefreshCw, X, Shield, 
   Map, Award, Flame, User, LogOut, MessageSquare, AlertOctagon, History, Loader2,
-  Send, Mic, Bell, Settings, ArrowRight, Folder, MapPin, CheckCircle, Clock, ChevronRight, Sparkles, SendHorizontal
+  Send, Mic, Bell, Settings, ArrowRight, Folder, MapPin, CheckCircle, Clock, ChevronRight, Sparkles, SendHorizontal, AlertTriangle
 } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
@@ -49,13 +49,38 @@ export default function App() {
   
   // Signup State (Reads from LocalStorage)
   const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('bharat_patrol_user');
+    const saved = localStorage.getItem('tracespark_user') || localStorage.getItem('bharat_patrol_user');
     return saved ? JSON.parse(saved) : null;
   });
   
   const [signupLoading, setSignupLoading] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [toasts, setToasts] = useState([]);
+  const [weatherData, setWeatherData] = useState({ temp: "25.4°C", condition: "Humid Winds 24.3 km/h", city: "Hyderabad" });
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const { latitude, longitude } = pos.coords;
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,wind_speed_10m`);
+            const data = await res.json();
+            if (data.current) {
+              setWeatherData({
+                temp: `${data.current.temperature_2m}°C`,
+                condition: `Wind ${data.current.wind_speed_10m} km/h`,
+                city: "Your Location"
+              });
+            }
+          } catch (e) {
+            console.error("Weather fetch failed:", e);
+          }
+        },
+        () => {}
+      );
+    }
+  }, []);
 
   // Guest-friendly Deferred Auth States
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -144,10 +169,11 @@ export default function App() {
         userObj = await res.json();
       }
       
+      localStorage.setItem('tracespark_user', JSON.stringify(userObj));
       localStorage.setItem('bharat_patrol_user', JSON.stringify(userObj));
       setCurrentUser(userObj);
       setIsAuthModalOpen(false);
-      showToast(`Welcome to Bharat Patrol, ${userObj.name}!`, "success");
+      showToast(`Welcome to TraceSpark, ${userObj.name}!`, "success");
 
       // Execute deferred pending action
       if (pendingAction) {
@@ -168,6 +194,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('tracespark_user');
     localStorage.removeItem('bharat_patrol_user');
     setCurrentUser(null);
     showToast("Signed out successfully", "info");
@@ -404,7 +431,7 @@ export default function App() {
 
   const getWhatsAppMessageText = (alert) => {
     const catLabel = CATEGORIES[alert.category]?.label || alert.category;
-    return `🚨 *BHARAT PATROL URGENT CIVIC ESCALATION* 🚨
+    return `🚨 *TRACESPARK URGENT CIVIC ESCALATION* 🚨
 
 *Attention Ward Councillor, ${alert.ward}*
 
@@ -425,7 +452,7 @@ Subject: URGENT: Civic Escalation - ${catLabel} - ${alert.ward} (25+ Citizen Vot
 
 Dear Commissioner and Local Councillor,
 
-This is an automated dispatch from the Bharat Patrol Civic Accountability Platform.
+This is an automated dispatch from the TraceSpark Civic Accountability Platform.
 
 A public grievance has reached the critical citizen threshold of 25 upvotes:
 - Issue: ${catLabel}
@@ -442,15 +469,15 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
       {/* 1. APP TOP BAR */}
       <header className="bg-white border-b border-slate-200/80 px-6 py-4 flex items-center justify-between shrink-0 shadow-sm sticky top-0 z-[1010] backdrop-blur-md bg-white/90">
         <div className="flex items-center gap-3">
-          <div 
+          <img 
+            src="/logo.jpeg" 
+            alt="TraceSpark" 
             onClick={() => setViewMode('dashboard')}
-            className="bg-gradient-to-tr from-orange-500 to-red-600 w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md font-display font-extrabold text-lg select-none cursor-pointer"
-          >
-            BP
-          </div>
+            className="w-10 h-10 rounded-xl object-cover shadow-md select-none cursor-pointer"
+          />
           <div className="text-left cursor-pointer" onClick={() => setViewMode('dashboard')}>
             <h1 className="text-slate-900 font-display font-extrabold text-xl leading-none tracking-tight">
-              Bharat Patrol
+              TraceSpark
             </h1>
             <p className="text-slate-400 text-[10px] tracking-wider uppercase font-semibold mt-0.5">AI Civic Accountability Loop</p>
           </div>
@@ -486,7 +513,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
               </div>
               <button
                 onClick={handleLogout}
-                className="bg-red-50 border border-red-200 text-red-655 p-2 rounded-xl hover:bg-red-100 transition cursor-pointer"
+                className="bg-red-50 border border-red-200 text-red-600 p-2 rounded-xl hover:bg-red-100 transition cursor-pointer"
                 title="Sign Out"
               >
                 <LogOut className="h-4 w-4" />
@@ -495,7 +522,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
           ) : (
             <button
               onClick={() => setIsAuthModalOpen(true)}
-              className="bg-gradient-to-r from-orange-500 to-red-650 hover:from-orange-400 hover:to-red-500 text-white font-extrabold text-xs uppercase tracking-wider py-2.5 px-4 rounded-xl transition cursor-pointer shadow-md shadow-orange-500/5 font-mono"
+              className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-extrabold text-xs uppercase tracking-wider py-2.5 px-4 rounded-xl transition cursor-pointer shadow-md shadow-orange-500/5 font-mono"
             >
               Sign Up
             </button>
@@ -506,11 +533,15 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
       {/* 2. DYNAMIC BROADCAST WEATHER/ALERTS TICKER */}
       <div className="bg-gradient-to-r from-teal-600 to-teal-800 text-white py-2 px-6 overflow-hidden flex items-center shrink-0 border-b border-teal-900/10">
         <div className="bg-teal-900/30 text-teal-200 font-mono text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-teal-500/20 shrink-0 select-none mr-4">
-          GhMC Alert
+          TraceSpark Alert
         </div>
-        <div className="relative w-full flex items-center">
-          <div className="animate-marquee whitespace-nowrap text-xs font-mono font-bold tracking-wider text-teal-150 flex gap-12">
-            <span>🌦️ Hyderabad: 25.4°C • Humid Winds 24.3 km/h</span>
+        <div className="relative w-full flex items-center overflow-hidden">
+          <div className="animate-marquee whitespace-nowrap text-xs font-mono font-bold tracking-wider text-teal-100 flex gap-12">
+            <span>🌦️ {weatherData.city}: {weatherData.temp} • {weatherData.condition}</span>
+            <span>🚨 Mosquito Outbreak Warning - Stagnant drains flagged in Charminar area</span>
+            <span>🚧 Jubilee Hills Road No. 36: Ward repair order active</span>
+            <span>🔥 AI verified pipeline leakage auto-assigned to water works engineering</span>
+            <span>🌦️ {weatherData.city}: {weatherData.temp} • {weatherData.condition}</span>
             <span>🚨 Mosquito Outbreak Warning - Stagnant drains flagged in Charminar area</span>
             <span>🚧 Jubilee Hills Road No. 36: Ward repair order active</span>
             <span>🔥 AI verified pipeline leakage auto-assigned to water works engineering</span>
@@ -542,9 +573,9 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
               </div>
               
               <div className="bg-sky-50 border border-sky-100 rounded-2xl py-2 px-4 text-right shadow-sm select-none">
-                <span className="text-[9px] text-sky-500 font-bold block uppercase tracking-wider">Hyderabad</span>
+                <span className="text-[9px] text-sky-500 font-bold block uppercase tracking-wider">{weatherData.city}</span>
                 <span className="text-slate-800 font-mono font-extrabold text-base flex items-center gap-1">
-                  ☁️ 25.4°C
+                  ☁️ {weatherData.temp}
                 </span>
               </div>
             </div>
@@ -552,7 +583,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
             {/* Quick Action Button to direct map access */}
             <button
               onClick={() => setViewMode('map')}
-              className="bg-gradient-to-r from-orange-500 to-red-605 hover:from-orange-400 hover:to-red-500 text-white font-extrabold px-6 py-5 rounded-2xl flex items-center justify-center gap-2 transition cursor-pointer shadow-lg hover:shadow-orange-500/10 shrink-0 md:w-56 text-sm uppercase tracking-widest font-mono"
+              className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-extrabold px-6 py-5 rounded-2xl flex items-center justify-center gap-2 transition cursor-pointer shadow-lg hover:shadow-orange-500/10 shrink-0 md:w-56 text-sm uppercase tracking-widest font-mono"
             >
               <Map className="h-5 w-5 animate-pulse text-white" />
               Open Live Map
@@ -565,8 +596,8 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
               <Sparkles className="h-4 w-4 text-orange-500" />
               Platform Objective & Civic Problem Scale
             </h3>
-            <p className="text-xs text-slate-650 font-bold leading-relaxed">
-              "10,476 Indians died last year because of potholes. Not because we don't know where the potholes are — because nobody is accountable for fixing them. Bharat Patrol changes that by linking citizen crowdsourcing directly with Councillor WhatsApp dispatches."
+            <p className="text-xs text-slate-700 font-bold leading-relaxed">
+              "10,476 Indians died last year because of potholes. Not because we don't know where the potholes are — because nobody is accountable for fixing them. TraceSpark changes that by linking citizen crowdsourcing directly with Councillor WhatsApp dispatches."
             </p>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-1 font-mono text-center">
@@ -579,11 +610,11 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
                 <span className="text-[8px] text-slate-400 uppercase font-bold tracking-wider">Damaged Roads</span>
               </div>
               <div className="bg-white p-3 border border-emerald-200/50 rounded-xl shadow-2xs">
-                <span className="text-teal-650 font-extrabold text-lg block">100%</span>
+                <span className="text-teal-600 font-extrabold text-lg block">100%</span>
                 <span className="text-[8px] text-slate-400 uppercase font-bold tracking-wider">AI Vision Check</span>
               </div>
               <div className="bg-white p-3 border border-teal-200/50 rounded-xl shadow-2xs">
-                <span className="text-teal-650 font-extrabold text-lg block">25 Votes</span>
+                <span className="text-teal-600 font-extrabold text-lg block">25 Votes</span>
                 <span className="text-[8px] text-slate-400 uppercase font-bold tracking-wider">Auto-Escalation</span>
               </div>
             </div>
@@ -663,7 +694,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
               {/* Card 2: Live Map */}
               <div 
                 onClick={() => { setViewMode('map'); setShowHeatmap(false); }}
-                className="bg-gradient-to-br from-blue-500 to-indigo-650 text-white p-5 rounded-2xl min-w-[280px] w-80 text-left shadow-lg cursor-pointer transform hover:scale-102 transition flex flex-col justify-between h-40"
+                className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-5 rounded-2xl min-w-[280px] w-80 text-left shadow-lg cursor-pointer transform hover:scale-102 transition flex flex-col justify-between h-40"
               >
                 <div className="flex items-start justify-between">
                   <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-white">
@@ -702,11 +733,11 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
             {/* Chatbot Header */}
             <div className="bg-slate-50 border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="bg-teal-100 p-2 rounded-xl text-teal-650">
+                <div className="bg-teal-100 p-2 rounded-xl text-teal-600">
                   <MessageSquare className="h-4.5 w-4.5" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-display font-extrabold text-sm text-slate-850">AI Grievance Assistant</h3>
+                  <h3 className="font-display font-extrabold text-sm text-slate-900">AI Grievance Assistant</h3>
                   <p className="text-[9px] text-slate-400 font-mono tracking-wider uppercase font-semibold">Conversational Ticket Filing</p>
                 </div>
               </div>
@@ -725,7 +756,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
                 >
                   <div className={`max-w-[80%] p-3.5 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm text-left ${
                     msg.sender === 'user'
-                      ? 'bg-gradient-to-r from-orange-500 to-red-650 text-white rounded-tr-none'
+                      ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-tr-none'
                       : 'bg-white border border-slate-200/80 text-slate-700 rounded-tl-none'
                   }`}>
                     {msg.text}
@@ -735,7 +766,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
                       <div className="mt-3">
                         <button
                           onClick={() => handleChatAction(msg.action.category)}
-                          className="bg-teal-650 bg-teal-650 hover:bg-teal-500 text-white font-extrabold text-[10px] font-mono tracking-wider uppercase px-3.5 py-1.5 rounded-xl transition shadow flex items-center gap-1 cursor-pointer"
+                          className="bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-[10px] font-mono tracking-wider uppercase px-3.5 py-1.5 rounded-xl transition shadow flex items-center gap-1 cursor-pointer"
                         >
                           {msg.action.label}
                           <ArrowRight className="h-3 w-3" />
@@ -749,7 +780,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
               {chatLoading && (
                 <div className="flex justify-start">
                   <div className="bg-white border border-slate-100 p-4 rounded-2xl rounded-tl-none flex items-center gap-1.5">
-                    <Loader2 className="h-4 w-4 animate-spin text-teal-650" />
+                    <Loader2 className="h-4 w-4 animate-spin text-teal-600" />
                     <span className="text-[10px] text-slate-400 font-mono uppercase tracking-widest animate-pulse">Assistant is typing...</span>
                   </div>
                 </div>
@@ -771,7 +802,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Type your issue here..."
-                className="flex-1 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl py-3 px-4 text-xs font-semibold placeholder:text-slate-350 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition shadow-sm"
+                className="flex-1 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl py-3 px-4 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition shadow-sm"
               />
 
               <button
@@ -794,9 +825,9 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
               
               <div 
                 onClick={() => setViewMode('map')}
-                className="bg-white border border-slate-200/80 hover:border-slate-350 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
+                className="bg-white border border-slate-200/80 hover:border-slate-300 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
               >
-                <div className="bg-red-50 border border-red-150 p-2.5 rounded-xl text-red-600 w-fit">
+                <div className="bg-red-50 border border-red-200 p-2.5 rounded-xl text-red-600 w-fit">
                   <AlertCircle className="h-5 w-5" />
                 </div>
                 <div>
@@ -807,9 +838,9 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
 
               <div 
                 onClick={() => setViewMode('map')}
-                className="bg-white border border-slate-200/80 hover:border-slate-350 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
+                className="bg-white border border-slate-200/80 hover:border-slate-300 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
               >
-                <div className="bg-blue-50 border border-blue-150 p-2.5 rounded-xl text-blue-650 w-fit">
+                <div className="bg-blue-50 border border-blue-200 p-2.5 rounded-xl text-blue-600 w-fit">
                   <Map className="h-5 w-5" />
                 </div>
                 <div>
@@ -820,9 +851,9 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
 
               <div 
                 onClick={() => setIsSidePanelOpen(true)}
-                className="bg-white border border-slate-200/80 hover:border-slate-350 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
+                className="bg-white border border-slate-200/80 hover:border-slate-300 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
               >
-                <div className="bg-yellow-50 border border-yellow-150 p-2.5 rounded-xl text-yellow-650 w-fit">
+                <div className="bg-yellow-50 border border-yellow-200 p-2.5 rounded-xl text-yellow-600 w-fit">
                   <Award className="h-5 w-5" />
                 </div>
                 <div>
@@ -833,9 +864,9 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
 
               <div 
                 onClick={() => { setViewMode('map'); setShowHeatmap(true); }}
-                className="bg-white border border-slate-200/80 hover:border-slate-350 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
+                className="bg-white border border-slate-200/80 hover:border-slate-300 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
               >
-                <div className="bg-orange-50 border border-orange-150 p-2.5 rounded-xl text-orange-500 w-fit">
+                <div className="bg-orange-50 border border-orange-200 p-2.5 rounded-xl text-orange-500 w-fit">
                   <Flame className="h-5 w-5" />
                 </div>
                 <div>
@@ -846,9 +877,9 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
 
               <div 
                 onClick={() => setIsSidePanelOpen(true)}
-                className="bg-white border border-slate-200/80 hover:border-slate-350 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
+                className="bg-white border border-slate-200/80 hover:border-slate-300 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
               >
-                <div className="bg-purple-50 border border-purple-150 p-2.5 rounded-xl text-purple-600 w-fit">
+                <div className="bg-purple-50 border border-purple-200 p-2.5 rounded-xl text-purple-600 w-fit">
                   <History className="h-5 w-5" />
                 </div>
                 <div>
@@ -859,9 +890,9 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
 
               <div 
                 onClick={() => showToast("Circular manual matched for ward operations guidelines", "info")}
-                className="bg-white border border-slate-200/80 hover:border-slate-350 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
+                className="bg-white border border-slate-200/80 hover:border-slate-300 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
               >
-                <div className="bg-teal-50 border border-teal-150 p-2.5 rounded-xl text-teal-650 w-fit">
+                <div className="bg-teal-50 border border-teal-200 p-2.5 rounded-xl text-teal-600 w-fit">
                   <Shield className="h-5 w-5" />
                 </div>
                 <div>
@@ -942,7 +973,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
             {/* Toggle Citizen SidePanel */}
             <button
               onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}
-              className="p-3 rounded-xl shadow-2xl border border-slate-200 bg-white text-slate-750 hover:bg-slate-50 flex items-center justify-center gap-2 transition cursor-pointer backdrop-blur-md"
+              className="p-3 rounded-xl shadow-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2 transition cursor-pointer backdrop-blur-md"
               title="Citizen Leaderboard"
             >
               <Award className="h-5 w-5 text-orange-500" />
@@ -981,7 +1012,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
           <div className="bg-white border border-slate-100 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             
             {/* Header */}
-            <div className="bg-gradient-to-r from-orange-500 to-red-650 p-4 text-white flex items-center gap-3">
+            <div className="bg-gradient-to-r from-orange-500 to-red-600 p-4 text-white flex items-center gap-3">
               <div className="bg-white/10 p-2 rounded-xl border border-white/10">
                 <AlertOctagon className="h-5 w-5 text-white" />
               </div>
@@ -1005,8 +1036,8 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
             <div className="p-5 space-y-4 bg-slate-50/50">
               {escalationAlert.rejected ? (
                 <div className="space-y-3 text-left">
-                  <div className="bg-red-50 border border-red-200 p-3 rounded-xl text-red-650 font-mono text-[10px] font-bold leading-normal flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 shrink-0 text-red-500 animate-bounce" />
+                  <div className="bg-red-50 border border-red-200 p-3 rounded-xl text-red-600 font-mono text-[10px] font-bold leading-normal flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-red-500 animate-bounce" />
                     <span>Llama Vision AI classified this image as invalid/unrelated. Submission has been rejected and will not be displayed on the map.</span>
                   </div>
                   <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm text-xs font-semibold text-slate-700 leading-relaxed">
@@ -1015,7 +1046,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center gap-2 text-teal-650 text-[10px] font-mono font-bold uppercase tracking-wider bg-teal-50 p-2.5 border border-teal-200 rounded-xl text-left">
+                  <div className="flex items-center gap-2 text-teal-600 text-[10px] font-mono font-bold uppercase tracking-wider bg-teal-50 p-2.5 border border-teal-200 rounded-xl text-left">
                     <CheckCircle2 className="h-4.5 w-4.5 shrink-0 text-teal-600 animate-pulse" />
                     <span>WhatsApp Sandbox Alert Fired & Councillor Email Dispatched!</span>
                   </div>
@@ -1039,7 +1070,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
               <div className="flex gap-2 font-mono uppercase text-[10px] tracking-widest pt-2">
                 <button
                   onClick={() => setEscalationAlert(null)}
-                  className="flex-1 bg-teal-650 bg-teal-605 hover:bg-teal-500 text-white font-extrabold py-3 rounded-2xl cursor-pointer transition text-center shadow-md hover:shadow-teal-500/10"
+                  className="flex-1 bg-teal-600 hover:bg-teal-500 text-white font-extrabold py-3 rounded-2xl cursor-pointer transition text-center shadow-md hover:shadow-teal-500/10"
                 >
                   Confirm Alert
                 </button>
@@ -1072,14 +1103,14 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
               toast.type === 'success' 
                 ? 'bg-white border-teal-500/30 text-teal-600' 
                 : toast.type === 'error'
-                ? 'bg-white border-red-500/30 text-red-650'
+                ? 'bg-white border-red-500/30 text-red-600'
                 : 'bg-white border-orange-500/30 text-orange-500'
             }`}
           >
             {toast.type === 'success' ? (
               <CheckCircle2 className="h-5 w-5 shrink-0 text-teal-600" />
             ) : toast.type === 'error' ? (
-              <AlertCircle className="h-5 w-5 shrink-0 text-red-650" />
+              <AlertCircle className="h-5 w-5 shrink-0 text-red-600" />
             ) : (
               <Info className="h-5 w-5 shrink-0 text-orange-500" />
             )}

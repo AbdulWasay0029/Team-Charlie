@@ -38,13 +38,11 @@ export default function AuthModal({ onSignup, loading, onClose }) {
         {/* Logo and Brand Heading */}
         <div className="space-y-4 text-center">
           <div className="flex justify-center">
-            <div className="bg-gradient-to-tr from-orange-500 to-red-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-orange-500/10 font-display font-extrabold text-3xl">
-              BP
-            </div>
+            <img src="/logo.jpeg" alt="TraceSpark" className="w-16 h-16 rounded-2xl object-cover shadow-xl shadow-orange-500/10" />
           </div>
           <div className="space-y-1">
             <h2 className="text-2xl font-display font-extrabold tracking-tight text-slate-900 uppercase">
-              Join Bharat Patrol
+              Join TraceSpark
             </h2>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider font-mono">
               India's first AI-verified civic accountability portal
@@ -61,7 +59,7 @@ export default function AuthModal({ onSignup, loading, onClose }) {
             </label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
-                <User className="h-4.5 w-4.5 text-slate-450" />
+                <User className="h-4.5 w-4.5 text-slate-400" />
               </span>
               <input
                 type="text"
@@ -69,7 +67,7 @@ export default function AuthModal({ onSignup, loading, onClose }) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Sameer Ansari"
-                className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl py-3.5 pl-10 pr-4 text-sm font-semibold placeholder:text-slate-350 focus:outline-none focus:ring-2 focus:ring-teal-650 focus:border-transparent transition shadow-sm"
+                className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl py-3.5 pl-10 pr-4 text-sm font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent transition shadow-sm"
               />
             </div>
           </div>
@@ -90,7 +88,7 @@ export default function AuthModal({ onSignup, loading, onClose }) {
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                 placeholder="9876543210"
                 maxLength={10}
-                className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl py-3.5 pl-12 pr-4 text-sm font-semibold tracking-widest placeholder:text-slate-350 focus:outline-none focus:ring-2 focus:ring-teal-650 focus:border-transparent transition font-mono shadow-sm"
+                className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl py-3.5 pl-12 pr-4 text-sm font-semibold tracking-widest placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent transition font-mono shadow-sm"
               />
             </div>
           </div>
@@ -121,7 +119,7 @@ export default function AuthModal({ onSignup, loading, onClose }) {
             <button
               type="button"
               onClick={onClose}
-              className="text-xs text-slate-450 hover:text-slate-700 underline font-mono uppercase font-bold tracking-wider cursor-pointer"
+              className="text-xs text-slate-400 hover:text-slate-700 underline font-mono uppercase font-bold tracking-wider cursor-pointer"
             >
               Skip and browse as Guest
             </button>

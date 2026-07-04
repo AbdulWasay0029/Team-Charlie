@@ -12,7 +12,7 @@ export default function SidePanel({ isOpen, onClose, reports, currentUser, onLog
   const getStatusColor = (status) => {
     switch (status) {
       case 'resolved': return 'text-teal-600 bg-teal-500/10 border-teal-500/20';
-      case 'in_progress': return 'text-blue-650 bg-blue-500/10 border-blue-500/20';
+      case 'in_progress': return 'text-blue-600 bg-blue-500/10 border-blue-500/20';
       case 'resolved_pending_confirmation': return 'text-teal-600 bg-teal-500/10 border-teal-500/30';
       case 'pending': return 'text-slate-500 bg-slate-100 border-slate-200/60';
       case 'reopened': return 'text-red-600 bg-red-500/10 border-red-500/20';
@@ -41,12 +41,12 @@ export default function SidePanel({ isOpen, onClose, reports, currentUser, onLog
 
       {/* Critical Pitch Stats (Warning Banner) */}
       <div className="bg-red-50 border-b border-red-100 p-4 space-y-2 text-left">
-        <div className="flex items-center gap-1.5 text-red-655 font-bold">
+        <div className="flex items-center gap-1.5 text-red-600 font-bold">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span className="text-[9px] font-mono uppercase tracking-widest">National Crisis Scale</span>
         </div>
         <p className="text-xs text-slate-700 leading-relaxed font-medium">
-          "10,476 Indians died last year from potholes. Not because we don't know where they are — because nobody is accountable. Bharat Patrol changes that."
+          "10,476 Indians died last year from potholes. Not because we don't know where they are — because nobody is accountable. TraceSpark changes that."
         </p>
         <div className="grid grid-cols-3 gap-2 pt-1 text-center font-mono">
           <div className="bg-white p-2 border border-red-200/50 rounded-xl">
@@ -71,7 +71,7 @@ export default function SidePanel({ isOpen, onClose, reports, currentUser, onLog
           className={`flex-1 py-3.5 font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
             activeTab === 'leaderboard'
               ? 'text-teal-600 border-b-2 border-teal-600 bg-white'
-              : 'text-slate-400 hover:text-slate-650'
+              : 'text-slate-400 hover:text-slate-600'
           }`}
         >
           <TrendingUp className="h-4 w-4 text-teal-600" />
@@ -82,7 +82,7 @@ export default function SidePanel({ isOpen, onClose, reports, currentUser, onLog
           className={`flex-1 py-3.5 font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
             activeTab === 'history'
               ? 'text-teal-600 border-b-2 border-teal-600 bg-white'
-              : 'text-slate-400 hover:text-slate-650'
+              : 'text-slate-400 hover:text-slate-600'
           }`}
         >
           <History className="h-4 w-4 text-teal-600" />
@@ -138,8 +138,8 @@ export default function SidePanel({ isOpen, onClose, reports, currentUser, onLog
                   </div>
 
                   <div className="text-right font-mono">
-                    <span className="text-xs font-extrabold text-teal-650 block">{item.points} pts</span>
-                    <span className="text-[8px] text-slate-450 tracking-wide">{item.reportsCount} reported</span>
+                    <span className="text-xs font-extrabold text-teal-600 block">{item.points} pts</span>
+                    <span className="text-[8px] text-slate-400 tracking-wide">{item.reportsCount} reported</span>
                   </div>
                 </div>
               ))}
@@ -154,8 +154,8 @@ export default function SidePanel({ isOpen, onClose, reports, currentUser, onLog
               <div className="text-center py-10 space-y-4 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                 <ShieldCheck className="h-8 w-8 text-slate-400 mx-auto" />
                 <div className="space-y-1">
-                  <h4 className="text-xs font-mono font-bold text-slate-850 uppercase tracking-widest">Authentication Required</h4>
-                  <p className="text-[10px] text-slate-450 max-w-[220px] mx-auto leading-normal">
+                  <h4 className="text-xs font-mono font-bold text-slate-800 uppercase tracking-widest">Authentication Required</h4>
+                  <p className="text-[10px] text-slate-400 max-w-[220px] mx-auto leading-normal">
                     Log in with Supabase Phone OTP to track your reported tickets and earn impact points.
                   </p>
                 </div>
@@ -169,7 +169,7 @@ export default function SidePanel({ isOpen, onClose, reports, currentUser, onLog
             ) : userReports.length === 0 ? (
               <div className="text-center py-10 bg-white border border-slate-200 rounded-xl p-4 text-slate-400 text-xs shadow-sm">
                 <p>No complaints submitted yet.</p>
-                <p className="text-[9px] text-slate-450 font-mono uppercase tracking-wider mt-1.5">
+                <p className="text-[9px] text-slate-400 font-mono uppercase tracking-wider mt-1.5">
                   Tap anywhere on the map to file a report.
                 </p>
               </div>
@@ -193,10 +193,10 @@ export default function SidePanel({ isOpen, onClose, reports, currentUser, onLog
                             {report.status.replace(/_/g, ' ')}
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-550 line-clamp-1 mt-0.5 font-medium">{report.description}</p>
+                        <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5 font-medium">{report.description}</p>
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-[8px] text-slate-400 font-mono tracking-wide">
                           <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3 text-slate-350" />
+                            <MapPin className="h-3 w-3 text-slate-400" />
                             {report.ward}
                           </span>
                           <span className="font-bold text-orange-500">🔥 {report.priority_score} votes</span>

@@ -105,7 +105,7 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
           
           {/* Coordinates Info */}
           <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-3 flex items-center gap-3">
-            <div className="bg-orange-500/10 p-2 rounded-xl text-orange-655 font-bold">
+            <div className="bg-orange-500/10 p-2 rounded-xl text-orange-600 font-bold">
               <MapPin className="h-4.5 w-4.5" />
             </div>
             <div className="text-left font-mono">
@@ -122,7 +122,7 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl py-3 px-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-teal-650 focus:border-transparent transition cursor-pointer shadow-sm"
+              className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl py-3 px-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent transition cursor-pointer shadow-sm"
             >
               {Object.entries(CATEGORIES).map(([key, cat]) => (
                 <option key={key} value={key}>
