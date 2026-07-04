@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const { supabase, isConfigured } = require('./supabaseClient');
 const { verifyAndDescribePhoto, draftEscalationMessage, chatWithCivicAssistant } = require('./aiModule');
 const { sendWhatsAppAlert } = require('./escalationModule');
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 dotenv.config();
 
@@ -151,69 +153,17 @@ app.get('/', (req, res) => {
   });
 });
 
-// In-memory OTP storage for production SMS verification (TTL: 5 minutes)
-const otpStore = new Map();
-
-// 0.1 POST /auth/send-otp
-// Body: { phone }
-app.post('/auth/send-otp', async (req, res) => {
-  const { phone } = req.body;
-  if (!phone || phone.length < 10) {
-    return res.status(400).json({ error: 'Valid 10-digit phone number is required' });
+// 0.1 POST /auth/signup
+// Body: { name, phone, password, ward }
+app.post('/auth/signup', async (req, res) => {
+  const { name, phone, password, ward = 'Ward 112 (Hitech City)' } = req.body;
+  if (!name || !phone || !password) {
+    return res.status(400).json({ error: 'Name, mobile number, and password are required' });
   }
 
-  // Generate secure 6-digit verification code
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  otpStore.set(phone, {
-    code: otp,
-    expires: Date.now() + 5 * 60 * 1000 // 5 minutes TTL
-  });
-
-  console.log(`[Production Auth Service] Verification OTP for +91 ${phone}: ${otp}`);
-
-  // Attempt to send real SMS via Twilio if configured
-  try {
-    if (process.env.TWILIO_ACCOUNT_SID && !process.env.TWILIO_ACCOUNT_SID.includes('placeholder')) {
-      const twilioClient = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-      await twilioClient.messages.create({
-        body: `Your TraceSpark citizen verification code is: ${otp}. Valid for 5 minutes. Do not share this code.`,
-        from: process.env.TWILIO_SMS_FROM || process.env.TWILIO_WHATSAPP_FROM || '+14155238886',
-        to: phone.startsWith('+') ? phone : `+91${phone}`
-      });
-      console.log(`[Production Auth Service] SMS sent successfully to +91 ${phone}`);
-    }
-  } catch (smsErr) {
-    console.warn(`[Production Auth Service] SMS Gateway notification error (using console dispatch):`, smsErr.message);
+  if (phone.length < 10) {
+    return res.status(400).json({ error: 'Please enter a valid 10-digit mobile number' });
   }
-
-  return res.json({
-    success: true,
-    message: "Verification SMS dispatched successfully",
-    // Include dev_otp only when not in strict production environment to assist testing
-    dev_otp: process.env.NODE_ENV !== 'production' ? otp : undefined
-  });
-});
-
-// 0.2 POST /auth/verify-otp
-// Body: { phone, otp, name, authMetadata }
-app.post('/auth/verify-otp', async (req, res) => {
-  const { phone, otp, name, authMetadata = {} } = req.body;
-  if (!phone || !otp) {
-    return res.status(400).json({ error: 'Phone number and verification code are required' });
-  }
-
-  const record = otpStore.get(phone);
-  if (!record || record.code !== otp) {
-    return res.status(400).json({ error: 'Invalid verification code. Please check and try again.' });
-  }
-
-  if (Date.now() > record.expires) {
-    otpStore.delete(phone);
-    return res.status(400).json({ error: 'Verification code has expired. Please request a new SMS.' });
-  }
-
-  // OTP verified successfully
-  otpStore.delete(phone);
 
   if (isConfigured && supabase) {
     try {
@@ -225,56 +175,118 @@ app.post('/auth/verify-otp', async (req, res) => {
 
       if (fetchError) throw fetchError;
       if (existingUser) {
-        return res.json({ ...existingUser, verified: true, ...authMetadata });
+        return res.status(400).json({ error: 'An account with this mobile number already exists. Please Sign In.' });
       }
 
       const { data: newUser, error: insertError } = await supabase
         .from('users')
-        .insert([{ name: name || 'Verified Citizen', phone }])
+        .insert([{ name, phone }])
         .select()
         .single();
 
       if (insertError) throw insertError;
-      return res.status(201).json({ ...newUser, verified: true, ...authMetadata });
+      return res.status(201).json({ ...newUser, verified: true, loginType: 'phone', ward });
     } catch (err) {
-      console.error('Supabase error in POST /auth/verify-otp:', err);
+      console.error('Supabase error in POST /auth/signup:', err);
       return res.status(500).json({ error: err.message });
     }
   } else {
     // Fallback Mock Logic
     let existingUser = mockUsers.find(u => u.phone === phone);
     if (existingUser) {
-      return res.json({ ...existingUser, verified: true, ...authMetadata });
+      return res.status(400).json({ error: 'An account with this mobile number already exists. Please Sign In.' });
     }
 
     const newUser = {
       id: generateUuid(),
-      name: name || 'Verified Citizen',
+      name,
       phone,
+      password,
       verified: true,
-      ...authMetadata
+      loginType: 'phone',
+      ward
     };
     mockUsers.push(newUser);
     return res.status(201).json(newUser);
   }
 });
 
-// 0.3 POST /auth/google
-// Body: { email, name, ward }
-app.post('/auth/google', async (req, res) => {
-  const { email, name, ward = 'Ward 112 (Hitech City)' } = req.body;
-  if (!email || !name) {
-    return res.status(400).json({ error: 'Email and full name are required for Google authentication' });
-  }
-
-  // Ensure valid email format
-  if (!email.includes('@') || !email.includes('.')) {
-    return res.status(400).json({ error: 'Please enter a valid Google email address' });
+// 0.2 POST /auth/signin
+// Body: { phone, password }
+app.post('/auth/signin', async (req, res) => {
+  const { phone, password } = req.body;
+  if (!phone || !password) {
+    return res.status(400).json({ error: 'Mobile number and password are required' });
   }
 
   if (isConfigured && supabase) {
     try {
-      // Check if user exists by phone/email field
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('phone', phone)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+      if (!existingUser) {
+        return res.status(400).json({ error: 'Invalid mobile number or password.' });
+      }
+
+      return res.json({ ...existingUser, verified: true, loginType: 'phone' });
+    } catch (err) {
+      console.error('Supabase error in POST /auth/signin:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  } else {
+    // Fallback Mock Logic
+    let existingUser = mockUsers.find(u => u.phone === phone);
+    if (!existingUser || (existingUser.password && existingUser.password !== password)) {
+      return res.status(400).json({ error: 'Invalid mobile number or password.' });
+    }
+
+    return res.json({ ...existingUser, verified: true, loginType: 'phone' });
+  }
+});
+
+// 0.3 POST /auth/google-verify
+// Body: { credential, ward }
+app.post('/auth/google-verify', async (req, res) => {
+  const { credential, ward = 'Ward 112 (Hitech City)' } = req.body;
+  if (!credential) {
+    return res.status(400).json({ error: 'Google credential token is required' });
+  }
+
+  try {
+    let email, name, picture;
+
+    // Verify cryptographic ID token if Client ID is present
+    if (process.env.GOOGLE_CLIENT_ID && !process.env.GOOGLE_CLIENT_ID.includes('demo')) {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID
+      });
+      const payload = ticket.getPayload();
+      email = payload.email;
+      name = payload.name || 'Verified Google Citizen';
+      picture = payload.picture;
+    } else {
+      // Fallback decode if offline / non-strict env
+      const base64Url = credential.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      const parsed = JSON.parse(jsonPayload);
+      email = parsed.email;
+      name = parsed.name || 'Verified Google Citizen';
+      picture = parsed.picture;
+    }
+
+    if (!email) {
+      return res.status(400).json({ error: 'Unable to extract email from Google token' });
+    }
+
+    if (isConfigured && supabase) {
       const { data: existingUser, error: fetchError } = await supabase
         .from('users')
         .select('*')
@@ -283,7 +295,7 @@ app.post('/auth/google', async (req, res) => {
 
       if (fetchError) throw fetchError;
       if (existingUser) {
-        return res.json({ ...existingUser, verified: true, loginType: 'google', email, ward });
+        return res.json({ ...existingUser, verified: true, loginType: 'google', email, picture, ward });
       }
 
       const { data: newUser, error: insertError } = await supabase
@@ -293,29 +305,29 @@ app.post('/auth/google', async (req, res) => {
         .single();
 
       if (insertError) throw insertError;
-      return res.status(201).json({ ...newUser, verified: true, loginType: 'google', email, ward });
-    } catch (err) {
-      console.error('Supabase error in POST /auth/google:', err);
-      return res.status(500).json({ error: err.message });
-    }
-  } else {
-    // Fallback Mock Logic
-    let existingUser = mockUsers.find(u => u.phone === email || u.email === email);
-    if (existingUser) {
-      return res.json({ ...existingUser, verified: true, loginType: 'google', email, ward });
-    }
+      return res.status(201).json({ ...newUser, verified: true, loginType: 'google', email, picture, ward });
+    } else {
+      let existingUser = mockUsers.find(u => u.phone === email || u.email === email);
+      if (existingUser) {
+        return res.json({ ...existingUser, verified: true, loginType: 'google', email, picture, ward });
+      }
 
-    const newUser = {
-      id: generateUuid(),
-      name,
-      phone: email,
-      email,
-      verified: true,
-      loginType: 'google',
-      ward
-    };
-    mockUsers.push(newUser);
-    return res.status(201).json(newUser);
+      const newUser = {
+        id: generateUuid(),
+        name,
+        phone: email,
+        email,
+        picture,
+        verified: true,
+        loginType: 'google',
+        ward
+      };
+      mockUsers.push(newUser);
+      return res.status(201).json(newUser);
+    }
+  } catch (err) {
+    console.error('Error verifying Google ID token in POST /auth/google-verify:', err);
+    return res.status(401).json({ error: 'Invalid or expired Google token' });
   }
 });
 
