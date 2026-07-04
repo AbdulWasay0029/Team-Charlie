@@ -14,7 +14,7 @@ import {
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 const IS_MOCK_MODE = !API_BASE_URL;
 
-// Helper to determine ward name from coordinates
+// Helper to determine ward name from coordinates (saves DB columns)
 const getMockWard = (lat, lng) => {
   const wards = [
     "Ward 112 (Hitech City)",
@@ -24,7 +24,7 @@ const getMockWard = (lat, lng) => {
     "Ward 120 (Kukatpally)",
     "Ward 85 (Koti)",
     "Ward 98 (Gachibowli)",
-    "Ward 115 (Madhapur)"
+    "Ward 104 (Begumpet)"
   ];
   const index = Math.abs(Math.floor(lat * 1000 + lng * 1000)) % wards.length;
   return wards[index];
@@ -42,19 +42,19 @@ export default function App() {
   const [activeClick, setActiveClick] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [showIntroPitch, setShowIntroPitch] = useState(true);
   
   // Interactive Overlays
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [escalationAlert, setEscalationAlert] = useState(null); // holds report details when 25 votes hit
-  const [currentUser, setCurrentUser] = useState({
-    id: "usr_patlolla",
-    phone: "9876541169",
-    name: "Patlolla",
-    role: "citizen",
-    ward: "Ward 112 (Hitech City)"
-  }); // Pre-authenticate for demo experience matching screenshot "Patlolla"
+  
+  // Signup State (Reads from LocalStorage)
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('bharat_patrol_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  
+  const [signupLoading, setSignupLoading] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [toasts, setToasts] = useState([]);
 
@@ -80,20 +80,27 @@ export default function App() {
     try {
       if (IS_MOCK_MODE) {
         setReports(prev => {
-          if (prev.length === 0) return INITIAL_REPORTS;
+          if (prev.length === 0) return INITIAL_REPORTS.map(r => ({ ...r, status: r.status === 'resolved_pending_confirmation' ? 'live' : r.status }));
           return prev;
         });
         if (showNotification) showToast("Mock data refreshed successfully", "success");
       } else {
         const url = new URL(`${API_BASE_URL}/reports`);
         url.searchParams.append('sort', sortBy === 'newest' ? 'date' : 'priority');
-        if (filters.status !== 'all') url.searchParams.append('status', filters.status);
         if (filters.category !== 'all') url.searchParams.append('category', filters.category);
 
         const res = await fetch(url.toString());
         if (!res.ok) throw new Error("Failed to fetch reports");
         const data = await res.json();
-        setReports(data);
+        
+        // Map database fields to UI keys
+        const mapped = data.map(r => ({
+          ...r,
+          priority_score: r.priority_score !== undefined ? r.priority_score : (r.vote_count || 0),
+          ward: getMockWard(r.lat, r.lng)
+        }));
+        
+        setReports(mapped);
         if (showNotification) showToast("Live reports synchronized", "success");
       }
     } catch (err) {
@@ -105,12 +112,59 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchReports();
-    const interval = setInterval(() => {
-      fetchReports(false);
-    }, 10000);
-    return () => clearInterval(interval);
-  }, [filters, sortBy]);
+    if (currentUser) {
+      fetchReports();
+      const interval = setInterval(() => {
+        fetchReports(false);
+      }, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [filters, sortBy, currentUser]);
+
+  // Handle Signup
+  const handleSignup = async (name, phone) => {
+    setSignupLoading(true);
+    try {
+      if (IS_MOCK_MODE) {
+        setTimeout(() => {
+          const mockUser = {
+            id: `usr_${Math.random().toString(36).substr(2, 9)}`,
+            name,
+            phone
+          };
+          localStorage.setItem('bharat_patrol_user', JSON.stringify(mockUser));
+          setCurrentUser(mockUser);
+          setSignupLoading(false);
+          showToast(`Welcome to Bharat Patrol, ${name}!`, "success");
+        }, 1000);
+      } else {
+        const res = await fetch(`${API_BASE_URL}/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone })
+        });
+        
+        if (!res.ok) throw new Error("Signup failed. Please try again.");
+        const data = await res.json();
+        
+        localStorage.setItem('bharat_patrol_user', JSON.stringify(data));
+        setCurrentUser(data);
+        showToast(`Welcome to Bharat Patrol, ${data.name}!`, "success");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(err.message, "error");
+    } finally {
+      setSignupLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('bharat_patrol_user');
+    setCurrentUser(null);
+    setReports([]);
+    showToast("Signed out successfully", "info");
+  };
 
   // Handle map click
   const handleMapClick = (latlng) => {
@@ -120,54 +174,47 @@ export default function App() {
 
   // Handle report submission
   const handleReportSubmit = async (formData) => {
-    const newReportLocalId = Date.now();
-    const mockCreatedReport = {
-      id: newReportLocalId,
-      user_id: currentUser ? currentUser.id : "usr_anonymous",
-      lat: formData.lat,
-      lng: formData.lng,
-      category: formData.category,
-      description: formData.description,
-      photo_url: formData.photo_url,
-      ai_verified: formData.ai_verified,
-      ai_severity: formData.ai_severity,
-      ai_issue_type: formData.ai_issue_type,
-      status: 'pending', 
-      priority_score: 1,
-      ward: getMockWard(formData.lat, formData.lng),
-      resolution_photo_url: null,
-      created_at: new Date().toISOString()
-    };
-
-    setReports(prev => [mockCreatedReport, ...prev]);
+    const tempLocalId = Date.now();
     setShowForm(false);
     setActiveClick(null);
-    showToast("Complaint submitted! Verification Pending on Map.", "info");
+    showToast("Analyzing photo evidence via Llama Vision...", "info");
 
     try {
       if (IS_MOCK_MODE) {
         setTimeout(() => {
-          setReports(prev => 
-            prev.map(r => {
-              if (r.id === newReportLocalId) {
-                return {
-                  ...r,
-                  status: 'live',
-                  priority_score: 1
-                };
-              }
-              return r;
-            })
-          );
-          showToast("AI Verification Approved: Ticket live on dashboard!", "success");
-        }, 3500);
+          // Mock vision check results
+          const isVerified = !formData.photo_url.includes('unsplash.com/photo-1534528741775-53994a69daeb');
+          const finalStatus = isVerified ? 'live' : 'rejected';
+          const newMockReport = {
+            id: tempLocalId,
+            user_id: currentUser.id,
+            lat: formData.lat,
+            lng: formData.lng,
+            category: formData.category,
+            description: isVerified ? `Multiple hazards located on the lane near coordinates. Auto-generated by AI Vision inspector.` : 'Selfie photo rejected: No civic issue detected.',
+            photo_url: formData.photo_url,
+            ai_verified: isVerified,
+            ai_severity: isVerified ? 6 : 0,
+            status: finalStatus,
+            priority_score: 0,
+            ward: getMockWard(formData.lat, formData.lng),
+            created_at: new Date().toISOString()
+          };
+
+          if (finalStatus === 'rejected') {
+            showToast("Llama Vision Rejected: Selfie detected instead of road damage.", "error");
+          } else {
+            setReports(prev => [newMockReport, ...prev]);
+            showToast("Issue approved & pinned live!", "success");
+          }
+        }, 1500);
 
       } else {
         const res = await fetch(`${API_BASE_URL}/reports`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            user_id: currentUser ? currentUser.id : 'usr_anonymous',
+            user_id: currentUser.id,
             lat: formData.lat,
             lng: formData.lng,
             category: formData.category,
@@ -175,43 +222,53 @@ export default function App() {
           })
         });
 
-        if (!res.ok) throw new Error("Server rejected report submission");
-        const resData = await res.json();
+        if (!res.ok) throw new Error("AI Inspector failed to verify report");
+        const reportRow = await res.json();
         
-        setReports(prev =>
-          prev.map(r => (r.id === newReportLocalId ? { ...r, id: resData.id, status: resData.status || r.status } : r))
-        );
-        showToast("Backend registered complaint successfully", "success");
-        fetchReports();
+        if (reportRow.status === 'rejected') {
+          showToast("AI Verification Rejected: Not a valid civic issue.", "error");
+          // Optionally show rejection alert
+          setEscalationAlert({
+            category: reportRow.category,
+            ward: getMockWard(reportRow.lat, reportRow.lng),
+            description: reportRow.description || "Selfie detected. The uploaded photo shows a human face rather than a road, drain, or public utility hazard. Verification failed.",
+            rejected: true
+          });
+        } else {
+          const mappedReport = {
+            ...reportRow,
+            priority_score: reportRow.priority_score !== undefined ? reportRow.priority_score : 0,
+            ward: getMockWard(reportRow.lat, reportRow.lng)
+          };
+          setReports(prev => [mappedReport, ...prev]);
+          showToast("AI Verification Approved: Issue is live!", "success");
+        }
       }
     } catch (err) {
       console.error(err);
       showToast(`Submission failed: ${err.message}`, "error");
-      setReports(prev => prev.filter(r => r.id !== newReportLocalId));
     }
   };
 
   // Upvote ticket
   const handleVote = async (reportId) => {
     try {
-      let updatedReport = null;
       if (IS_MOCK_MODE) {
         setReports(prev =>
           prev.map(r => {
             if (r.id === reportId) {
-              const newVotes = r.priority_score + 1;
-              updatedReport = { ...r, priority_score: newVotes };
+              const newScore = r.priority_score + 1;
               
-              if (newVotes === 25) {
+              if (newScore === 25) {
                 setEscalationAlert({
                   id: r.id,
                   category: r.category,
                   ward: r.ward,
-                  priority_score: newVotes,
+                  priority_score: newScore,
                   description: r.description
                 });
               }
-              return updatedReport;
+              return { ...r, priority_score: newScore };
             }
             return r;
           })
@@ -221,86 +278,38 @@ export default function App() {
         const res = await fetch(`${API_BASE_URL}/reports/${reportId}/vote`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: currentUser ? currentUser.id : 'usr_anonymous' })
+          body: JSON.stringify({ user_id: currentUser.id })
         });
-        if (!res.ok) throw new Error("Failed to cast vote");
-        const resData = await res.json();
+        
+        if (!res.ok) throw new Error("Failed to register upvote");
+        const data = await res.json();
         
         setReports(prev =>
           prev.map(r => {
             if (r.id === reportId) {
-              const newVotes = resData.priority_score;
-              updatedReport = { ...r, priority_score: newVotes };
-              
-              if (newVotes >= 25 && r.priority_score < 25) {
-                setEscalationAlert({
-                  id: r.id,
-                  category: r.category,
-                  ward: r.ward,
-                  priority_score: newVotes,
-                  description: r.description
-                });
-              }
-              return updatedReport;
+              return { ...r, priority_score: data.priority_score };
             }
             return r;
           })
         );
-        showToast("Upvote registered on backend", "success");
-      }
-    } catch (err) {
-      console.error(err);
-      showToast("Could not register upvote", "error");
-    }
-  };
+        
+        showToast("Vote recorded!", "success");
 
-  // Citizen resolution confirmation
-  const handleConfirmResolution = async (reportId, confirmed) => {
-    try {
-      if (IS_MOCK_MODE) {
-        setReports(prev =>
-          prev.map(r => {
-            if (r.id === reportId) {
-              return {
-                ...r,
-                status: confirmed ? 'resolved' : 'reopened',
-                priority_score: confirmed ? r.priority_score : r.priority_score + 10
-              };
-            }
-            return r;
-          })
-        );
-        if (confirmed) {
-          showToast("Resolution confirmed! Thank you for verification.", "success");
-        } else {
-          showToast("Complaint reopened! Priority boosted for councillor review.", "error");
+        if (data.escalation_fired) {
+          const currentReport = reports.find(r => r.id === reportId);
+          setEscalationAlert({
+            id: reportId,
+            category: currentReport?.category || 'General Issue',
+            ward: currentReport?.ward || 'Local Ward',
+            priority_score: data.priority_score,
+            description: currentReport?.description || 'Public hazard has been escalated.'
+          });
         }
-      } else {
-        const res = await fetch(`${API_BASE_URL}/reports/${reportId}/confirm-resolution`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: currentUser ? currentUser.id : 'usr_anonymous', confirmed })
-        });
-        if (!res.ok) throw new Error("Failed to post resolution status");
-        const updatedReport = await res.json();
-        
-        setReports(prev => (r.id === reportId ? updatedReport : r));
-        showToast(confirmed ? "Confirmed fixed!" : "Report reopened on backend", "success");
       }
     } catch (err) {
       console.error(err);
-      showToast(`Verification Failed: ${err.message}`, "error");
+      showToast(err.message, "error");
     }
-  };
-
-  const handleLogin = (user) => {
-    setCurrentUser(user);
-    showToast(`Logged in as ${user.name}`, "success");
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    showToast("Logged out successfully", "info");
   };
 
   // AI Chatbot message sender
@@ -324,7 +333,7 @@ export default function App() {
         aiText = "I've detected a potential Road Damage issue. Would you like to pinpoint it on the map and upload photo evidence for AI verification?";
       } else if (lower.includes('drain') || lower.includes('sewage') || lower.includes('mosquito')) {
         categoryMatch = 'open_drain';
-        aiText = "I've detected an Open Drain grievance. Drainage overflow poses mosquito-breeding risks. Let's pin this location on the map!";
+        aiText = "I've detected an Open Drain grievance. Drainage overflow poses health risks. Let's pin this location on the map!";
       } else if (lower.includes('light') || lower.includes('dark') || lower.includes('streetlight')) {
         categoryMatch = 'streetlight';
         aiText = "I've detected a Broken Streetlight issue. Dark lanes threaten citizen safety. Click below to locate and report this streetlight!";
@@ -370,7 +379,7 @@ export default function App() {
   const statsTotal = reports.length;
   const statsPending = reports.filter(r => r.status === 'pending').length;
   const statsInProgress = reports.filter(r => r.status === 'in_progress').length;
-  const statsCompleted = reports.filter(r => r.status === 'resolved' || r.status === 'resolved_pending_confirmation').length;
+  const statsLive = reports.filter(r => r.status === 'live').length;
 
   const getWhatsAppMessageText = (alert) => {
     const catLabel = CATEGORIES[alert.category]?.label || alert.category;
@@ -383,11 +392,9 @@ An infrastructure issue in your constituency has crossed the community threshold
 *Issue*: ${catLabel}
 *Details*: ${alert.description}
 *Current Votes*: 🔥 ${alert.priority_score} verified citizens
-*Status*: Pending action
+*Status*: Live / Urgent Dispatch Required
 
-This issue poses a public risk and requires immediate department dispatch. 
-
-_This message was auto-escalated via Bharat Patrol (Twilio API) based on crowdsourced verification._`;
+This issue poses a public risk. An alert is sent automatically using the Twilio Sandbox API.`;
   };
 
   const getEmailMessageText = (alert) => {
@@ -401,15 +408,22 @@ This is an automated dispatch from the Bharat Patrol Civic Accountability Platfo
 
 A public grievance has reached the critical citizen threshold of 25 upvotes:
 - Issue: ${catLabel}
-- Location: GPS (${alert.description})
+- Location: GPS Coordinates (${alert.description})
 - Ward: ${alert.ward}
 - Verification: AI Verified Photo Evidence
 
-Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to resolve this complaint.
-
-Respectfully,
-Bharat Patrol Accountability Engine`;
+Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to resolve this complaint.`;
   };
+
+  // SIGNUP GUARD: If user is not logged in, force Signup Screen
+  if (!currentUser) {
+    return (
+      <AuthModal
+        onSignup={handleSignup}
+        loading={signupLoading}
+      />
+    );
+  }
 
   return (
     <div className="w-screen h-screen relative bg-gradient-to-br from-sky-50 via-slate-50 to-emerald-50/50 flex flex-col select-none overflow-x-hidden overflow-y-auto font-body text-slate-800">
@@ -419,7 +433,7 @@ Bharat Patrol Accountability Engine`;
         <div className="flex items-center gap-3">
           <div 
             onClick={() => setViewMode('dashboard')}
-            className="bg-gradient-to-tr from-orange-505 from-orange-500 to-red-600 w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md font-display font-extrabold text-lg select-none cursor-pointer"
+            className="bg-gradient-to-tr from-orange-500 to-red-600 w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md font-display font-extrabold text-lg select-none cursor-pointer"
           >
             BP
           </div>
@@ -427,7 +441,7 @@ Bharat Patrol Accountability Engine`;
             <h1 className="text-slate-900 font-display font-extrabold text-xl leading-none tracking-tight">
               Bharat Patrol
             </h1>
-            <p className="text-slate-400 text-[10px] tracking-wider uppercase font-semibold mt-0.5">MY CURE Accountability Portal</p>
+            <p className="text-slate-400 text-[10px] tracking-wider uppercase font-semibold mt-0.5">AI Civic Accountability Loop</p>
           </div>
         </div>
 
@@ -452,30 +466,20 @@ Bharat Patrol Accountability Engine`;
             <Settings className="h-4.5 w-4.5" />
           </button>
 
-          {/* Auth Display */}
-          {currentUser ? (
-            <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200">
-              <div className="hidden sm:flex flex-col text-right">
-                <span className="text-xs font-extrabold text-slate-800">Namaste, {currentUser.name}</span>
-                <span className="text-[9px] text-slate-400 font-mono tracking-wider">GUEST CITIZEN</span>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="bg-red-50 border border-red-200 text-red-600 p-2 rounded-xl hover:bg-red-100 transition cursor-pointer"
-                title="Log Out"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
+          {/* User Details & Sign Out */}
+          <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200">
+            <div className="hidden sm:flex flex-col text-right">
+              <span className="text-xs font-extrabold text-slate-800">Namaste, {currentUser.name}</span>
+              <span className="text-[9px] text-slate-400 font-mono tracking-wider">Verified Citizen</span>
             </div>
-          ) : (
             <button
-              onClick={() => setIsAuthModalOpen(true)}
-              className="bg-gradient-to-r from-orange-500 to-red-650 text-white font-extrabold text-xs uppercase tracking-wider px-4 py-2 rounded-xl transition cursor-pointer shadow-md hover:shadow-orange-500/10 flex items-center gap-1.5"
+              onClick={handleLogout}
+              className="bg-red-50 border border-red-200 text-red-650 p-2 rounded-xl hover:bg-red-100 transition cursor-pointer"
+              title="Sign Out"
             >
-              <User className="h-4 w-4 text-white" />
-              Log In
+              <LogOut className="h-4 w-4" />
             </button>
-          )}
+          </div>
         </div>
       </header>
 
@@ -509,10 +513,10 @@ Bharat Patrol Accountability Engine`;
                 </div>
                 <div>
                   <h2 className="text-slate-800 font-display font-black text-xl md:text-2xl leading-none">
-                    Namaste, {currentUser ? currentUser.name : "Citizen"}
+                    Namaste, {currentUser.name}
                   </h2>
                   <p className="text-slate-400 font-mono text-[10px] tracking-wider uppercase mt-1">
-                    {currentUser ? `+91 •••••• ${currentUser.phone.slice(-4)}` : "Guest Access (Verification Locked)"}
+                    +91 •••••• {currentUser.phone.slice(-4)}
                   </p>
                 </div>
               </div>
@@ -535,13 +539,13 @@ Bharat Patrol Accountability Engine`;
             </button>
           </div>
 
-          {/* Quick Stats Grid (From MY CURE layout) */}
+          {/* Quick Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             
             <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition">
               <div className="text-left">
                 <span className="text-[28px] font-black text-slate-800 font-mono block leading-none">{statsTotal}</span>
-                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1">Submitted Grievances</span>
+                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1">Total Reports</span>
               </div>
               <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-slate-400">
                 <Folder className="h-5 w-5" />
@@ -551,7 +555,7 @@ Bharat Patrol Accountability Engine`;
             <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition">
               <div className="text-left">
                 <span className="text-[28px] font-black text-slate-800 font-mono block leading-none">{statsPending}</span>
-                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1">Pending Verification</span>
+                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1">AI Pending</span>
               </div>
               <div className="bg-orange-50 border border-orange-100 p-2.5 rounded-xl text-orange-500">
                 <Clock className="h-5 w-5" />
@@ -561,7 +565,7 @@ Bharat Patrol Accountability Engine`;
             <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition">
               <div className="text-left">
                 <span className="text-[28px] font-black text-slate-800 font-mono block leading-none">{statsInProgress}</span>
-                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1">Work In Progress</span>
+                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1">Work Orders Dispatch</span>
               </div>
               <div className="bg-blue-50 border border-blue-100 p-2.5 rounded-xl text-blue-500">
                 <RefreshCw className="h-5 w-5" />
@@ -570,8 +574,8 @@ Bharat Patrol Accountability Engine`;
 
             <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition">
               <div className="text-left">
-                <span className="text-[28px] font-black text-slate-800 font-mono block leading-none">{statsCompleted}</span>
-                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1">Resolved complaints</span>
+                <span className="text-[28px] font-black text-slate-800 font-mono block leading-none">{statsLive}</span>
+                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1">Live Verified</span>
               </div>
               <div className="bg-teal-50 border border-teal-100 p-2.5 rounded-xl text-teal-500">
                 <CheckCircle className="h-5 w-5" />
@@ -596,17 +600,17 @@ Bharat Patrol Accountability Engine`;
               >
                 <div className="flex items-start justify-between">
                   <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-white font-black text-lg">
-                    ⚠️
+                    🚨
                   </div>
-                  <span className="text-[9px] font-mono uppercase tracking-widest font-extrabold bg-white/20 px-2 py-0.5 rounded border border-white/15">Active</span>
+                  <span className="text-[9px] font-mono uppercase tracking-widest font-extrabold bg-white/20 px-2 py-0.5 rounded border border-white/15">Report</span>
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-sm tracking-wide">LODGE CIVIC GRIEVANCE</h4>
-                  <p className="text-orange-100 text-[10px] mt-1 font-medium">Lodge and track citizen complaints with AI vision verification.</p>
+                  <h4 className="font-extrabold text-sm tracking-wide">TAP MAP TO REPORT</h4>
+                  <p className="text-orange-100 text-[10px] mt-1 font-medium">Lodge issue coordinates with inline AI Vision verification check.</p>
                 </div>
               </div>
 
-              {/* Card 2: Density Map */}
+              {/* Card 2: Live Map */}
               <div 
                 onClick={() => { setViewMode('map'); setShowHeatmap(false); }}
                 className="bg-gradient-to-br from-blue-500 to-indigo-650 text-white p-5 rounded-2xl min-w-[280px] w-80 text-left shadow-lg cursor-pointer transform hover:scale-102 transition flex flex-col justify-between h-40"
@@ -615,7 +619,7 @@ Bharat Patrol Accountability Engine`;
                   <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-white">
                     <Map className="h-5 w-5" />
                   </div>
-                  <span className="text-[9px] font-mono uppercase tracking-widest font-extrabold bg-white/20 px-2 py-0.5 rounded border border-white/15">Interactive</span>
+                  <span className="text-[9px] font-mono uppercase tracking-widest font-extrabold bg-white/20 px-2 py-0.5 rounded border border-white/15">Explorer</span>
                 </div>
                 <div>
                   <h4 className="font-extrabold text-sm tracking-wide">LIVE GRIEVANCE MAP</h4>
@@ -643,8 +647,8 @@ Bharat Patrol Accountability Engine`;
             </div>
           </div>
 
-          {/* AI Grievance Assistant Chatbot (First Screenshot layout) */}
-          <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden flex flex-col h-[400px]">
+          {/* AI Grievance Assistant Chatbot */}
+          <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden flex flex-col h-[380px]">
             {/* Chatbot Header */}
             <div className="bg-slate-50 border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
@@ -681,7 +685,7 @@ Bharat Patrol Accountability Engine`;
                       <div className="mt-3">
                         <button
                           onClick={() => handleChatAction(msg.action.category)}
-                          className="bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-[10px] font-mono tracking-wider uppercase px-3.5 py-1.5 rounded-xl transition shadow flex items-center gap-1 cursor-pointer"
+                          className="bg-teal-650 bg-teal-650 hover:bg-teal-500 text-white font-extrabold text-[10px] font-mono tracking-wider uppercase px-3.5 py-1.5 rounded-xl transition shadow flex items-center gap-1 cursor-pointer"
                         >
                           {msg.action.label}
                           <ArrowRight className="h-3 w-3" />
@@ -706,7 +710,7 @@ Bharat Patrol Accountability Engine`;
             <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-150/70 bg-white flex items-center gap-3 shrink-0">
               <button
                 type="button"
-                onClick={() => showToast("Microphone support requires permissions", "info")}
+                onClick={() => showToast("Microphone requires browser permissions", "info")}
                 className="bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-800 p-3 rounded-full transition cursor-pointer shrink-0 shadow-sm"
               >
                 <Mic className="h-4.5 w-4.5" />
@@ -717,20 +721,20 @@ Bharat Patrol Accountability Engine`;
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Type your issue here..."
-                className="flex-1 bg-slate-50 border border-slate-200 text-slate-850 rounded-2xl py-3 px-4 text-xs font-semibold placeholder:text-slate-350 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition shadow-sm"
+                className="flex-1 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl py-3 px-4 text-xs font-semibold placeholder:text-slate-350 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition shadow-sm"
               />
 
               <button
                 type="submit"
                 disabled={!chatInput.trim()}
-                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white p-3 rounded-full transition shrink-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-orange-500/10"
+                className="bg-gradient-to-r from-orange-500 to-red-650 hover:from-orange-400 hover:to-red-500 text-white p-3 rounded-full transition shrink-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-orange-500/10"
               >
                 <SendHorizontal className="h-4.5 w-4.5" />
               </button>
             </form>
           </div>
 
-          {/* All services grid of 6 cards */}
+          {/* All services grid */}
           <div className="space-y-3 pt-2">
             <h3 className="text-slate-800 text-xs font-bold uppercase tracking-widest flex items-center gap-1 text-left font-mono">
               📂 All Services
@@ -742,7 +746,7 @@ Bharat Patrol Accountability Engine`;
                 onClick={() => setViewMode('map')}
                 className="bg-white border border-slate-200/80 hover:border-slate-350 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
               >
-                <div className="bg-red-50 border border-red-150 p-2.5 rounded-xl text-red-655 w-fit">
+                <div className="bg-red-50 border border-red-150 p-2.5 rounded-xl text-red-600 w-fit">
                   <AlertCircle className="h-5 w-5" />
                 </div>
                 <div>
@@ -768,12 +772,12 @@ Bharat Patrol Accountability Engine`;
                 onClick={() => setIsSidePanelOpen(true)}
                 className="bg-white border border-slate-200/80 hover:border-slate-350 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
               >
-                <div className="bg-yellow-50 border border-yellow-150 p-2.5 rounded-xl text-yellow-600 w-fit">
+                <div className="bg-yellow-50 border border-yellow-150 p-2.5 rounded-xl text-yellow-650 w-fit">
                   <Award className="h-5 w-5" />
                 </div>
                 <div>
                   <h4 className="font-extrabold text-xs text-slate-800 uppercase tracking-wide">Impact Leaderboard</h4>
-                  <p className="text-[10px] text-slate-400 mt-0.5 leading-normal">Citizens ranking and reward achievements</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5 leading-normal">Ward rankings and community awards</p>
                 </div>
               </div>
 
@@ -781,7 +785,7 @@ Bharat Patrol Accountability Engine`;
                 onClick={() => { setViewMode('map'); setShowHeatmap(true); }}
                 className="bg-white border border-slate-200/80 hover:border-slate-350 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
               >
-                <div className="bg-orange-50 border border-orange-150 p-2.5 rounded-xl text-orange-655 w-fit">
+                <div className="bg-orange-50 border border-orange-150 p-2.5 rounded-xl text-orange-500 w-fit">
                   <Flame className="h-5 w-5" />
                 </div>
                 <div>
@@ -804,7 +808,7 @@ Bharat Patrol Accountability Engine`;
               </div>
 
               <div 
-                onClick={() => showToast("Hyderabad Central Ward Office is located in Khairatabad Division", "info")}
+                onClick={() => showToast("Circular manual matched for ward operations guidelines", "info")}
                 className="bg-white border border-slate-200/80 hover:border-slate-350 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
               >
                 <div className="bg-teal-50 border border-teal-150 p-2.5 rounded-xl text-teal-650 w-fit">
@@ -812,7 +816,7 @@ Bharat Patrol Accountability Engine`;
                 </div>
                 <div>
                   <h4 className="font-extrabold text-xs text-slate-800 uppercase tracking-wide">My Ward Office</h4>
-                  <p className="text-[10px] text-slate-400 mt-0.5 leading-normal">Verify circular guidelines and local officials</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5 leading-normal">Circular manuals and emergency numbers</p>
                 </div>
               </div>
 
@@ -823,7 +827,7 @@ Bharat Patrol Accountability Engine`;
           <footer className="pt-6 pb-12 text-center space-y-2 border-t border-slate-200/50">
             <span className="text-[10px] text-slate-400 uppercase font-mono font-bold tracking-widest block">Designed & Developed By</span>
             <div className="flex items-center justify-center gap-1.5 text-teal-700 font-display font-black tracking-wide text-xs">
-              <span className="bg-teal-550 bg-teal-600 text-white w-5.5 h-5.5 rounded-lg flex items-center justify-center text-[10px]">CGG</span>
+              <span className="bg-teal-600 text-white w-5.5 h-5.5 rounded-lg flex items-center justify-center text-[10px]">CGG</span>
               <span>CENTRE FOR GOOD GOVERNANCE</span>
             </div>
             <span className="text-[9px] text-slate-400 block font-medium">Knowledge • Technology • People</span>
@@ -834,7 +838,7 @@ Bharat Patrol Accountability Engine`;
         /* 4. ACTIVE MAP OVERLAY VIEW */
         <div className="flex-1 w-full h-full relative flex">
           
-          {/* Back to dashboard button overlay (Floating top left) */}
+          {/* Back to dashboard button overlay */}
           <button
             onClick={() => {
               setViewMode('dashboard');
@@ -862,11 +866,11 @@ Bharat Patrol Accountability Engine`;
             activeClick={activeClick}
             onMapClick={handleMapClick}
             onVote={handleVote}
-            onConfirmResolution={handleConfirmResolution}
+            onConfirmResolution={() => {}}
             showHeatmap={showHeatmap}
           />
 
-          {/* Floating Controls Overlay (Right middle) */}
+          {/* Floating Controls Overlay */}
           <div className="absolute top-44 right-4 z-[1000] flex flex-col gap-3 font-mono uppercase tracking-widest text-[9px]">
             {/* Toggle Heatmap */}
             <button
@@ -888,7 +892,7 @@ Bharat Patrol Accountability Engine`;
             {/* Toggle Citizen SidePanel */}
             <button
               onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}
-              className="p-3 rounded-xl shadow-2xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2 transition cursor-pointer backdrop-blur-md"
+              className="p-3 rounded-xl shadow-2xl border border-slate-200 bg-white text-slate-750 hover:bg-slate-50 flex items-center justify-center gap-2 transition cursor-pointer backdrop-blur-md"
               title="Citizen Leaderboard"
             >
               <Award className="h-5 w-5 text-orange-500" />
@@ -905,10 +909,7 @@ Bharat Patrol Accountability Engine`;
         onClose={() => setIsSidePanelOpen(false)}
         reports={reports}
         currentUser={currentUser}
-        onLoginClick={() => {
-          setIsSidePanelOpen(false);
-          setIsAuthModalOpen(true);
-        }}
+        onLoginClick={() => {}}
       />
 
       {/* 6. REPORT FORM MODAL */}
@@ -924,22 +925,14 @@ Bharat Patrol Accountability Engine`;
         />
       )}
 
-      {/* 7. PHONE OTP AUTH MODAL */}
-      {isAuthModalOpen && (
-        <AuthModal
-          onLogin={handleLogin}
-          onClose={() => setIsAuthModalOpen(false)}
-        />
-      )}
-
-      {/* 8. PITCH OPENING MODAL (ON FIRST LOAD) - Soft Light Gradient Theme */}
+      {/* 7. INTRO PITCH OPENING MODAL */}
       {showIntroPitch && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[5000] flex items-center justify-center p-4 font-body">
           <div className="bg-white border border-slate-100 w-full max-w-lg rounded-3xl shadow-2xl p-6 md:p-8 space-y-6 text-center animate-in fade-in zoom-in-95 duration-350">
             
             {/* Logo */}
             <div className="flex justify-center">
-              <div className="bg-gradient-to-tr from-orange-505 from-orange-500 to-red-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-orange-500/10 font-display font-extrabold text-3xl select-none">
+              <div className="bg-gradient-to-tr from-orange-500 to-red-650 w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-orange-500/10 font-display font-extrabold text-3xl select-none">
                 BP
               </div>
             </div>
@@ -948,14 +941,14 @@ Bharat Patrol Accountability Engine`;
               <h1 className="text-2xl md:text-3xl font-display font-extrabold text-slate-900 tracking-tight leading-none uppercase">
                 Bharat Patrol
               </h1>
-              <p className="text-[10px] font-mono tracking-widest font-extrabold text-teal-600 uppercase">
-                India's First AI-Verified Infrastructure Accountability Portal
+              <p className="text-[10px] font-mono tracking-widest font-extrabold text-teal-650 uppercase">
+                AI-Verified Civic Accountability Platform
               </p>
             </div>
 
             {/* National Crisis Stats */}
             <div className="bg-slate-50 p-5 border border-slate-200/60 rounded-2xl space-y-4">
-              <p className="text-xs text-slate-600 font-semibold leading-relaxed text-center">
+              <p className="text-xs text-slate-650 font-bold leading-relaxed text-center">
                 "10,476 Indians died last year because of potholes. Not because we don't know where the potholes are — because nobody is accountable for fixing them. Bharat Patrol changes that."
               </p>
               
@@ -978,8 +971,8 @@ Bharat Patrol Accountability Engine`;
               >
                 Access Citizen Dashboard
               </button>
-              <p className="text-[8px] text-slate-405 text-slate-400 font-semibold">
-                Reference Model designed in compliance with Centre for Good Governance.
+              <p className="text-[8px] text-slate-400 font-semibold">
+                Designed in compliance with Centre for Good Governance.
               </p>
             </div>
 
@@ -987,19 +980,23 @@ Bharat Patrol Accountability Engine`;
         </div>
       )}
 
-      {/* 9. WHATSAPP & EMAIL DOUBLE ESCALATION ALERTS MODAL */}
+      {/* 8. DUAL ESCALATION PAYLOADS MODAL */}
       {escalationAlert && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[4000] flex items-center justify-center p-4 font-body">
           <div className="bg-white border border-slate-100 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
             
-            {/* Escalation Title Bar */}
+            {/* Header */}
             <div className="bg-gradient-to-r from-orange-500 to-red-600 p-4 text-white flex items-center gap-3">
               <div className="bg-white/10 p-2 rounded-xl border border-white/10">
-                <MessageSquare className="h-5 w-5 text-white" />
+                <AlertOctagon className="h-5 w-5 text-white" />
               </div>
               <div className="text-left font-mono">
-                <h3 className="font-extrabold text-xs uppercase tracking-widest">Multi-Channel Escalation</h3>
-                <p className="text-orange-100 text-[9px] font-bold">Priority score crossed 25 votes threshold</p>
+                <h3 className="font-extrabold text-xs uppercase tracking-widest">
+                  {escalationAlert.rejected ? "AI Verification Rejected" : "Auto Escalation Fired"}
+                </h3>
+                <p className="text-orange-100 text-[9px] font-bold">
+                  {escalationAlert.rejected ? "Groq Llama-4-Scout Vision analysis" : "Priority crossed 25 votes threshold"}
+                </p>
               </div>
               <button
                 onClick={() => setEscalationAlert(null)}
@@ -1009,39 +1006,47 @@ Bharat Patrol Accountability Engine`;
               </button>
             </div>
 
-            {/* Content chat-bubble */}
+            {/* Content payloads */}
             <div className="p-5 space-y-4 bg-slate-50/50">
-              
-              <div className="flex items-center gap-2 text-teal-650 text-[10px] font-mono font-bold uppercase tracking-wider bg-teal-50 p-2.5 border border-teal-200 rounded-xl text-left">
-                <AlertOctagon className="h-4.5 w-4.5 shrink-0 text-teal-600 animate-bounce" />
-                <span>Twilio WhatsApp Dispatched & Official Department Email Fired!</span>
-              </div>
-
-              {/* Chat Bubble 1: WhatsApp */}
-              <div className="space-y-1 text-left font-mono">
-                <span className="text-[9px] text-slate-400 uppercase tracking-widest font-extrabold">🟢 Twilio WhatsApp Councillor Payload</span>
-                <div className="bg-white text-slate-700 p-3.5 rounded-2xl border border-slate-200 text-xs whitespace-pre-wrap leading-relaxed shadow-sm">
-                  {getWhatsAppMessageText(escalationAlert)}
+              {escalationAlert.rejected ? (
+                <div className="space-y-3 text-left">
+                  <div className="bg-red-50 border border-red-200 p-3 rounded-xl text-red-600 font-mono text-[10px] font-bold leading-normal flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 text-red-500 animate-bounce" />
+                    <span>Llama Vision AI classified this image as invalid/unrelated. Submission has been rejected and will not be displayed on the map.</span>
+                  </div>
+                  <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm text-xs font-semibold text-slate-700 leading-relaxed">
+                    {escalationAlert.description}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 text-teal-600 text-[10px] font-mono font-bold uppercase tracking-wider bg-teal-50 p-2.5 border border-teal-200 rounded-xl text-left">
+                    <CheckCircle2 className="h-4.5 w-4.5 shrink-0 text-teal-650 animate-pulse" />
+                    <span>WhatsApp Sandbox Alert Fired & Councillor Email Dispatched!</span>
+                  </div>
 
-              {/* Chat Bubble 2: Email */}
-              <div className="space-y-1 text-left font-mono">
-                <span className="text-[9px] text-slate-400 uppercase tracking-widest font-extrabold">🔵 Official Department Mailgun Payload</span>
-                <div className="bg-white text-slate-700 p-3.5 rounded-2xl border border-slate-200 text-[10px] whitespace-pre-wrap leading-relaxed shadow-sm">
-                  {getEmailMessageText(escalationAlert)}
-                </div>
-              </div>
+                  <div className="space-y-1 text-left font-mono">
+                    <span className="text-[9px] text-slate-400 uppercase tracking-widest font-extrabold">🟢 Twilio Councillor WhatsApp Payload</span>
+                    <div className="bg-white text-slate-800 p-3.5 rounded-2xl border border-slate-200 text-xs whitespace-pre-wrap leading-relaxed shadow-sm">
+                      {getWhatsAppMessageText(escalationAlert)}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 text-left font-mono">
+                    <span className="text-[9px] text-slate-400 uppercase tracking-widest font-extrabold">🔵 Official Department Mailgun Payload</span>
+                    <div className="bg-white text-slate-800 p-3.5 rounded-2xl border border-slate-200 text-[10px] whitespace-pre-wrap leading-relaxed shadow-sm">
+                      {getEmailMessageText(escalationAlert)}
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="flex gap-2 font-mono uppercase text-[10px] tracking-widest pt-2">
                 <button
-                  onClick={() => {
-                    setEscalationAlert(null);
-                    showToast("Simulated dual WhatsApp/Email notifications to local department officials", "success");
-                  }}
+                  onClick={() => setEscalationAlert(null)}
                   className="flex-1 bg-teal-650 bg-teal-600 hover:bg-teal-500 text-white font-extrabold py-3 rounded-2xl cursor-pointer transition text-center shadow-md hover:shadow-teal-500/10"
                 >
-                  Close Escalation Payloads
+                  Confirm Alert
                 </button>
               </div>
 
@@ -1060,14 +1065,14 @@ Bharat Patrol Accountability Engine`;
               toast.type === 'success' 
                 ? 'bg-white border-teal-500/30 text-teal-600' 
                 : toast.type === 'error'
-                ? 'bg-white border-red-500/30 text-red-655'
-                : 'bg-white border-orange-500/30 text-orange-655'
+                ? 'bg-white border-red-500/30 text-red-600'
+                : 'bg-white border-orange-500/30 text-orange-500'
             }`}
           >
             {toast.type === 'success' ? (
               <CheckCircle2 className="h-5 w-5 shrink-0 text-teal-600" />
             ) : toast.type === 'error' ? (
-              <AlertCircle className="h-5 w-5 shrink-0 text-red-600" />
+              <AlertCircle className="h-5 w-5 shrink-0 text-red-650" />
             ) : (
               <Info className="h-5 w-5 shrink-0 text-orange-500" />
             )}

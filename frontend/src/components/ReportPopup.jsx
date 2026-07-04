@@ -1,46 +1,34 @@
 import React, { useState } from 'react';
 import { CATEGORIES } from '../mockData';
-import { ThumbsUp, AlertTriangle, CheckCircle, XCircle, Calendar, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { ThumbsUp, Calendar, ShieldCheck, ShieldAlert, AlertTriangle } from 'lucide-react';
 
-export default function ReportPopup({ report, onVote, onConfirmResolution }) {
+export default function ReportPopup({ report, onVote }) {
   const [voting, setVoting] = useState(false);
-  const [submittingConfirmation, setSubmittingConfirmation] = useState(false);
-  
-  const categoryInfo = CATEGORIES[report.category] || { label: report.category, icon: '❓' };
-  
+  const categoryInfo = CATEGORIES[report.category] || { label: report.category, icon: '📍' };
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'pending':
         return <span className="bg-slate-100 border border-slate-200 text-slate-500 text-[9px] px-2.5 py-0.5 rounded-full font-bold font-mono uppercase tracking-wider">Verification Pending</span>;
       case 'live':
-        return <span className="bg-orange-500/10 text-orange-600 border border-orange-200/60 text-[9px] px-2.5 py-0.5 rounded-full font-bold font-mono uppercase tracking-wider animate-pulse">Live</span>;
-      case 'in_progress':
-        return <span className="bg-blue-500/10 text-blue-605 border border-blue-200/60 text-[9px] px-2.5 py-0.5 rounded-full font-bold font-mono uppercase tracking-wider">In Progress</span>;
-      case 'resolved_pending_confirmation':
-        return <span className="bg-teal-600 text-white text-[9px] px-2.5 py-0.5 rounded-full font-black font-mono uppercase tracking-widest animate-pulse shadow-sm shadow-teal-500/10">Needs Citizen Action</span>;
-      case 'resolved':
-        return <span className="bg-teal-500/10 text-teal-650 border border-teal-200/60 text-[9px] px-2.5 py-0.5 rounded-full font-bold font-mono uppercase tracking-wider">Resolved</span>;
-      case 'reopened':
-        return <span className="bg-red-550 text-white border border-red-600 text-[9px] px-2.5 py-0.5 rounded-full font-bold font-mono uppercase tracking-wider flex items-center gap-1.5 animate-bounce">🚨 Reopened</span>;
+        return <span className="bg-emerald-50 border border-emerald-200 text-emerald-600 text-[9px] px-2.5 py-0.5 rounded-full font-bold font-mono uppercase tracking-wider animate-pulse">AI Verified Live</span>;
       case 'rejected':
-        return <span className="bg-slate-100 text-slate-400 border border-slate-200 text-[9px] px-2.5 py-0.5 rounded-full font-bold font-mono uppercase tracking-wider">Rejected</span>;
+        return <span className="bg-rose-50 border border-rose-200 text-rose-600 text-[9px] px-2.5 py-0.5 rounded-full font-bold font-mono uppercase tracking-wider">AI Rejected</span>;
       default:
-        return <span className="bg-slate-100 text-slate-500 border border-slate-200 text-[9px] px-2.5 py-0.5 rounded-full font-bold font-mono uppercase tracking-wider">{status}</span>;
+        return <span className="bg-slate-105 border border-slate-200 text-slate-500 text-[9px] px-2.5 py-0.5 rounded-full font-bold font-mono uppercase tracking-wider">{status}</span>;
     }
   };
 
   const getSeverityBadge = (severity) => {
-    switch (severity?.toLowerCase()) {
-      case 'critical':
-        return <span className="bg-red-100 text-red-700 border border-red-200 text-[8px] px-2 py-0.5 rounded-full font-extrabold uppercase font-mono tracking-wider">Critical</span>;
-      case 'high':
-        return <span className="bg-orange-100 text-orange-700 border border-orange-200 text-[8px] px-2 py-0.5 rounded-full font-extrabold uppercase font-mono tracking-wider">High</span>;
-      case 'medium':
-        return <span className="bg-yellow-100 text-yellow-700 border border-yellow-250 text-[8px] px-2 py-0.5 rounded-full font-extrabold uppercase font-mono tracking-wider">Medium</span>;
-      case 'low':
-        return <span className="bg-slate-100 text-slate-650 border border-slate-200 text-[8px] px-2 py-0.5 rounded-full font-extrabold uppercase font-mono tracking-wider">Low</span>;
-      default:
-        return null;
+    const score = parseInt(severity) || 1;
+    if (score >= 8) {
+      return <span className="bg-red-100 text-red-700 border border-red-200 text-[8px] px-2 py-0.5 rounded-full font-extrabold uppercase font-mono tracking-wider">Critical ({score})</span>;
+    } else if (score >= 5) {
+      return <span className="bg-orange-100 text-orange-700 border border-orange-250 text-[8px] px-2 py-0.5 rounded-full font-extrabold uppercase font-mono tracking-wider">High ({score})</span>;
+    } else if (score >= 3) {
+      return <span className="bg-yellow-100 text-yellow-705 border border-yellow-200 text-[8px] px-2 py-0.5 rounded-full font-extrabold uppercase font-mono tracking-wider">Medium ({score})</span>;
+    } else {
+      return <span className="bg-slate-100 text-slate-650 border border-slate-200 text-[8px] px-2 py-0.5 rounded-full font-extrabold uppercase font-mono tracking-wider">Low ({score})</span>;
     }
   };
 
@@ -56,18 +44,6 @@ export default function ReportPopup({ report, onVote, onConfirmResolution }) {
     }
   };
 
-  const handleConfirmation = async (confirmed) => {
-    if (submittingConfirmation) return;
-    setSubmittingConfirmation(true);
-    try {
-      await onConfirmResolution(report.id, confirmed);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSubmittingConfirmation(false);
-    }
-  };
-
   const formattedDate = report.created_at 
     ? new Date(report.created_at).toLocaleDateString('en-IN', {
         day: 'numeric',
@@ -79,13 +55,17 @@ export default function ReportPopup({ report, onVote, onConfirmResolution }) {
     : 'Unknown Date';
 
   return (
-    <div className="w-80 flex flex-col max-h-[480px] text-slate-800 font-body bg-white rounded-2xl overflow-hidden shadow-xl">
+    <div className="w-80 flex flex-col max-h-[420px] text-slate-800 font-body bg-white rounded-2xl overflow-hidden shadow-xl">
       {/* Photo Header */}
       <div className="relative h-40 w-full overflow-hidden bg-slate-100">
         <img 
           src={report.photo_url} 
           alt={categoryInfo.label} 
           className="w-full h-full object-cover"
+          onError={(e) => {
+            // fallback if base64 upload or preset image breaks
+            e.target.src = "https://images.unsplash.com/photo-1599740831464-54c86b24d775?auto=format&fit=crop&w=400&q=80";
+          }}
         />
         <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
           {getStatusBadge(report.status)}
@@ -108,8 +88,8 @@ export default function ReportPopup({ report, onVote, onConfirmResolution }) {
       <div className="p-4 space-y-3.5 overflow-y-auto flex-1 bg-white border-t border-slate-100">
         
         {/* Description */}
-        <p className="text-xs text-slate-655 leading-relaxed text-left font-medium">
-          {report.description}
+        <p className="text-xs text-slate-600 leading-relaxed text-left font-medium">
+          {report.description || 'AI description processing...'}
         </p>
 
         {/* Info Grid */}
@@ -122,97 +102,47 @@ export default function ReportPopup({ report, onVote, onConfirmResolution }) {
             </span>
           </div>
           <div className="flex flex-col text-left">
-            <span className="text-slate-400 uppercase font-bold tracking-wider">Verification</span>
+            <span className="text-slate-400 uppercase font-bold tracking-wider">AI Check</span>
             <span className="text-slate-700 flex items-center gap-1 mt-0.5 font-bold">
               {report.ai_verified ? (
                 <>
-                  <ShieldCheck className="h-3.5 w-3.5 text-teal-600" />
-                  <span className="text-teal-650 font-extrabold uppercase">AI Verified</span>
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
+                  <span className="text-emerald-600 font-extrabold uppercase">Verified</span>
                 </>
               ) : (
                 <>
-                  <ShieldAlert className="h-3.5 w-3.5 text-orange-655" />
-                  <span className="text-orange-600 font-extrabold uppercase">Unverified</span>
+                  <ShieldAlert className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="text-slate-500 font-extrabold uppercase">Unverified</span>
                 </>
               )}
             </span>
           </div>
         </div>
 
-        {/* CITIZEN ACCOUNTABILITY LOOP */}
-        {report.status === 'resolved_pending_confirmation' && (
-          <div className="border border-teal-555/20 bg-teal-500/5 rounded-xl p-3 space-y-3 text-left">
-            <div className="flex items-center gap-1.5 text-teal-650 text-xs font-black uppercase font-mono tracking-widest">
-              <AlertTriangle className="h-4 w-4 text-teal-600" />
-              <span>Citizen Action Required</span>
-            </div>
-            
-            {report.resolution_photo_url && (
-              <div className="space-y-1">
-                <span className="text-[9px] text-slate-400 font-mono font-bold tracking-widest block uppercase">Resolution Evidence:</span>
-                <div className="h-24 w-full rounded-xl overflow-hidden border border-slate-200 relative">
-                  <img 
-                    src={report.resolution_photo_url} 
-                    alt="Resolution Evidence" 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-1 right-1 bg-teal-600 text-white font-extrabold text-[8px] px-2 py-0.5 rounded-full shadow font-mono uppercase tracking-widest">
-                    Fixed State
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <p className="text-[10px] text-slate-600 font-medium leading-relaxed">
-              Has the issue been fixed to your satisfaction? Your confirmation locks resolution.
-            </p>
-
-            <div className="grid grid-cols-2 gap-2 font-mono uppercase text-[9px] tracking-widest">
-              <button
-                type="button"
-                disabled={submittingConfirmation}
-                onClick={() => handleConfirmation(true)}
-                className="bg-teal-600 hover:bg-teal-500 text-white font-extrabold py-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer transition shadow"
-              >
-                <CheckCircle className="h-3.5 w-3.5" />
-                Confirm Fixed
-              </button>
-              <button
-                type="button"
-                disabled={submittingConfirmation}
-                onClick={() => handleConfirmation(false)}
-                className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-extrabold py-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer transition shadow"
-              >
-                <XCircle className="h-3.5 w-3.5" />
-                Not Fixed
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Voting & Actions */}
-        {report.status !== 'resolved_pending_confirmation' && (
-          <div className="flex items-center justify-between border-t border-slate-100 pt-3.5">
-            <div className="flex flex-col text-left">
-              <span className="text-[9px] text-slate-400 uppercase font-mono font-bold tracking-widest">Priority Score</span>
-              <span className="text-slate-800 font-extrabold text-sm flex items-center gap-1 font-mono">
-                🔥 {report.priority_score} {report.priority_score >= 25 ? 'votes' : 'votes'}
-              </span>
-            </div>
-
-            {report.status !== 'resolved' && report.status !== 'rejected' && (
-              <button
-                type="button"
-                onClick={handleVote}
-                disabled={voting}
-                className="bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-700 border border-slate-200 hover:border-orange-500/30 py-1.5 px-3 rounded-xl text-xs font-bold font-mono uppercase tracking-widest transition flex items-center gap-1.5 cursor-pointer shadow-sm"
-              >
-                <ThumbsUp className={`h-3.5 w-3.5 text-orange-500 ${voting ? 'animate-bounce' : ''}`} />
-                Upvote
-              </button>
-            )}
+        <div className="flex items-center justify-between border-t border-slate-100 pt-3.5">
+          <div className="flex flex-col text-left">
+            <span className="text-[9px] text-slate-400 uppercase font-mono font-bold tracking-widest">Priority Score</span>
+            <span className="text-slate-800 font-extrabold text-sm flex items-center gap-1 font-mono">
+              🔥 {report.priority_score || 0} votes
+              {(report.priority_score || 0) >= 25 && (
+                <span className="bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.2 rounded font-mono uppercase tracking-wide shrink-0 animate-pulse">Escalated</span>
+              )}
+            </span>
           </div>
-        )}
+
+          {report.status !== 'rejected' && (
+            <button
+              type="button"
+              onClick={handleVote}
+              disabled={voting}
+              className="bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-700 border border-slate-200 hover:border-orange-500/35 py-1.5 px-3.5 rounded-xl text-xs font-bold font-mono uppercase tracking-widest transition flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-40"
+            >
+              <ThumbsUp className={`h-3.5 w-3.5 text-orange-500 ${voting ? 'animate-bounce' : ''}`} />
+              Upvote
+            </button>
+          )}
+        </div>
 
       </div>
     </div>
