@@ -92,6 +92,7 @@ export default function App() {
     { sender: 'ai', text: "Namaste! How can I help you today?" }
   ]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [activeFormCategory, setActiveFormCategory] = useState(null);
 
   // Toast notifier helper
   const showToast = (message, type = 'info') => {
@@ -115,7 +116,6 @@ export default function App() {
       } else {
         const url = new URL(`${API_BASE_URL}/reports`);
         url.searchParams.append('sort', sortBy === 'newest' ? 'date' : 'priority');
-        if (filters.category !== 'all') url.searchParams.append('category', filters.category);
 
         const res = await fetch(url.toString());
         if (!res.ok) throw new Error("Failed to fetch reports");
@@ -277,6 +277,7 @@ export default function App() {
   const handleReportSubmit = async (formData) => {
     setShowForm(false);
     setActiveClick(null);
+    setActiveFormCategory(null);
 
     if (!currentUser) {
       setPendingAction({ type: 'report', formData });
@@ -373,24 +374,47 @@ export default function App() {
     setTimeout(() => {
       setChatLoading(false);
       const lower = userMsg.toLowerCase();
-      let aiText = "Namaste! I can assist you with reporting civic issues. Please choose 'Raise Grievance' or click anywhere on the Map to drop a pin.";
-      let categoryMatch = null;
+      let aiText = "Namaste! I can assist you with reporting civic issues, checking ward councillor details, or tracking urgent community complaints. Choose an option or tap the map to report.";
+      let actionObj = null;
 
-      if (lower.includes('pothole') || lower.includes('road') || lower.includes('tarmac')) {
-        categoryMatch = 'road_damage';
-        aiText = "I've detected a potential Road Damage issue. Would you like to pinpoint it on the map and upload photo evidence for AI verification?";
-      } else if (lower.includes('drain') || lower.includes('sewage') || lower.includes('mosquito')) {
-        categoryMatch = 'open_drain';
-        aiText = "I've detected an Open Drain grievance. Drainage overflow poses health risks. Let's pin this location on the map!";
-      } else if (lower.includes('light') || lower.includes('dark') || lower.includes('streetlight')) {
-        categoryMatch = 'streetlight';
-        aiText = "I've detected a Broken Streetlight issue. Dark lanes threaten citizen safety. Click below to locate and report this streetlight!";
-      } else if (lower.includes('garbage') || lower.includes('dump') || lower.includes('trash') || lower.includes('waste')) {
-        categoryMatch = 'garbage';
-        aiText = "I've detected a Garbage Pile grievance. Overflowing bins are health hazards. Would you like to map this complaint?";
-      } else if (lower.includes('water') || lower.includes('leak') || lower.includes('pipe')) {
-        categoryMatch = 'water_leak';
-        aiText = "I've detected a Water Pipe Leak. Clean water waste damages road tarmac. Let's map it immediately!";
+      if (lower.includes('urgent') || lower.includes('top') || lower.includes('highest') || lower.includes('priority') || lower.includes('critical') || lower.includes('escalat') || lower.includes('status')) {
+        const topReport = [...reports].sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0))[0];
+        if (topReport) {
+          const catLabel = CATEGORIES[topReport.category]?.label || topReport.category;
+          const votesNeeded = Math.max(0, 25 - (topReport.priority_score || 0));
+          aiText = `Currently, our most urgent community grievance is a ${catLabel} in ${topReport.ward} with 🔥 ${topReport.priority_score} verified citizen votes! ${votesNeeded > 0 ? `Only ${votesNeeded} more vote(s) needed to trigger an automated WhatsApp alert to the Councillor.` : 'WhatsApp escalation alert has been dispatched!'}`;
+          actionObj = { label: `View ${catLabel} on Map`, category: topReport.category, type: 'view_report', targetReport: topReport };
+        } else {
+          aiText = "All community grievances are currently under control or resolved! Would you like to report a new issue?";
+        }
+      } else if (lower.includes('councillor') || lower.includes('ward') || lower.includes('contact') || lower.includes('who') || lower.includes('responsible') || lower.includes('ghmc') || lower.includes('office')) {
+        aiText = "TraceSpark covers all 150 wards under GHMC (Hyderabad). In Hitech City (Ward 112), your Councillor is Sri Ch. Ram Mohan. When any verified report reaches 25 upvotes, our AI engine automatically generates an SLA dispatch and sends an immediate WhatsApp alert to the Councillor!";
+      } else if (lower.includes('how') || lower.includes('work') || lower.includes('ai') || lower.includes('vision') || lower.includes('verify') || lower.includes('help')) {
+        aiText = "We use Llama 3 Vision AI to analyze uploaded photos in real-time. It verifies if the image depicts a real infrastructure hazard in India. Once verified, complaints go live on the Map where citizens upvote them to trigger Councillor dispatches!";
+      } else if (lower.includes('pothole') || lower.includes('road') || lower.includes('tarmac') || lower.includes('crack')) {
+        actionObj = { label: `Pin Road Damage on Map`, category: 'road_damage', type: 'report' };
+        aiText = "I've detected a potential Road Damage issue. Let's get your location and open the report form immediately!";
+      } else if (lower.includes('drain') || lower.includes('sewage') || lower.includes('mosquito') || lower.includes('manhole') || lower.includes('overflow')) {
+        actionObj = { label: `Pin Open Drain on Map`, category: 'open_drain', type: 'report' };
+        aiText = "I've detected an Open Drain grievance. Drainage overflow poses health risks. Let's get your location and drop a pin!";
+      } else if (lower.includes('light') || lower.includes('dark') || lower.includes('streetlight') || lower.includes('lamp') || lower.includes('night')) {
+        actionObj = { label: `Pin Streetlight on Map`, category: 'streetlight', type: 'report' };
+        aiText = "I've detected a Broken Streetlight issue. Dark lanes threaten citizen safety. Let's get your location and report this!";
+      } else if (lower.includes('garbage') || lower.includes('dump') || lower.includes('trash') || lower.includes('waste') || lower.includes('bin')) {
+        actionObj = { label: `Pin Garbage Pile on Map`, category: 'garbage', type: 'report' };
+        aiText = "I've detected a Garbage Pile grievance. Overflowing bins are health hazards. Let's get your location and map it!";
+      } else if (lower.includes('water') || lower.includes('leak') || lower.includes('pipe') || lower.includes('burst') || lower.includes('flooding')) {
+        actionObj = { label: `Pin Water Leak on Map`, category: 'water_leak', type: 'report' };
+        aiText = "I've detected a Water Pipe Leak. Clean water waste damages road tarmac. Let's get your location and map it immediately!";
+      } else if (lower.includes('encroach') || lower.includes('footpath') || lower.includes('vendor') || lower.includes('illegal') || lower.includes('block')) {
+        actionObj = { label: `Pin Encroachment on Map`, category: 'encroachment', type: 'report' };
+        aiText = "I've detected an Encroachment issue. Footpath obstruction forces pedestrians onto busy roads. Let's get your location and map it!";
+      } else if (lower.includes('tree') || lower.includes('branch') || lower.includes('fallen') || lower.includes('storm')) {
+        actionObj = { label: `Pin Fallen Tree on Map`, category: 'fallen_tree', type: 'report' };
+        aiText = "I've detected a Fallen Tree hazard. Obstructions block emergency vehicles. Let's get your location and report this!";
+      } else if (lower.includes('bus') || lower.includes('shelter') || lower.includes('bench') || lower.includes('stop')) {
+        actionObj = { label: `Pin Bus Stop Issue on Map`, category: 'bus_stop', type: 'report' };
+        aiText = "I've detected a Bus Stop grievance. Broken shelters affect public transit commuters. Let's get your location and map it!";
       }
 
       setChatMessages(prev => [
@@ -398,16 +422,45 @@ export default function App() {
         { 
           sender: 'ai', 
           text: aiText,
-          action: categoryMatch ? { label: `Pin ${CATEGORIES[categoryMatch].label} on Map`, category: categoryMatch } : null
+          action: actionObj
         }
       ]);
     }, 1200);
   };
 
-  const handleChatAction = (category) => {
+  const handleChatAction = (category, actionType = 'report', targetReport = null) => {
+    if (actionType === 'view_report' && targetReport) {
+      setViewMode('map');
+      setFilters(prev => ({ ...prev, category: targetReport.category }));
+      showToast(`Viewing urgent hazard: ${CATEGORIES[targetReport.category]?.label} (${targetReport.priority_score} votes)`, "info");
+      return;
+    }
+
+    // Default: actionType === 'report'
     setViewMode('map');
     setFilters(prev => ({ ...prev, category }));
-    showToast(`Category filtered: ${CATEGORIES[category]?.label}. Tap on map to report!`, "info");
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setActiveClick({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setActiveFormCategory(category);
+          setShowForm(true);
+          showToast(`Pinpoint dropped at your location for ${CATEGORIES[category]?.label}. Please attach photo!`, "info");
+        },
+        () => {
+          setActiveClick({ lat: 17.3850, lng: 78.4867 });
+          setActiveFormCategory(category);
+          setShowForm(true);
+          showToast(`Pinpoint dropped at default center for ${CATEGORIES[category]?.label}. Please attach photo!`, "info");
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    } else {
+      setActiveClick({ lat: 17.3850, lng: 78.4867 });
+      setActiveFormCategory(category);
+      setShowForm(true);
+    }
   };
 
   // Perform client-side filtering and sorting for display
@@ -765,7 +818,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
                     {msg.action && (
                       <div className="mt-3">
                         <button
-                          onClick={() => handleChatAction(msg.action.category)}
+                          onClick={() => handleChatAction(msg.action.category, msg.action.type, msg.action.targetReport)}
                           className="bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-[10px] font-mono tracking-wider uppercase px-3.5 py-1.5 rounded-xl transition shadow flex items-center gap-1 cursor-pointer"
                         >
                           {msg.action.label}
@@ -998,10 +1051,12 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
         <ReportForm
           lat={activeClick.lat}
           lng={activeClick.lng}
+          initialCategory={activeFormCategory}
           onSubmit={handleReportSubmit}
           onClose={() => {
             setShowForm(false);
             setActiveClick(null);
+            setActiveFormCategory(null);
           }}
         />
       )}

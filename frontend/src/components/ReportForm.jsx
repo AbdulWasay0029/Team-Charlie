@@ -2,8 +2,8 @@ import React, { useState, useRef } from 'react';
 import { CATEGORIES } from '../mockData';
 import { X, Camera, Upload, MapPin, Loader2, Sparkles } from 'lucide-react';
 
-export default function ReportForm({ lat, lng, onSubmit, onClose }) {
-  const [category, setCategory] = useState('road_damage');
+export default function ReportForm({ lat, lng, onSubmit, onClose, initialCategory }) {
+  const [category, setCategory] = useState(initialCategory || 'road_damage');
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoPreview, setPhotoPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
