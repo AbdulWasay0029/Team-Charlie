@@ -765,22 +765,28 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
   }
 
   return (
-    <div className="w-screen h-screen relative bg-slate-950 flex flex-col select-none overflow-x-hidden overflow-y-auto font-body text-slate-100">
+    <div className={`w-screen h-screen relative flex flex-col select-none overflow-x-hidden overflow-y-auto font-body transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       
-      {/* 1. APP TOP BAR */}
-      <header className="bg-slate-900/80 border-b border-slate-800/85 px-6 py-4 flex items-center justify-between shrink-0 shadow-lg sticky top-0 z-[1010] backdrop-blur-md">
+      {/* 1. APP TOP BAR (THEME AWARE & TACTILE) */}
+      <header className={`border-b px-6 py-4 flex items-center justify-between shrink-0 shadow-sm sticky top-0 z-[1010] backdrop-blur-md transition-all duration-300 ${
+        darkMode 
+          ? 'bg-slate-900/85 border-slate-800/85 text-slate-100' 
+          : 'bg-white/85 border-slate-200/80 text-slate-900'
+      }`}>
         <div className="flex items-center gap-3">
           <img 
             src="/logo.jpeg" 
             alt="TraceSpark" 
             onClick={() => setViewMode('dashboard')}
-            className="w-10 h-10 rounded-xl object-cover shadow-md select-none cursor-pointer"
+            className="w-10 h-10 rounded-xl object-cover shadow-md select-none cursor-pointer transition-transform duration-200 active:scale-95"
           />
-          <div className="text-left cursor-pointer" onClick={() => setViewMode('dashboard')}>
-            <h1 className="font-display font-extrabold text-xl leading-none tracking-tight bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+          <div className="text-left cursor-pointer group" onClick={() => setViewMode('dashboard')}>
+            <h1 className="font-display font-extrabold text-xl leading-none tracking-tight bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent group-hover:from-orange-400 group-hover:to-red-500 transition-all">
               TraceSpark
             </h1>
-            <p className="text-slate-400 text-[10px] tracking-wider uppercase font-semibold mt-0.5">AI Civic Accountability Loop</p>
+            <p className={`text-[10px] tracking-wider uppercase font-extrabold mt-0.5 transition-colors ${
+              darkMode ? 'text-slate-400' : 'text-slate-500'
+            }`}>AI Civic Accountability Loop</p>
           </div>
         </div>
 
@@ -788,15 +794,24 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
         <div className="flex items-center gap-3">
           <button 
             onClick={toggleDarkMode}
-            className="bg-slate-850 border border-slate-800 text-slate-350 p-2.5 rounded-xl hover:bg-slate-800 hover:text-white transition cursor-pointer flex items-center justify-center shadow-sm"
+            className={`border p-2.5 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center shadow-2xs active:scale-[0.98] ${
+              darkMode 
+                ? 'bg-slate-850 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white' 
+                : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200 hover:text-slate-900'
+            }`}
             title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
-            {darkMode ? <Sun className="h-4.5 w-4.5 text-orange-400" /> : <Moon className="h-4.5 w-4.5 text-indigo-400" />}
+            {darkMode ? <Sun className="h-4.5 w-4.5 text-orange-400" /> : <Moon className="h-4.5 w-4.5 text-indigo-600" />}
           </button>
 
           <button 
-            onClick={() => showToast("No new alerts", "info")}
-            className="bg-slate-850 border border-slate-800 text-slate-300 p-2.5 rounded-xl hover:bg-slate-800 transition relative cursor-pointer"
+            onClick={() => showToast("No new urgent notifications", "info")}
+            className={`border p-2.5 rounded-xl transition-all duration-200 relative cursor-pointer active:scale-[0.98] ${
+              darkMode 
+                ? 'bg-slate-850 border-slate-800 text-slate-300 hover:bg-slate-800' 
+                : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+            }`}
+            title="SLA Notifications"
           >
             <Bell className="h-4.5 w-4.5" />
             <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
@@ -807,22 +822,26 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
           
           <button 
             onClick={() => setIsSidePanelOpen(true)}
-            className="bg-slate-850 border border-slate-800 text-slate-300 p-2.5 rounded-xl hover:bg-slate-800 transition cursor-pointer"
-            title="Settings"
+            className={`border p-2.5 rounded-xl transition-all duration-200 cursor-pointer active:scale-[0.98] ${
+              darkMode 
+                ? 'bg-slate-850 border-slate-800 text-slate-300 hover:bg-slate-800' 
+                : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200'
+            }`}
+            title="Settings & History"
           >
             <Settings className="h-4.5 w-4.5" />
           </button>
 
           {/* User Details / Sign Up Trigger */}
           {currentUser ? (
-            <div className="flex items-center gap-2.5 pl-2 border-l border-slate-800">
+            <div className={`flex items-center gap-3 pl-3 border-l ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
               <div className="hidden sm:flex flex-col text-right">
-                <span className="text-xs font-extrabold text-slate-200">Namaste, {currentUser.name}</span>
-                <span className="text-[9px] text-slate-400 font-mono tracking-wider">Verified Citizen</span>
+                <span className={`text-xs font-extrabold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>Namaste, {currentUser.name}</span>
+                <span className="text-[9px] text-teal-500 font-mono font-bold tracking-wider uppercase">Verified Citizen</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="bg-red-950/40 border border-red-900/50 text-red-400 p-2 rounded-xl hover:bg-red-900/40 transition cursor-pointer"
+                className="bg-red-950/30 border border-red-900/40 text-red-500 hover:text-red-400 p-2 rounded-xl hover:bg-red-900/40 transition-all duration-200 cursor-pointer active:scale-[0.98]"
                 title="Sign Out"
               >
                 <LogOut className="h-4 w-4" />
@@ -832,17 +851,17 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
             <div className="flex items-center gap-2">
               <button
                 onClick={() => { setAuthModalTab('signin'); setIsAuthModalOpen(true); }}
-                className={`font-mono font-extrabold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl transition cursor-pointer shadow-2xs border ${
+                className={`font-mono font-extrabold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl transition-all duration-200 cursor-pointer shadow-2xs border active:scale-[0.98] ${
                   darkMode 
                     ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
                 }`}
               >
                 Sign In
               </button>
               <button
                 onClick={() => { setAuthModalTab('signup'); setIsAuthModalOpen(true); }}
-                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-mono font-extrabold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl transition cursor-pointer shadow-sm border-0"
+                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-mono font-extrabold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl transition-all duration-200 cursor-pointer shadow-sm border-0 active:scale-[0.98]"
               >
                 Sign Up
               </button>
@@ -852,12 +871,15 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
       </header>
 
       {/* 2. DYNAMIC BROADCAST WEATHER/ALERTS TICKER */}
-      <div className={`py-2 px-6 overflow-hidden flex items-center shrink-0 border-b transition-all duration-300 ${
-        darkMode ? 'bg-slate-900/90 text-slate-350 border-slate-800/80' : 'bg-gradient-to-r from-teal-600 to-teal-800 text-white border-teal-900/10'
+      <div className={`py-2.5 px-6 overflow-hidden flex items-center shrink-0 border-b transition-all duration-300 ${
+        darkMode 
+          ? 'bg-slate-900/90 text-slate-350 border-slate-800/80' 
+          : 'bg-teal-900 text-teal-100 border-teal-950/10'
       }`}>
-        <div className={`font-mono text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded shrink-0 select-none mr-4 border transition-all duration-300 ${
-          darkMode ? 'bg-emerald-950/45 text-emerald-400 border-emerald-900/30' : 'bg-teal-900/30 text-teal-200 border-teal-500/20'
+        <div className={`font-mono text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded shrink-0 select-none mr-4 border flex items-center gap-1.5 transition-all duration-300 ${
+          darkMode ? 'bg-emerald-950/60 text-emerald-400 border-emerald-900/40' : 'bg-teal-950/50 text-teal-200 border-teal-400/30'
         }`}>
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
           TraceSpark Alert
         </div>
         <div className="relative w-full flex items-center overflow-hidden">
@@ -876,160 +898,174 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
         </div>
       </div>
 
-      {/* 3. MAIN DASHBOARD CONTENT (DEFAULT VIEW) */}
+      {/* 3. MAIN DASHBOARD CONTENT (CIVIC CONTROL ROOM) */}
       {viewMode === 'dashboard' ? (
         <div className="flex-1 w-full flex flex-col justify-between">
-          <main className="w-full max-w-5xl mx-auto p-4 md:p-6 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {/* Namaste Greeting & Quick Stats */}
-          <div className="flex flex-col md:flex-row items-stretch gap-4">
+          <main className="w-full max-w-7xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          
+          {/* Section A: Hero / Namaste Citizen Greeting Card */}
+          <div className="flex flex-col md:flex-row items-stretch gap-5">
             
-            {/* Waving Hand profile banner (Conditional Theme) */}
-            <div className={`flex-1 border rounded-2xl p-5 flex items-center justify-between transition-all duration-300 ${
+            <div className={`flex-1 border rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-300 ${
               darkMode 
-                ? 'bg-slate-900 border-slate-800/80 shadow-xl text-slate-100' 
-                : 'bg-white border-slate-100 shadow-md text-slate-800'
+                ? 'bg-slate-900/90 border-slate-800/80 shadow-xl text-slate-100' 
+                : 'bg-white border-slate-200/80 shadow-sm text-slate-900'
             }`}>
               <div className="flex items-center gap-4 text-left">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-sm shrink-0 transition-all ${
-                  darkMode ? 'bg-slate-950/80 border border-slate-800' : 'bg-teal-50'
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-sm shrink-0 border transition-all ${
+                  darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200/80'
                 }`}>
                   👋
                 </div>
                 <div>
-                  <h2 className="font-display font-black text-xl md:text-2xl leading-none flex items-center gap-2">
-                    <span className={darkMode ? 'text-slate-100' : 'text-slate-850'}>Namaste, {currentUser ? currentUser.name : "Citizen (Guest)"}</span>
+                  <h2 className="font-display font-black text-2xl md:text-3xl leading-none flex flex-wrap items-center gap-2.5">
+                    <span className={darkMode ? 'text-slate-100' : 'text-slate-900'}>
+                      Namaste, {currentUser ? currentUser.name : "Citizen (Guest)"}
+                    </span>
                     {currentUser?.verified && (
                       <span className={`border text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full shadow-2xs ${
-                        darkMode ? 'bg-emerald-950/30 text-emerald-400 border-emerald-900/30' : 'bg-teal-50 text-teal-600 border-teal-200'
+                        darkMode ? 'bg-emerald-950/40 text-emerald-400 border-emerald-900/40' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                       }`}>
                         ✓ {currentUser.loginType === 'google' ? 'Google Verified' : 'OTP Verified'}
                       </span>
                     )}
                   </h2>
-                  <p className="text-slate-400 font-mono text-[10px] tracking-wider uppercase mt-1.5 font-bold">
-                    {currentUser ? `${currentUser.email || `+91 •••••• ${currentUser.phone.slice(-4)}`} • Verified Citizen` : "Guest Access Mode • Verification Required to Vote"}
+                  <p className={`font-mono text-xs tracking-wider mt-2 font-bold ${
+                    darkMode ? 'text-slate-400' : 'text-slate-500'
+                  }`}>
+                    {currentUser ? `${currentUser.email || `+91 •••••• ${currentUser.phone.slice(-4)}`} • Verified Citizen` : "Guest Access Mode • Verification Required to Cast Upvotes"}
                   </p>
                 </div>
               </div>
               
-              <div className={`border rounded-2xl py-2 px-4 text-right shadow-sm select-none transition-all ${
-                darkMode ? 'bg-slate-950 border-slate-850 text-slate-350' : 'bg-sky-50 border-sky-100 text-slate-800'
+              <div className={`border rounded-2xl py-2.5 px-4 text-right shadow-2xs select-none shrink-0 transition-all ${
+                darkMode ? 'bg-slate-950 border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-800'
               }`}>
-                <span className="text-[9px] text-sky-500 font-bold block uppercase tracking-wider">{weatherData.city}</span>
-                <span className={`font-mono font-extrabold text-base flex items-center gap-1 mt-0.5 ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                <span className="text-[10px] text-teal-500 font-extrabold block uppercase tracking-widest">{weatherData.city}</span>
+                <span className={`font-mono font-black text-lg flex items-center justify-end gap-1.5 mt-0.5 ${darkMode ? 'text-slate-200' : 'text-slate-850'}`}>
                   ☁️ {weatherData.temp}
                 </span>
               </div>
             </div>
 
-            {/* Quick Action Button to direct map access */}
+            {/* Quick Action CTA Button */}
             <button
               onClick={() => setViewMode('map')}
-              className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-extrabold px-6 py-5 rounded-2xl flex items-center justify-center gap-2 transition cursor-pointer shadow-lg hover:shadow-orange-500/10 shrink-0 md:w-56 text-sm uppercase tracking-widest font-mono border-0"
+              className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-mono font-extrabold px-8 py-6 rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.98] shadow-lg hover:shadow-orange-500/20 shrink-0 md:w-64 text-sm uppercase tracking-widest border-0 cursor-pointer"
             >
-              <Map className="h-5 w-5 animate-pulse text-white" />
-              Open Live Map
+              <Map className="h-5 w-5 animate-pulse text-white shrink-0" />
+              <span>Open Live Map</span>
             </button>
           </div>
 
-          {/* National Crisis Stats Integrated Direct in Dashboard */}
-          <div className={`p-5 border rounded-2xl space-y-4 text-left shadow-xs transition-all ${
+          {/* Section B: Platform Objective & National Crisis Scale */}
+          <div className={`p-6 border rounded-2xl space-y-5 text-left shadow-xs transition-all ${
             darkMode 
-              ? 'bg-slate-900 border-slate-800/80 text-slate-100' 
-              : 'bg-slate-50 border-slate-200/60 text-slate-800'
+              ? 'bg-slate-900/90 border-slate-800 text-slate-100' 
+              : 'bg-white border-slate-200/80 text-slate-850 shadow-sm'
           }`}>
-            <h3 className={`text-[10px] font-mono tracking-widest font-extrabold uppercase flex items-center gap-1 ${
-              darkMode ? 'text-slate-400' : 'text-slate-800'
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h3 className={`text-xs font-mono tracking-widest font-extrabold uppercase flex items-center gap-2 ${
+                darkMode ? 'text-slate-300' : 'text-slate-800'
+              }`}>
+                <Sparkles className="h-4 w-4 text-orange-500 shrink-0" />
+                <span>India's First AI-Powered Civic Accountability Gateway</span>
+              </h3>
+              <span className={`text-[10px] font-mono uppercase px-2.5 py-0.5 rounded border font-bold ${
+                darkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-600'
+              }`}>
+                GHMC SLA Enforcement
+              </span>
+            </div>
+
+            <p className={`text-sm md:text-base font-medium leading-relaxed max-w-[80ch] ${
+              darkMode ? 'text-slate-300' : 'text-slate-600'
             }`}>
-              <Sparkles className="h-4 w-4 text-orange-500" />
-              Platform Objective & Civic Problem Scale
-            </h3>
-            <p className={`text-xs font-bold leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-              "10,476 Indians died last year because of potholes. Not because we don't know where the potholes are — because nobody is accountable for fixing them. TraceSpark changes that by linking citizen crowdsourcing directly with Councillor WhatsApp dispatches."
+              "Last year, 10,476 Indians died due to preventable potholes and road hazards. Traditional portals are black boxes without SLA enforcement. TraceSpark bridges citizen crowdsourcing, autonomous Llama 3.2 Vision AI inspection, and automated 25-vote WhatsApp/Email dispatches directly to municipal officers."
             </p>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-1 font-mono text-center">
-              <div className={`p-3 border rounded-xl shadow-2xs transition-all ${
-                darkMode ? 'bg-slate-950 border-red-950/40 text-red-400' : 'bg-white border-red-200/50 text-red-600'
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 font-mono text-center">
+              <div className={`p-4 border rounded-xl shadow-2xs transition-all ${
+                darkMode ? 'bg-slate-950 border-red-950/50 text-red-400' : 'bg-red-50/50 border-red-200 text-red-600'
               }`}>
-                <span className="font-extrabold text-lg block">10,476</span>
-                <span className="text-[8px] text-slate-400 uppercase font-bold tracking-wider">Pothole Deaths/Yr</span>
+                <span className="font-black text-xl md:text-2xl block">10,476</span>
+                <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider mt-0.5 block">Pothole Deaths/Yr</span>
               </div>
-              <div className={`p-3 border rounded-xl shadow-2xs transition-all ${
-                darkMode ? 'bg-slate-950 border-red-950/40 text-red-400' : 'bg-white border-red-200/50 text-red-600'
+              <div className={`p-4 border rounded-xl shadow-2xs transition-all ${
+                darkMode ? 'bg-slate-950 border-red-950/50 text-red-400' : 'bg-red-50/50 border-red-200 text-red-600'
               }`}>
-                <span className="font-extrabold text-lg block">3.5L km</span>
-                <span className="text-[8px] text-slate-400 uppercase font-bold tracking-wider">Damaged Roads</span>
+                <span className="font-black text-xl md:text-2xl block">3.5L km</span>
+                <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider mt-0.5 block">Damaged Roads</span>
               </div>
-              <div className={`p-3 border rounded-xl shadow-2xs transition-all ${
-                darkMode ? 'bg-slate-950 border-emerald-950/40 text-emerald-400' : 'bg-white border-emerald-200/50 text-teal-650'
+              <div className={`p-4 border rounded-xl shadow-2xs transition-all ${
+                darkMode ? 'bg-slate-950 border-emerald-950/50 text-emerald-400' : 'bg-emerald-50/50 border-emerald-200 text-emerald-700'
               }`}>
-                <span className="font-extrabold text-lg block">100%</span>
-                <span className="text-[8px] text-slate-400 uppercase font-bold tracking-wider">AI Vision Check</span>
+                <span className="font-black text-xl md:text-2xl block">100%</span>
+                <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider mt-0.5 block">AI Vision Check</span>
               </div>
-              <div className={`p-3 border rounded-xl shadow-2xs transition-all ${
-                darkMode ? 'bg-slate-950 border-teal-950/40 text-teal-400' : 'bg-white border-teal-200/50 text-teal-650'
+              <div className={`p-4 border rounded-xl shadow-2xs transition-all ${
+                darkMode ? 'bg-slate-950 border-teal-950/50 text-teal-400' : 'bg-teal-50/50 border-teal-200 text-teal-700'
               }`}>
-                <span className="font-extrabold text-lg block">25 Votes</span>
-                <span className="text-[8px] text-slate-400 uppercase font-bold tracking-wider">Auto-Escalation</span>
+                <span className="font-black text-xl md:text-2xl block">25 Votes</span>
+                <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider mt-0.5 block">Auto-Escalation</span>
               </div>
             </div>
           </div>
 
-          {/* Quick Stats Grid */}
+          {/* Section C: Quick Stats Strip */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             
-            <div className={`border rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-all ${
-              darkMode ? 'bg-slate-900 border-slate-800/80 text-slate-100' : 'bg-white border-slate-200/80 text-slate-800'
+            <div className={`border rounded-2xl p-5 flex items-center justify-between shadow-xs hover:shadow-md transition-all ${
+              darkMode ? 'bg-slate-900/90 border-slate-800/80 text-slate-100' : 'bg-white border-slate-200/80 text-slate-900'
             }`}>
               <div className="text-left">
-                <span className="text-[28px] font-black font-mono block leading-none">{statsTotal}</span>
-                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1">Total Reports</span>
+                <span className="text-3xl font-black font-mono block leading-none">{statsTotal}</span>
+                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1.5">Total Reports</span>
               </div>
-              <div className={`p-2.5 rounded-xl border transition-all ${
-                darkMode ? 'bg-slate-950 border-slate-850 text-slate-400' : 'bg-slate-50 border border-slate-100 text-slate-400'
+              <div className={`p-3 rounded-xl border transition-all ${
+                darkMode ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-500'
               }`}>
                 <Folder className="h-5 w-5" />
               </div>
             </div>
 
-            <div className={`border rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-all ${
-              darkMode ? 'bg-slate-900 border-slate-800/80 text-slate-100' : 'bg-white border-slate-200/80 text-slate-800'
+            <div className={`border rounded-2xl p-5 flex items-center justify-between shadow-xs hover:shadow-md transition-all ${
+              darkMode ? 'bg-slate-900/90 border-slate-800/80 text-slate-100' : 'bg-white border-slate-200/80 text-slate-900'
             }`}>
               <div className="text-left">
-                <span className="text-[28px] font-black font-mono block leading-none">{statsPending}</span>
-                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1">AI Pending</span>
+                <span className="text-3xl font-black font-mono block leading-none">{statsPending}</span>
+                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1.5">AI Pending</span>
               </div>
-              <div className={`p-2.5 rounded-xl border transition-all ${
-                darkMode ? 'bg-orange-955/20 border-orange-900/35 text-orange-400' : 'bg-orange-50 border border-orange-100 text-orange-500'
+              <div className={`p-3 rounded-xl border transition-all ${
+                darkMode ? 'bg-orange-955/30 border-orange-900/40 text-orange-400' : 'bg-orange-50 border-orange-200 text-orange-600'
               }`}>
                 <Clock className="h-5 w-5" />
               </div>
             </div>
 
-            <div className={`border rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-all ${
-              darkMode ? 'bg-slate-900 border-slate-800/80 text-slate-100' : 'bg-white border-slate-200/80 text-slate-800'
+            <div className={`border rounded-2xl p-5 flex items-center justify-between shadow-xs hover:shadow-md transition-all ${
+              darkMode ? 'bg-slate-900/90 border-slate-800/80 text-slate-100' : 'bg-white border-slate-200/80 text-slate-900'
             }`}>
               <div className="text-left">
-                <span className="text-[28px] font-black font-mono block leading-none">{statsInProgress}</span>
-                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1">Work Orders Dispatch</span>
+                <span className="text-3xl font-black font-mono block leading-none">{statsInProgress}</span>
+                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1.5">Work Orders Dispatch</span>
               </div>
-              <div className={`p-2.5 rounded-xl border transition-all ${
-                darkMode ? 'bg-blue-955/20 border-blue-900/35 text-blue-400' : 'bg-blue-50 border border-blue-100 text-blue-500'
+              <div className={`p-3 rounded-xl border transition-all ${
+                darkMode ? 'bg-blue-955/30 border-blue-900/40 text-blue-400' : 'bg-blue-50 border-blue-200 text-blue-600'
               }`}>
                 <RefreshCw className="h-5 w-5" />
               </div>
             </div>
 
-            <div className={`border rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-all ${
-              darkMode ? 'bg-slate-900 border-slate-800/80 text-slate-100' : 'bg-white border-slate-200/80 text-slate-800'
+            <div className={`border rounded-2xl p-5 flex items-center justify-between shadow-xs hover:shadow-md transition-all ${
+              darkMode ? 'bg-slate-900/90 border-slate-800/80 text-slate-100' : 'bg-white border-slate-200/80 text-slate-900'
             }`}>
               <div className="text-left">
-                <span className="text-[28px] font-black font-mono block leading-none">{statsLive}</span>
-                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1">Live Verified</span>
+                <span className="text-3xl font-black font-mono block leading-none">{statsLive}</span>
+                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase block mt-1.5">Live Verified</span>
               </div>
-              <div className={`p-2.5 rounded-xl border transition-all ${
-                darkMode ? 'bg-teal-955/20 border-teal-900/35 text-teal-400' : 'bg-teal-50 border border-teal-100 text-teal-500'
+              <div className={`p-3 rounded-xl border transition-all ${
+                darkMode ? 'bg-teal-955/30 border-teal-900/40 text-teal-400' : 'bg-teal-50 border-teal-200 text-teal-600'
               }`}>
                 <CheckCircle className="h-5 w-5" />
               </div>
@@ -1037,157 +1073,221 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
 
           </div>
 
-          {/* Featured scrolling cards slider */}
-          <div className="space-y-2">
-            <h3 className={`text-xs font-bold uppercase tracking-widest flex items-center gap-1 text-left font-mono ${
-              darkMode ? 'text-slate-350' : 'text-slate-800'
+          {/* Section D: Civic Control Room Bento Grid (Featured Services) */}
+          <div className="space-y-4">
+            <h3 className={`text-xs font-mono font-extrabold uppercase tracking-widest flex items-center gap-2 text-left ${
+              darkMode ? 'text-slate-300' : 'text-slate-800'
             }`}>
-              <Sparkles className="h-4 w-4 text-orange-500" />
-              Featured Services
+              <Sparkles className="h-4 w-4 text-orange-500 shrink-0" />
+              <span>Civic Control Room & Featured Portals</span>
             </h3>
             
-            <div className="featured-scroll-container pb-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5">
               
-              {/* Card 1: Lodge Grievance */}
+              {/* Bento Card 1: Lodge Hazard with AI Vision (2 Cols, 2 Rows on Desktop) */}
               <div 
                 onClick={() => setViewMode('map')}
-                className="bg-gradient-to-br from-orange-500 to-red-600 text-white p-5 rounded-2xl min-w-[280px] w-80 text-left shadow-lg cursor-pointer transform hover:scale-102 transition flex flex-col justify-between h-40"
+                className="md:col-span-2 lg:col-span-2 lg:row-span-2 bg-gradient-to-br from-orange-600 via-red-600 to-red-700 text-white p-6 md:p-8 rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 cursor-pointer flex flex-col justify-between group relative overflow-hidden border border-red-400/30 min-h-[280px]"
               >
-                <div className="flex items-start justify-between">
-                  <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-white font-black text-lg">
+                <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none group-hover:bg-white/15 transition-all"></div>
+                
+                <div className="flex items-start justify-between z-10">
+                  <div className="bg-white/15 p-3.5 rounded-2xl backdrop-blur-md border border-white/20 text-white font-black text-2xl shadow-sm">
                     🚨
                   </div>
-                  <span className="text-[9px] font-mono uppercase tracking-widest font-extrabold bg-white/20 px-2 py-0.5 rounded border border-white/15">Report</span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest font-extrabold bg-white/20 px-3 py-1 rounded-full border border-white/25 shadow-2xs">
+                    Primary Action
+                  </span>
                 </div>
-                <div>
-                  <h4 className="font-extrabold text-sm tracking-wide">TAP MAP TO REPORT</h4>
-                  <p className="text-orange-100 text-[10px] mt-1 font-medium">Lodge issue coordinates with inline AI Vision verification check.</p>
+
+                <div className="text-left z-10 mt-8 space-y-2">
+                  <h4 className="font-display font-black text-xl md:text-2xl tracking-tight leading-snug">
+                    LODGE HAZARD WITH AI VISION
+                  </h4>
+                  <p className="text-orange-100 text-xs md:text-sm font-medium leading-relaxed max-w-[45ch]">
+                    Attach photographic evidence of potholes, open drains, or garbage accumulation. Our autonomous Llama 3.2 Vision AI inspects the hazard in real-time, grades public safety risk (1–10), and verifies authenticity before pinning it live.
+                  </p>
+                </div>
+
+                <div className="pt-6 border-t border-white/15 flex items-center justify-between flex-wrap gap-2 font-mono text-[10px] text-white/90 z-10 font-bold">
+                  <span>🤖 100% Llama Vision Checked</span>
+                  <span>📍 GPS Centroid Routing</span>
+                  <span>⚡ 25-Vote SLA Trigger</span>
                 </div>
               </div>
 
-              {/* Card 2: Live Map */}
+              {/* Bento Card 2: Live GIS Grievance Map (2 Cols) */}
               <div 
                 onClick={() => { setViewMode('map'); setShowHeatmap(false); }}
-                className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-5 rounded-2xl min-w-[280px] w-80 text-left shadow-lg cursor-pointer transform hover:scale-102 transition flex flex-col justify-between h-40"
+                className="md:col-span-1 lg:col-span-2 bg-gradient-to-br from-blue-600 via-indigo-600 to-indigo-700 text-white p-6 rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 cursor-pointer flex flex-col justify-between group relative overflow-hidden border border-blue-400/30 min-h-[180px]"
               >
-                <div className="flex items-start justify-between">
-                  <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-white">
-                    <Map className="h-5 w-5" />
+                <div className="flex items-start justify-between z-10">
+                  <div className="bg-white/15 p-3 rounded-xl backdrop-blur-md border border-white/20 text-white">
+                    <Map className="h-6 w-6" />
                   </div>
-                  <span className="text-[9px] font-mono uppercase tracking-widest font-extrabold bg-white/20 px-2 py-0.5 rounded border border-white/15">Explorer</span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest font-extrabold bg-white/20 px-3 py-1 rounded-full border border-white/25">
+                    Map Explorer
+                  </span>
                 </div>
-                <div>
-                  <h4 className="font-extrabold text-sm tracking-wide">LIVE GRIEVANCE MAP</h4>
-                  <p className="text-blue-100 text-[10px] mt-1 font-medium">Browse neighborhood complaints, upvote tickets, and view active dispatches.</p>
+
+                <div className="text-left z-10 mt-4">
+                  <h4 className="font-display font-black text-lg md:text-xl tracking-tight">
+                    LIVE GIS GRIEVANCE MAP
+                  </h4>
+                  <p className="text-blue-100 text-xs mt-1 font-medium leading-relaxed max-w-[50ch]">
+                    Browse live community grievances across 8 canonical Hyderabad municipal wards. Inspect photographic evidence, check SLA countdown timers, and cast upvotes to trigger executive dispatches.
+                  </p>
                 </div>
               </div>
 
-              {/* Card 3: Heatmap Density */}
+              {/* Bento Card 3: Neglect Density Heatmap (1 Col) */}
               <div 
                 onClick={() => { setViewMode('map'); setShowHeatmap(true); }}
-                className="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-5 rounded-2xl min-w-[280px] w-80 text-left shadow-lg cursor-pointer transform hover:scale-102 transition flex flex-col justify-between h-40"
+                className={`${darkMode ? 'bg-slate-900/90 border-slate-800 hover:border-amber-500/50 text-slate-100' : 'bg-white border-slate-200 hover:border-amber-500 text-slate-900'} p-6 rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 cursor-pointer flex flex-col justify-between group border min-h-[180px]`}
               >
                 <div className="flex items-start justify-between">
-                  <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-white">
-                    <Flame className="h-5 w-5 text-amber-300 animate-pulse" />
+                  <div className={`p-3 rounded-xl border transition-all ${darkMode ? 'bg-amber-950/30 border-amber-900/40 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-600'}`}>
+                    <Flame className="h-6 w-6 animate-pulse" />
                   </div>
-                  <span className="text-[9px] font-mono uppercase tracking-widest font-extrabold bg-white/20 px-2 py-0.5 rounded border border-white/15">Hot-Spots</span>
+                  <span className="text-[9px] font-mono uppercase tracking-widest font-extrabold px-2.5 py-0.5 rounded border border-slate-700/30 text-slate-400">
+                    Hotspots
+                  </span>
                 </div>
-                <div>
-                  <h4 className="font-extrabold text-sm tracking-wide">DENSITY HEATMAP</h4>
-                  <p className="text-amber-100 text-[10px] mt-1 font-medium">Pinpoint critical hubs of civic neglect based on crowdsourced upvotes.</p>
+
+                <div className="text-left mt-4">
+                  <h4 className="font-display font-black text-base tracking-tight">
+                    DENSITY HEATMAP
+                  </h4>
+                  <p className={`text-xs mt-1 font-medium leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                    Pinpoint critical hubs of civic neglect across Greater Hyderabad based on crowdsourced citizen upvotes.
+                  </p>
+                </div>
+              </div>
+
+              {/* Bento Card 4: SLA Transparency Portal (1 Col) */}
+              <div 
+                onClick={() => setViewMode('transparency')}
+                className={`${darkMode ? 'bg-slate-900/90 border-slate-800 hover:border-emerald-500/50 text-slate-100' : 'bg-white border-slate-200 hover:border-emerald-500 text-slate-900'} p-6 rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 cursor-pointer flex flex-col justify-between group border min-h-[180px]`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className={`p-3 rounded-xl border transition-all ${darkMode ? 'bg-emerald-950/30 border-emerald-900/40 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-600'}`}>
+                    <BarChart3 className="h-6 w-6" />
+                  </div>
+                  <span className="text-[9px] font-mono uppercase tracking-widest font-extrabold px-2.5 py-0.5 rounded border border-slate-700/30 text-slate-400">
+                    Accountability
+                  </span>
+                </div>
+
+                <div className="text-left mt-4">
+                  <h4 className="font-display font-black text-base tracking-tight">
+                    TRANSPARENCY PORTAL
+                  </h4>
+                  <p className={`text-xs mt-1 font-medium leading-relaxed ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                    Public accountability leaderboards without black-box bureaucracy. Track ward resolution rates and RTI Act compliance.
+                  </p>
                 </div>
               </div>
 
             </div>
           </div>
 
-
-
-          {/* All services grid */}
-          <div className="space-y-3 pt-2">
-            <h3 className="text-slate-350 text-xs font-bold uppercase tracking-widest flex items-center gap-1 text-left font-mono">
-              📂 All Services
+          {/* Section E: All Services Grid */}
+          <div className="space-y-4 pt-2">
+            <h3 className={`text-xs font-mono font-extrabold uppercase tracking-widest flex items-center gap-2 text-left ${
+              darkMode ? 'text-slate-300' : 'text-slate-800'
+            }`}>
+              <span>📂 All Municipal Services & Portals</span>
             </h3>
 
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               
               <div 
                 onClick={() => setViewMode('map')}
-                className="bg-slate-900 border border-slate-800/85 hover:border-slate-700/80 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
+                className={`border p-5 rounded-2xl text-left cursor-pointer transition-all duration-200 shadow-2xs hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] flex flex-col justify-between h-40 ${
+                  darkMode ? 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-100' : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900'
+                }`}
               >
-                <div className="bg-red-950/20 border border-red-900/30 p-2.5 rounded-xl text-red-400 w-fit">
+                <div className={`p-3 rounded-xl border w-fit ${darkMode ? 'bg-red-955/30 border-red-900/40 text-red-400' : 'bg-red-50 border-red-200 text-red-600'}`}>
                   <AlertCircle className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-xs text-slate-200 uppercase tracking-wide">Raise Grievance</h4>
-                  <p className="text-[10px] text-slate-455 mt-0.5 leading-normal font-sans font-medium">Lodge and track citizen complaints</p>
+                  <h4 className="font-extrabold text-sm uppercase tracking-wide">Raise Grievance</h4>
+                  <p className={`text-xs mt-1 leading-relaxed font-medium ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Lodge and track citizen complaints with inline photo verification.</p>
                 </div>
               </div>
 
               <div 
                 onClick={() => setViewMode('map')}
-                className="bg-slate-900 border border-slate-800/85 hover:border-slate-700/80 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
+                className={`border p-5 rounded-2xl text-left cursor-pointer transition-all duration-200 shadow-2xs hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] flex flex-col justify-between h-40 ${
+                  darkMode ? 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-100' : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900'
+                }`}
               >
-                <div className="bg-blue-950/20 border border-blue-900/30 p-2.5 rounded-xl text-blue-400 w-fit">
+                <div className={`p-3 rounded-xl border w-fit ${darkMode ? 'bg-blue-955/30 border-blue-900/40 text-blue-400' : 'bg-blue-50 border-blue-200 text-blue-600'}`}>
                   <Map className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-xs text-slate-200 uppercase tracking-wide">Grievance Map</h4>
-                  <p className="text-[10px] text-slate-455 mt-0.5 leading-normal font-sans font-medium">Interactive map pins and status tracker</p>
+                  <h4 className="font-extrabold text-sm uppercase tracking-wide">Grievance Map</h4>
+                  <p className={`text-xs mt-1 leading-relaxed font-medium ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Interactive map pins, SLA timers, and municipal dispatch status.</p>
                 </div>
               </div>
 
-
               <div 
                 onClick={() => { setViewMode('map'); setShowHeatmap(true); }}
-                className="bg-slate-900 border border-slate-800/85 hover:border-slate-700/80 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
+                className={`border p-5 rounded-2xl text-left cursor-pointer transition-all duration-200 shadow-2xs hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] flex flex-col justify-between h-40 ${
+                  darkMode ? 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-100' : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900'
+                }`}
               >
-                <div className="bg-orange-950/20 border border-orange-900/30 p-2.5 rounded-xl text-orange-500 w-fit">
+                <div className={`p-3 rounded-xl border w-fit ${darkMode ? 'bg-orange-955/30 border-orange-900/40 text-orange-400' : 'bg-orange-50 border-orange-200 text-orange-600'}`}>
                   <Flame className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-xs text-slate-200 uppercase tracking-wide">Neglect Heatmap</h4>
-                  <p className="text-[10px] text-slate-455 mt-0.5 leading-normal font-sans font-medium">Hot-spot density overlay coordinates</p>
+                  <h4 className="font-extrabold text-sm uppercase tracking-wide">Neglect Heatmap</h4>
+                  <p className={`text-xs mt-1 leading-relaxed font-medium ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Hot-spot density overlay coordinates across 8 Hyderabad zones.</p>
                 </div>
               </div>
 
               <div 
                 onClick={() => setIsSidePanelOpen(true)}
-                className="bg-slate-900 border border-slate-800/85 hover:border-slate-700/80 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
+                className={`border p-5 rounded-2xl text-left cursor-pointer transition-all duration-200 shadow-2xs hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] flex flex-col justify-between h-40 ${
+                  darkMode ? 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-100' : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900'
+                }`}
               >
-                <div className="bg-purple-950/20 border border-purple-900/30 p-2.5 rounded-xl text-purple-400 w-fit">
+                <div className={`p-3 rounded-xl border w-fit ${darkMode ? 'bg-purple-955/30 border-purple-900/40 text-purple-400' : 'bg-purple-50 border-purple-200 text-purple-600'}`}>
                   <History className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-xs text-slate-200 uppercase tracking-wide">Grievance History</h4>
-                  <p className="text-[10px] text-slate-455 mt-0.5 leading-normal font-sans font-medium">Track your historical submissions</p>
+                  <h4 className="font-extrabold text-sm uppercase tracking-wide">Grievance History</h4>
+                  <p className={`text-xs mt-1 leading-relaxed font-medium ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Track your historical submissions, upvotes, and resolution proofs.</p>
                 </div>
               </div>
 
               <div 
                 onClick={() => setViewMode('transparency')}
-                className="bg-slate-900 border border-slate-800/85 hover:border-slate-700/80 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36 border border-emerald-900/30"
+                className={`border p-5 rounded-2xl text-left cursor-pointer transition-all duration-200 shadow-2xs hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] flex flex-col justify-between h-40 ${
+                  darkMode ? 'bg-slate-900/90 border-emerald-900/40 hover:border-emerald-500/50 text-slate-100' : 'bg-white border-emerald-200 hover:border-emerald-500 text-slate-900'
+                }`}
               >
-                <div className="bg-emerald-950/35 border border-emerald-900/35 p-2.5 rounded-xl text-emerald-455 w-fit">
+                <div className={`p-3 rounded-xl border w-fit ${darkMode ? 'bg-emerald-955/30 border-emerald-900/40 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-600'}`}>
                   <BarChart3 className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-xs text-slate-200 uppercase tracking-wide">Transparency Portal</h4>
-                  <p className="text-[10px] text-slate-455 mt-0.5 leading-normal font-sans font-medium">View Leaderboards & SLA statistics</p>
+                  <h4 className="font-extrabold text-sm uppercase tracking-wide">Transparency Portal</h4>
+                  <p className={`text-xs mt-1 leading-relaxed font-medium ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>View ward leaderboards, response times, and SLA statistics.</p>
                 </div>
               </div>
 
               <div 
                 onClick={() => showToast("Circular manual matched for ward operations guidelines", "info")}
-                className="bg-slate-900 border border-slate-800/85 hover:border-slate-700/80 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
+                className={`border p-5 rounded-2xl text-left cursor-pointer transition-all duration-200 shadow-2xs hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] flex flex-col justify-between h-40 ${
+                  darkMode ? 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-100' : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900'
+                }`}
               >
-                <div className="bg-teal-950/20 border border-teal-900/30 p-2.5 rounded-xl text-teal-400 w-fit">
+                <div className={`p-3 rounded-xl border w-fit ${darkMode ? 'bg-teal-955/30 border-teal-900/40 text-teal-400' : 'bg-teal-50 border-teal-200 text-teal-600'}`}>
                   <Shield className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="font-extrabold text-xs text-slate-200 uppercase tracking-wide">My Ward Office</h4>
-                  <p className="text-[10px] text-slate-455 mt-0.5 leading-normal font-sans font-medium">Circular manuals and emergency numbers</p>
+                  <h4 className="font-extrabold text-sm uppercase tracking-wide">My Ward Office</h4>
+                  <p className={`text-xs mt-1 leading-relaxed font-medium ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>Circular manuals, Zonal Commissioner contacts, and emergency numbers.</p>
                 </div>
               </div>
 
@@ -1195,76 +1295,76 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
           </div>
         </main>
 
-        {/* 6. AUTHORITATIVE MUNICIPAL & LEGAL FOOTER (100% FULL WIDTH EDGE-TO-EDGE) */}
-        <footer className="w-full bg-slate-900 text-slate-300 pt-12 pb-16 px-6 sm:px-12 border-t border-slate-800 shadow-2xl font-body">
-            <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 pb-12 border-b border-slate-800/80 text-left">
-              
-              {/* Col 1: Brand & Mission */}
-              <div className="md:col-span-1 space-y-3">
-                <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setViewMode('dashboard')}>
-                  <img src="/logo.jpeg" alt="TraceSpark" className="w-8 h-8 rounded-xl object-cover shadow-md" />
-                  <span className="font-display font-extrabold text-lg text-white tracking-tight">TraceSpark</span>
-                </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  India's first AI-Powered Civic Accountability & SLA Enforcement Gateway. Bridging citizen crowdsourcing, Llama 3.2 Vision inspection, and automated 25-vote SLA dispatches for Greater Hyderabad Municipal Corporation (GHMC).
-                </p>
-                <div className="pt-2 flex items-center gap-2 text-[10px] text-teal-400 font-mono font-bold">
-                  <span className="h-2 w-2 rounded-full bg-teal-400 animate-pulse"></span>
-                  <span>All 8 Municipal Gateways Online</span>
-                </div>
+        {/* 4. AUTHORITATIVE MUNICIPAL & LEGAL FOOTER (100% EDGE-TO-EDGE) */}
+        <footer className="w-full bg-slate-950 text-slate-300 pt-12 pb-16 px-6 sm:px-12 border-t border-slate-800 shadow-2xl font-body shrink-0 mt-12">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 pb-12 border-b border-slate-800/80 text-left">
+            
+            {/* Col 1: Brand & Mission */}
+            <div className="md:col-span-1 space-y-3">
+              <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setViewMode('dashboard')}>
+                <img src="/logo.jpeg" alt="TraceSpark" className="w-9 h-9 rounded-xl object-cover shadow-md group-hover:scale-105 transition-transform" />
+                <span className="font-display font-extrabold text-lg text-white tracking-tight">TraceSpark</span>
               </div>
-
-              {/* Col 2: Municipal & RTI */}
-              <div className="space-y-2.5 text-xs">
-                <h4 className="font-mono text-[10px] uppercase tracking-widest text-slate-400 font-extrabold">Municipal & Legal</h4>
-                <ul className="space-y-2 font-medium text-slate-300">
-                  <li><button onClick={() => { setLegalModalTab('rti'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Right to Information (RTI Act 2005)</button></li>
-                  <li><button onClick={() => { setLegalModalTab('rti'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">GHMC Citizen Charter & SLAs</button></li>
-                  <li><button onClick={() => { setLegalModalTab('tos'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Public Grievance Policy (CPGRAMS)</button></li>
-                  <li><button onClick={() => { setLegalModalTab('privacy'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">GPS Ward Proximity Math</button></li>
-                </ul>
-              </div>
-
-              {/* Col 3: Legal, Terms & Privacy */}
-              <div className="space-y-2.5 text-xs">
-                <h4 className="font-mono text-[10px] uppercase tracking-widest text-slate-400 font-extrabold">Compliance & Terms</h4>
-                <ul className="space-y-2 font-medium text-slate-300">
-                  <li><button onClick={() => { setLegalModalTab('tos'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Terms of Service (ToS)</button></li>
-                  <li><button onClick={() => { setLegalModalTab('privacy'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Privacy Policy (DPDP Act 2023)</button></li>
-                  <li><button onClick={() => { setLegalModalTab('privacy'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Google OAuth 2.0 Security</button></li>
-                  <li><button onClick={() => { setLegalModalTab('tos'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Anti-Spam & Vote Integrity</button></li>
-                </ul>
-              </div>
-
-              {/* Col 4: Open Source & AI Licenses */}
-              <div className="space-y-2.5 text-xs">
-                <h4 className="font-mono text-[10px] uppercase tracking-widest text-slate-400 font-extrabold">Licenses & AI</h4>
-                <ul className="space-y-2 font-medium text-slate-300">
-                  <li><button onClick={() => { setLegalModalTab('licenses'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">MIT License (Core Platform)</button></li>
-                  <li><button onClick={() => { setLegalModalTab('ai'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Meta Llama 3.2 Community License</button></li>
-                  <li><button onClick={() => { setLegalModalTab('licenses'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">OpenStreetMap / ODbL GIS Data</button></li>
-                  <li><button onClick={() => { setLegalModalTab('ai'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Autonomous Vision Grading</button></li>
-                </ul>
-              </div>
-
-            </div>
-
-            {/* Bottom Bar: Copyright & Credits */}
-            <div className="max-w-6xl mx-auto pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
-              <div>
-                © 2026 TraceSpark Civic Technologies Inc. Built for Greater Hyderabad Municipal Corporation (GHMC). All rights reserved.
-              </div>
-              <div className="flex items-center gap-2 bg-slate-800/80 px-3.5 py-1.5 rounded-xl border border-slate-700/60 text-slate-400 text-[10px]">
-                <span>Designed & Developed by</span>
-                <span className="bg-teal-600 text-white font-bold px-1.5 py-0.5 rounded text-[9px] tracking-wider">TEAM CHARLIE</span>
-                <span className="font-semibold text-slate-300">TraceSpark AI Civic Loop</span>
+              <p className="text-xs text-slate-400 leading-relaxed font-medium">
+                India's first AI-Powered Civic Accountability & SLA Enforcement Gateway. Bridging citizen crowdsourcing, Llama 3.2 Vision inspection, and automated 25-vote SLA dispatches for Greater Hyderabad Municipal Corporation (GHMC).
+              </p>
+              <div className="pt-2 flex items-center gap-2 text-[11px] text-teal-400 font-mono font-bold">
+                <span className="h-2 w-2 rounded-full bg-teal-400 animate-pulse"></span>
+                <span>All 8 Municipal Gateways Online</span>
               </div>
             </div>
-          </footer>
 
-        </div>
-      ) : (
-        /* 4. ACTIVE MAP OVERLAY VIEW */
+            {/* Col 2: Municipal & RTI */}
+            <div className="space-y-3 text-xs">
+              <h4 className="font-mono text-[11px] uppercase tracking-widest text-slate-400 font-extrabold">Municipal & Legal</h4>
+              <ul className="space-y-2.5 font-medium text-slate-300">
+                <li><button onClick={() => { setLegalModalTab('rti'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Right to Information (RTI Act 2005)</button></li>
+                <li><button onClick={() => { setLegalModalTab('rti'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">GHMC Citizen Charter & SLAs</button></li>
+                <li><button onClick={() => { setLegalModalTab('tos'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Public Grievance Policy (CPGRAMS)</button></li>
+                <li><button onClick={() => { setLegalModalTab('privacy'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">GPS Ward Proximity Math</button></li>
+              </ul>
+            </div>
+
+            {/* Col 3: Legal, Terms & Privacy */}
+            <div className="space-y-3 text-xs">
+              <h4 className="font-mono text-[11px] uppercase tracking-widest text-slate-400 font-extrabold">Compliance & Terms</h4>
+              <ul className="space-y-2.5 font-medium text-slate-300">
+                <li><button onClick={() => { setLegalModalTab('tos'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Terms of Service (ToS)</button></li>
+                <li><button onClick={() => { setLegalModalTab('privacy'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Privacy Policy (DPDP Act 2023)</button></li>
+                <li><button onClick={() => { setLegalModalTab('privacy'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Google OAuth 2.0 Security</button></li>
+                <li><button onClick={() => { setLegalModalTab('tos'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Anti-Spam & Vote Integrity</button></li>
+              </ul>
+            </div>
+
+            {/* Col 4: Open Source & AI Licenses */}
+            <div className="space-y-3 text-xs">
+              <h4 className="font-mono text-[11px] uppercase tracking-widest text-slate-400 font-extrabold">Licenses & AI</h4>
+              <ul className="space-y-2.5 font-medium text-slate-300">
+                <li><button onClick={() => { setLegalModalTab('licenses'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">MIT License (Core Platform)</button></li>
+                <li><button onClick={() => { setLegalModalTab('ai'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Meta Llama 3.2 Community License</button></li>
+                <li><button onClick={() => { setLegalModalTab('licenses'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">OpenStreetMap / ODbL GIS Data</button></li>
+                <li><button onClick={() => { setLegalModalTab('ai'); setIsLegalModalOpen(true); }} className="hover:text-white transition cursor-pointer text-left">Autonomous Vision Grading</button></li>
+              </ul>
+            </div>
+
+          </div>
+
+          {/* Bottom Bar: Copyright & Credits */}
+          <div className="max-w-7xl mx-auto pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-medium">
+            <div>
+              © 2026 TraceSpark Civic Technologies Inc. Built for Greater Hyderabad Municipal Corporation (GHMC). All rights reserved.
+            </div>
+            <div className="flex items-center gap-2.5 bg-slate-900 px-4 py-2 rounded-xl border border-slate-800 text-slate-400 text-[11px]">
+              <span>Designed & Developed by</span>
+              <span className="bg-teal-600 text-white font-extrabold px-2 py-0.5 rounded text-[10px] tracking-wider">TEAM CHARLIE</span>
+              <span className="font-bold text-slate-300">TraceSpark AI Civic Loop</span>
+            </div>
+          </div>
+        </footer>
+
+      </div>
+    ) : (
+      /* 4. ACTIVE MAP OVERLAY VIEW */
         <div className="flex-1 w-full h-full relative flex">
           {/* Filter Bar overlay inside map view */}
           <FilterBar
