@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
-import { MOCK_LEADERBOARD, CATEGORIES } from '../mockData';
-import { X, Award, History, TrendingUp, ShieldCheck, MapPin, AlertCircle } from 'lucide-react';
+import React from 'react';
+import { CATEGORIES } from '../mockData';
+import { X, History, ShieldCheck, MapPin, AlertCircle } from 'lucide-react';
 
 export default function SidePanel({ isOpen, onClose, reports, currentUser, onLoginClick, onLogout }) {
-  const [activeTab, setActiveTab] = useState('leaderboard'); // 'leaderboard' or 'history'
-
   const userReports = currentUser 
     ? reports.filter(r => r.user_id === currentUser.id) 
     : [];
@@ -28,9 +26,9 @@ export default function SidePanel({ isOpen, onClose, reports, currentUser, onLog
       {/* Panel Header */}
       <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
         <div className="flex items-center gap-2">
-          <Award className="h-5.5 w-5.5 text-orange-500" />
+          <History className="h-5.5 w-5.5 text-teal-600" />
           <div>
-            <h2 className="text-slate-800 font-display font-extrabold text-sm uppercase tracking-wider">Citizen Center</h2>
+            <h2 className="text-slate-800 font-display font-extrabold text-sm uppercase tracking-wider">My Submissions</h2>
             {currentUser && (
               <span className="text-[9px] text-teal-600 font-mono font-bold uppercase block">
                 👤 {currentUser.name} {currentUser.verified && "✓"}
@@ -82,152 +80,67 @@ export default function SidePanel({ isOpen, onClose, reports, currentUser, onLog
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex border-b border-slate-100 bg-slate-50/50 font-mono uppercase text-[9px] tracking-widest">
-        <button
-          onClick={() => setActiveTab('leaderboard')}
-          className={`flex-1 py-3.5 font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeTab === 'leaderboard'
-              ? 'text-teal-600 border-b-2 border-teal-600 bg-white'
-              : 'text-slate-400 hover:text-slate-600'
-          }`}
-        >
-          <TrendingUp className="h-4 w-4 text-teal-600" />
-          Leaderboard
-        </button>
-        <button
-          onClick={() => setActiveTab('history')}
-          className={`flex-1 py-3.5 font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-            activeTab === 'history'
-              ? 'text-teal-600 border-b-2 border-teal-600 bg-white'
-              : 'text-slate-400 hover:text-slate-600'
-          }`}
-        >
-          <History className="h-4 w-4 text-teal-600" />
-          My Reports ({userReports.length})
-        </button>
-      </div>
-
       {/* Content Body */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/40">
-        
-        {/* LEADERBOARD VIEW */}
-        {activeTab === 'leaderboard' && (
-          <div className="space-y-3">
-            <p className="text-[9px] text-slate-400 text-left font-mono font-bold uppercase tracking-widest">
-              🏆 Top Impact Makers (Ward Leaderboard)
-            </p>
-            
-            <div className="space-y-2">
-              {MOCK_LEADERBOARD.map((item) => (
-                <div 
-                  key={item.rank}
-                  className={`border rounded-xl p-3.5 flex items-center justify-between text-left transition ${
-                    item.rank === 1 
-                      ? 'bg-teal-50/40 border-teal-200 shadow-sm' 
-                      : 'bg-white border-slate-200/80 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-extrabold font-mono ${
-                      item.rank === 1 ? 'bg-orange-500 text-white shadow-md' :
-                      item.rank === 2 ? 'bg-teal-600 text-white' :
-                      item.rank === 3 ? 'bg-slate-200 text-slate-700' :
-                      'bg-slate-100 text-slate-400'
-                    }`}>
-                      {item.rank}
-                    </span>
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-800 leading-tight flex items-center gap-1.5">
-                        {item.name}
-                        {item.rank === 1 && <span className="text-[10px]">👑</span>}
-                      </h4>
-                      <p className="text-[9px] text-slate-400 font-mono tracking-wide mt-0.5">{item.ward}</p>
-                      
-                      {/* Badges */}
-                      <div className="flex flex-wrap gap-1 mt-1.5 font-mono text-[8px] uppercase tracking-wider text-teal-600">
-                        {item.badges.map(badge => (
-                          <span key={badge} className="bg-teal-50 border border-teal-100 px-1.5 py-0.2 rounded-full">
-                            {badge}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-right font-mono">
-                    <span className="text-xs font-extrabold text-teal-600 block">{item.points} pts</span>
-                    <span className="text-[8px] text-slate-400 tracking-wide">{item.reportsCount} reported</span>
-                  </div>
-                </div>
-              ))}
+        <div className="space-y-3">
+          {!currentUser ? (
+            <div className="text-center py-10 space-y-4 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+              <ShieldCheck className="h-8 w-8 text-slate-400 mx-auto" />
+              <div className="space-y-1">
+                <h4 className="text-xs font-mono font-bold text-slate-800 uppercase tracking-widest">Authentication Required</h4>
+                <p className="text-[10px] text-slate-400 max-w-[220px] mx-auto leading-normal">
+                  Log in with Supabase Phone OTP to track your reported tickets and earn impact points.
+                </p>
+              </div>
+              <button
+                onClick={onLoginClick}
+                className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-[10px] font-mono tracking-widest uppercase py-2 px-4 rounded-xl cursor-pointer transition shadow"
+              >
+                Log In Now
+              </button>
             </div>
-          </div>
-        )}
-
-        {/* MY REPORTS VIEW */}
-        {activeTab === 'history' && (
-          <div className="space-y-3">
-            {!currentUser ? (
-              <div className="text-center py-10 space-y-4 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                <ShieldCheck className="h-8 w-8 text-slate-400 mx-auto" />
-                <div className="space-y-1">
-                  <h4 className="text-xs font-mono font-bold text-slate-800 uppercase tracking-widest">Authentication Required</h4>
-                  <p className="text-[10px] text-slate-400 max-w-[220px] mx-auto leading-normal">
-                    Log in with Supabase Phone OTP to track your reported tickets and earn impact points.
-                  </p>
-                </div>
-                <button
-                  onClick={onLoginClick}
-                  className="bg-gradient-to-r from-orange-500 to-red-600 text-white font-extrabold text-[10px] font-mono tracking-widest uppercase py-2 px-4 rounded-xl cursor-pointer transition shadow"
-                >
-                  Log In Now
-                </button>
-              </div>
-            ) : userReports.length === 0 ? (
-              <div className="text-center py-10 bg-white border border-slate-200 rounded-xl p-4 text-slate-400 text-xs shadow-sm">
-                <p>No complaints submitted yet.</p>
-                <p className="text-[9px] text-slate-400 font-mono uppercase tracking-wider mt-1.5">
-                  Tap anywhere on the map to file a report.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-[9px] text-slate-400 text-left font-mono font-bold uppercase tracking-widest">
-                  📂 Submissions by you
-                </p>
-                {userReports.map((report) => {
-                  const cat = CATEGORIES[report.category] || { label: report.category, icon: '📍' };
-                  return (
-                    <div 
-                      key={report.id}
-                      className="bg-white border border-slate-200/80 rounded-xl p-3.5 flex items-start gap-3 hover:border-slate-300 transition text-left shadow-sm"
-                    >
-                      <span className="text-2xl bg-slate-50 p-2 rounded-xl border border-slate-100">{cat.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-1">
-                          <h4 className="text-xs font-bold text-slate-800 truncate uppercase font-mono tracking-wide">{cat.label}</h4>
-                          <span className={`text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.2 rounded-full border font-bold ${getStatusColor(report.status)}`}>
-                            {report.status.replace(/_/g, ' ')}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5 font-medium">{report.description}</p>
-                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-[8px] text-slate-400 font-mono tracking-wide">
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3 text-slate-400" />
-                            {report.ward}
-                          </span>
-                          <span className="font-bold text-orange-500">🔥 {report.priority_score} votes</span>
-                        </div>
+          ) : userReports.length === 0 ? (
+            <div className="text-center py-10 bg-white border border-slate-200 rounded-xl p-4 text-slate-400 text-xs shadow-sm">
+              <p>No complaints submitted yet.</p>
+              <p className="text-[9px] text-slate-400 font-mono uppercase tracking-wider mt-1.5">
+                Tap anywhere on the map to file a report.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-[9px] text-slate-400 text-left font-mono font-bold uppercase tracking-widest">
+                📂 Submissions by you
+              </p>
+              {userReports.map((report) => {
+                const cat = CATEGORIES[report.category] || { label: report.category, icon: '📍' };
+                return (
+                  <div 
+                    key={report.id}
+                    className="bg-white border border-slate-200/80 rounded-xl p-3.5 flex items-start gap-3 hover:border-slate-350 transition text-left shadow-sm"
+                  >
+                    <span className="text-2xl bg-slate-50 p-2 rounded-xl border border-slate-100">{cat.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <h4 className="text-xs font-bold text-slate-800 truncate uppercase font-mono tracking-wide">{cat.label}</h4>
+                        <span className={`text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.2 rounded-full border font-bold ${getStatusColor(report.status)}`}>
+                          {report.status.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5 font-medium">{report.description}</p>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-[8px] text-slate-400 font-mono tracking-wide">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3 text-slate-400" />
+                          {report.ward}
+                        </span>
+                        <span className="font-bold text-orange-500">🔥 {report.priority_score} votes</span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

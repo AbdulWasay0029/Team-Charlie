@@ -993,18 +993,6 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
                 </div>
               </div>
 
-              <div 
-                onClick={() => setIsSidePanelOpen(true)}
-                className="bg-white border border-slate-200/80 hover:border-slate-300 p-4 rounded-2xl text-left cursor-pointer transition shadow-sm flex flex-col justify-between h-36"
-              >
-                <div className="bg-yellow-50 border border-yellow-200 p-2.5 rounded-xl text-yellow-600 w-fit">
-                  <Award className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="font-extrabold text-xs text-slate-800 uppercase tracking-wide">Impact Leaderboard</h4>
-                  <p className="text-[10px] text-slate-400 mt-0.5 leading-normal">Ward rankings and community awards</p>
-                </div>
-              </div>
 
               <div 
                 onClick={() => { setViewMode('map'); setShowHeatmap(true); }}
@@ -1088,12 +1076,12 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
               setShowHeatmap(!showHeatmap);
               showToast(showHeatmap ? "Heatmap disabled" : "Heatmap density overlay enabled", "info");
             }}
-            onOpenLeaderboard={() => setIsSidePanelOpen(true)}
+            onOpenHistory={() => setIsSidePanelOpen(true)}
           />
         </div>
       )}
 
-      {/* 5. SLIDING PANEL (LEADERBOARD) */}
+      {/* 5. SLIDING PANEL (CITIZEN REPORTS) */}
       <SidePanel
         isOpen={isSidePanelOpen}
         onClose={() => setIsSidePanelOpen(false)}

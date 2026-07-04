@@ -137,18 +137,19 @@ const clickPinIcon = L.divIcon({
   popupAnchor: [0, -32]
 });
 
-// User's Current Location Marker
+// User's Current Location Marker styled as a Google Maps translucent blue ball
 const userLocationIcon = L.divIcon({
   html: `
-    <div class="relative flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 border-2 border-white shadow-2xl animate-pulse cursor-pointer transition-all duration-300 hover:scale-110" style="box-shadow: 0 0 16px rgba(37, 99, 235, 0.8)">
-      <span class="text-base">🧭</span>
-      <span class="absolute -bottom-5 whitespace-nowrap bg-slate-900 text-white font-mono font-bold text-[8px] px-1.5 py-0.5 rounded shadow border border-white/20">You Are Here</span>
+    <div class="relative flex items-center justify-center w-8 h-8 cursor-pointer">
+      <div class="absolute w-8 h-8 bg-blue-500/30 rounded-full animate-ping"></div>
+      <div class="absolute w-8 h-8 bg-blue-500/25 rounded-full border border-blue-500/10"></div>
+      <div class="w-3.5 h-3.5 bg-blue-600 rounded-full border-2 border-white shadow-md relative z-10"></div>
     </div>
   `,
   className: 'user-location-marker',
-  iconSize: [36, 36],
-  iconAnchor: [18, 18],
-  popupAnchor: [0, -18]
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+  popupAnchor: [0, -16]
 });
 
 // Sub-component to capture map click events
@@ -172,8 +173,46 @@ function AutoZoomToUser({ userPos }) {
   return null;
 }
 
+// Custom Zoom Widget (bottom-left)
+function CustomZoomWidget() {
+  const map = useMap();
+  const [zoom, setZoom] = useState(map.getZoom());
+
+  useEffect(() => {
+    const onZoom = () => setZoom(map.getZoom());
+    map.on('zoomend', onZoom);
+    return () => {
+      map.off('zoomend', onZoom);
+    };
+  }, [map]);
+
+  return (
+    <div className="absolute bottom-20 left-4 z-[1000] flex items-center bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-xl p-1.5 font-mono font-extrabold text-[12px] text-slate-800 select-none transition-all hover:border-slate-350">
+      <button
+        type="button"
+        onClick={() => map.zoomIn()}
+        className="w-8 h-8 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/60 flex items-center justify-center text-sm font-black transition cursor-pointer"
+        title="Zoom In"
+      >
+        +
+      </button>
+      <span className="px-3.5 text-center min-w-[32px] font-bold text-slate-700 tracking-wider">
+        {zoom}
+      </span>
+      <button
+        type="button"
+        onClick={() => map.zoomOut()}
+        className="w-8 h-8 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/60 flex items-center justify-center text-sm font-black transition cursor-pointer"
+        title="Zoom Out"
+      >
+        -
+      </button>
+    </div>
+  );
+}
+
 // Sub-component for Unified GIS Control Dock (bottom-right)
-function MapToolDock({ userPos, showHeatmap, onToggleHeatmap, onOpenLeaderboard }) {
+function MapToolDock({ userPos, showHeatmap, onToggleHeatmap, onOpenHistory }) {
   const map = useMap();
   return (
     <div className="absolute bottom-8 right-6 z-[1000] flex flex-col gap-2.5 font-mono uppercase tracking-widest text-[9px] select-none">
@@ -207,15 +246,15 @@ function MapToolDock({ userPos, showHeatmap, onToggleHeatmap, onOpenLeaderboard 
         <span className="hidden md:inline font-mono">Heatmap</span>
       </button>
 
-      {/* 3. Toggle Citizen Leaderboard */}
+      {/* 3. Open My Reports */}
       <button
         type="button"
-        onClick={onOpenLeaderboard}
+        onClick={onOpenHistory}
         className="p-3 bg-white/95 hover:bg-white text-slate-800 rounded-2xl shadow-xl border border-slate-200/80 flex items-center justify-center gap-2 font-extrabold cursor-pointer transition-all duration-200 hover:scale-105 backdrop-blur-md"
-        title="Citizen Leaderboard"
+        title="My Reports History"
       >
-        <span className="text-base">🏆</span>
-        <span className="hidden md:inline font-mono">Leaderboard</span>
+        <span className="text-base">📁</span>
+        <span className="hidden md:inline font-mono">My Reports</span>
       </button>
     </div>
   );
@@ -229,7 +268,7 @@ export default function MapView({
   onConfirmResolution,
   showHeatmap,
   onToggleHeatmap,
-  onOpenLeaderboard
+  onOpenHistory
 }) {
   const [userPos, setUserPos] = useState(HYDERABAD_CENTER);
 
@@ -270,12 +309,15 @@ export default function MapView({
         {/* Auto Zoom to User Location when Map Opens */}
         <AutoZoomToUser userPos={userPos} />
 
+        {/* Custom Zoom Control Widget (bottom-left) */}
+        <CustomZoomWidget />
+
         {/* Unified GIS Control Dock (bottom-right) */}
         <MapToolDock 
           userPos={userPos} 
           showHeatmap={showHeatmap} 
           onToggleHeatmap={onToggleHeatmap} 
-          onOpenLeaderboard={onOpenLeaderboard} 
+          onOpenHistory={onOpenHistory} 
         />
 
         {/* Dynamic Density Heatmap Overlay */}

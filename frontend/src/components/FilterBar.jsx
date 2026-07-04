@@ -59,21 +59,6 @@ export default function FilterBar({
             </select>
           </div>
 
-          {/* Status Dropdown */}
-          <div className="relative flex-1 min-w-[125px] md:flex-initial">
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-              className="w-full bg-slate-50 hover:bg-slate-100/80 border border-slate-200 text-slate-700 rounded-xl py-2 px-3 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition cursor-pointer appearance-none shadow-sm"
-            >
-              <option value="all">🏷️ All Statuses</option>
-              {STATUS_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
 
           {/* Sort Selector */}
           <div className="relative flex-1 min-w-[125px] md:flex-initial">

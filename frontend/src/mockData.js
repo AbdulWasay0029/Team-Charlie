@@ -93,14 +93,6 @@ export const STATUS_OPTIONS = [
   { value: "rejected", label: "Rejected" }
 ];
 
-export const MOCK_LEADERBOARD = [
-  { rank: 1, name: "Chaitanya Reddy", ward: "Ward 112 (Hitech City)", points: 480, reportsCount: 22, badges: ["🏆 Savior", "🚨 QuickReporter"] },
-  { rank: 2, name: "Priya Sharma", ward: "Ward 80 (Charminar)", points: 410, reportsCount: 18, badges: ["🎯 Accurate", "🛡️ Guardian"] },
-  { rank: 3, name: "Anil Kumar", ward: "Ward 95 (Khairatabad)", points: 350, reportsCount: 15, badges: ["🔍 Detective"] },
-  { rank: 4, name: "Sai Teja", ward: "Ward 101 (Jubilee Hills)", points: 290, reportsCount: 12, badges: ["🌱 EcoWarrior"] },
-  { rank: 5, name: "Divya N", ward: "Ward 104 (Begumpet)", points: 240, reportsCount: 10, badges: [] }
-];
-
 export const WARDS_DATABASE = {
   "Ward 112 (Hitech City)": {
     id: "112",
