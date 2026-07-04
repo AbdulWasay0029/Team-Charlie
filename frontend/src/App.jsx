@@ -12,7 +12,8 @@ import { INITIAL_REPORTS, CATEGORIES, WARDS_DATABASE } from './mockData';
 import { 
   AlertCircle, CheckCircle2, Info, RefreshCw, X, Shield, 
   Map, Award, Flame, User, LogOut, MessageSquare, AlertOctagon, History, Loader2,
-  Send, Mic, Bell, Settings, ArrowRight, Folder, MapPin, CheckCircle, Clock, ChevronRight, Sparkles, SendHorizontal, AlertTriangle
+  Send, Mic, Bell, Settings, ArrowRight, Folder, MapPin, CheckCircle, Clock, ChevronRight, Sparkles, SendHorizontal, AlertTriangle,
+  BarChart3
 } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
