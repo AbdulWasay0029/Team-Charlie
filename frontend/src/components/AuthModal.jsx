@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Phone, Mail, Loader2, ArrowRight, X, ShieldCheck, KeyRound, CheckCircle2, AlertCircle, MapPin, Lock, LogIn, UserPlus } from 'lucide-react';
+import { User, Phone, Mail, Loader2, ArrowRight, X, ShieldCheck, Lock, LogIn, UserPlus, MapPin, AlertCircle } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 
 const HYDERABAD_WARDS = [
@@ -184,100 +184,96 @@ export default function AuthModal({ onSignup, loading, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[1000] p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-8 shadow-2xl relative overflow-hidden">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[1000] p-4 animate-in fade-in duration-200">
+      <div className="bg-white border border-slate-200 rounded-2xl max-w-xs w-full p-5 shadow-2xl relative overflow-hidden text-left">
         
-        {/* Background Glow */}
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
         {/* Close Button */}
         {onClose && (
           <button 
             onClick={onClose}
-            className="absolute top-6 right-6 text-slate-400 hover:text-white p-2 rounded-full hover:bg-slate-800 transition-colors"
+            className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         )}
 
         {/* Header Branding */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/30 mb-4">
-            <ShieldCheck className="w-6 h-6" />
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-orange-500 to-red-600 text-white flex items-center justify-center shadow-md shadow-orange-500/20 shrink-0">
+            <ShieldCheck className="w-4 h-4" />
           </div>
-          <h2 className="text-2xl font-black text-white tracking-tight">TraceSpark Portal</h2>
-          <p className="text-xs text-slate-400 mt-1">Official Municipal Citizen Identity & SLA Gateway</p>
+          <div>
+            <h2 className="text-base font-display font-black text-slate-800 leading-tight">TraceSpark Portal</h2>
+            <p className="text-[10px] font-mono text-slate-400 tracking-wider uppercase">Citizen Identity</p>
+          </div>
         </div>
 
         {/* Top Navigation Tabs: SIGN IN vs SIGN UP */}
-        <div className="flex rounded-xl bg-slate-950 p-1.5 border border-slate-800 mb-6">
+        <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200/80 mb-4 font-mono text-xs font-bold">
           <button
             type="button"
             onClick={() => { setActiveTab('signin'); setError(''); }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeTab === 'signin'
-                ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-white text-slate-800 shadow-2xs font-extrabold border border-slate-200/60'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <LogIn className="w-4 h-4" />
+            <LogIn className="w-3.5 h-3.5" />
             Sign In
           </button>
           <button
             type="button"
             onClick={() => { setActiveTab('signup'); setError(''); }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg transition-all cursor-pointer ${
               activeTab === 'signup'
-                ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/20'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-white text-slate-800 shadow-2xs font-extrabold border border-slate-200/60'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <UserPlus className="w-4 h-4" />
+            <UserPlus className="w-3.5 h-3.5" />
             Sign Up
           </button>
         </div>
 
         {/* Error Display */}
         {error && (
-          <div className="mb-6 p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3 text-red-400 text-xs animate-shake">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <div className="mb-4 p-2.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 text-red-600 text-[11px] font-medium animate-shake">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
 
         {/* 1-Click Google OAuth Section */}
-        <div className="mb-6">
-          <div className="flex justify-center w-full overflow-hidden rounded-xl shadow-md">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => setError("Google Sign-In failed. Please try again.")}
-              theme="filled_black"
-              shape="pill"
-              size="large"
-              width="360"
-              text={activeTab === 'signin' ? "signin_with" : "signup_with"}
-            />
-          </div>
+        <div className="mb-4 flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError("Google Sign-In failed. Please try again.")}
+            theme="outline"
+            shape="rectangular"
+            size="medium"
+            width="280"
+            text={activeTab === 'signin' ? "signin_with" : "signup_with"}
+          />
         </div>
 
         {/* Divider */}
-        <div className="relative flex items-center justify-center mb-6">
-          <div className="border-t border-slate-800 w-full" />
-          <span className="bg-slate-900 px-3 text-[10px] font-black uppercase tracking-wider text-slate-500 absolute">
-            or continue with mobile
+        <div className="relative flex items-center justify-center mb-4">
+          <div className="border-t border-slate-200 w-full" />
+          <span className="bg-white px-2 text-[9px] font-mono font-extrabold uppercase tracking-widest text-slate-400 absolute">
+            or mobile
           </span>
         </div>
 
         {/* TAB 1: SIGN IN FORM */}
         {activeTab === 'signin' && (
-          <form onSubmit={handleSignin} className="space-y-4">
+          <form onSubmit={handleSignin} className="space-y-3 font-sans">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                Registered Mobile Number
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">
+                Mobile Number
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 font-bold text-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">
                   +91
                 </div>
                 <input
@@ -286,15 +282,15 @@ export default function AuthModal({ onSignup, loading, onClose }) {
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                  placeholder="Enter 10-digit mobile number"
-                  className="w-full pl-12 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-medium text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-600"
+                  placeholder="10-digit number"
+                  className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium text-xs focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-400"
                 />
-                <Phone className="w-4 h-4 text-slate-600 absolute right-3.5 top-3.5 pointer-events-none" />
+                <Phone className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">
                 Password
               </label>
               <div className="relative">
@@ -303,27 +299,27 @@ export default function AuthModal({ onSignup, loading, onClose }) {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="w-full pl-4 pr-10 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-medium text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-600"
+                  placeholder="••••••••"
+                  className="w-full pl-3 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium text-xs focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-400"
                 />
-                <Lock className="w-4 h-4 text-slate-600 absolute right-3.5 top-3.5 pointer-events-none" />
+                <Lock className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
               </div>
             </div>
 
             <button
               type="submit"
               disabled={loading || isSending}
-              className="w-full py-3.5 px-6 rounded-xl font-bold text-sm bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-2 cursor-pointer"
+              className="w-full py-2.5 px-4 rounded-xl font-mono font-extrabold text-xs uppercase tracking-wider bg-gradient-to-r from-orange-500 to-red-600 text-white hover:from-orange-400 hover:to-red-500 shadow-md shadow-orange-500/15 flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 mt-1 cursor-pointer"
             >
               {loading || isSending ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   <span>Signing In...</span>
                 </>
               ) : (
                 <>
                   <span>Sign In</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </>
               )}
             </button>
@@ -332,9 +328,9 @@ export default function AuthModal({ onSignup, loading, onClose }) {
 
         {/* TAB 2: SIGN UP FORM */}
         {activeTab === 'signup' && (
-          <form onSubmit={handleSignup} className="space-y-3.5">
+          <form onSubmit={handleSignup} className="space-y-2.5 font-sans">
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-0.5">
                 Full Name
               </label>
               <div className="relative">
@@ -343,19 +339,19 @@ export default function AuthModal({ onSignup, loading, onClose }) {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter your full name"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-medium text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-600"
+                  placeholder="Citizen Name"
+                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium text-xs focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-400"
                 />
-                <User className="w-4 h-4 text-slate-600 absolute left-3.5 top-3 pointer-events-none" />
+                <User className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2 pointer-events-none" />
               </div>
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-0.5">
                 Mobile Number
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 font-bold text-sm">
+                <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 font-bold text-xs">
                   +91
                 </div>
                 <input
@@ -364,15 +360,15 @@ export default function AuthModal({ onSignup, loading, onClose }) {
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                  placeholder="Enter 10-digit mobile number"
-                  className="w-full pl-12 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-medium text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-600"
+                  placeholder="10-digit number"
+                  className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium text-xs focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-400"
                 />
-                <Phone className="w-4 h-4 text-slate-600 absolute right-3.5 top-3 pointer-events-none" />
+                <Phone className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2 pointer-events-none" />
               </div>
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-0.5">
                 Create Password
               </label>
               <div className="relative">
@@ -381,45 +377,45 @@ export default function AuthModal({ onSignup, loading, onClose }) {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a 6+ character password"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-medium text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-600"
+                  placeholder="6+ characters"
+                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium text-xs focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-400"
                 />
-                <Lock className="w-4 h-4 text-slate-600 absolute left-3.5 top-3 pointer-events-none" />
+                <Lock className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2 pointer-events-none" />
               </div>
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-0.5">
                 Primary Municipal Ward
               </label>
               <div className="relative">
                 <select
                   value={selectedWard}
                   onChange={(e) => setSelectedWard(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-medium text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all appearance-none cursor-pointer"
+                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium text-xs focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all appearance-none cursor-pointer"
                 >
                   {HYDERABAD_WARDS.map(w => (
-                    <option key={w} value={w} className="bg-slate-900 text-white">{w}</option>
+                    <option key={w} value={w} className="bg-white text-slate-800">{w}</option>
                   ))}
                 </select>
-                <MapPin className="w-4 h-4 text-orange-500 absolute left-3.5 top-3 pointer-events-none" />
+                <MapPin className="w-3.5 h-3.5 text-orange-500 absolute left-2.5 top-2 pointer-events-none" />
               </div>
             </div>
 
             <button
               type="submit"
               disabled={loading || isSending}
-              className="w-full py-3 px-6 rounded-xl font-bold text-sm bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-4 cursor-pointer"
+              className="w-full py-2 px-4 rounded-xl font-mono font-extrabold text-xs uppercase tracking-wider bg-gradient-to-r from-orange-500 to-red-600 text-white hover:from-orange-400 hover:to-red-500 shadow-md shadow-orange-500/15 flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 mt-2 cursor-pointer"
             >
               {loading || isSending ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Creating Account...</span>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Creating...</span>
                 </>
               ) : (
                 <>
-                  <span>Create Citizen Account</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <span>Create Account</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </>
               )}
             </button>
@@ -427,25 +423,25 @@ export default function AuthModal({ onSignup, loading, onClose }) {
         )}
 
         {/* Bottom Switcher */}
-        <div className="mt-6 pt-4 border-t border-slate-800/80 text-center">
+        <div className="mt-4 pt-3 border-t border-slate-100 text-center">
           {activeTab === 'signin' ? (
-            <p className="text-xs text-slate-400">
-              Don't have a citizen account?{' '}
+            <p className="text-[11px] text-slate-500">
+              No account?{' '}
               <button
                 type="button"
                 onClick={() => { setActiveTab('signup'); setError(''); }}
-                className="text-orange-400 hover:text-orange-300 font-bold underline underline-offset-4 ml-1 cursor-pointer"
+                className="text-orange-600 hover:text-orange-700 font-bold underline underline-offset-2 ml-0.5 cursor-pointer"
               >
-                Create Account
+                Sign Up
               </button>
             </p>
           ) : (
-            <p className="text-xs text-slate-400">
-              Already have an account?{' '}
+            <p className="text-[11px] text-slate-500">
+              Have an account?{' '}
               <button
                 type="button"
                 onClick={() => { setActiveTab('signin'); setError(''); }}
-                className="text-orange-400 hover:text-orange-300 font-bold underline underline-offset-4 ml-1 cursor-pointer"
+                className="text-orange-600 hover:text-orange-700 font-bold underline underline-offset-2 ml-0.5 cursor-pointer"
               >
                 Sign In
               </button>
