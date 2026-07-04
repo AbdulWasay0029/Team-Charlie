@@ -38,7 +38,7 @@ const getMockWard = (lat, lng) => {
 export default function App() {
   const [reports, setReports] = useState([]);
   const [votedReportIds, setVotedReportIds] = useState([]);
-  const [filters, setFilters] = useState({ category: 'all', status: 'all' });
+  const [filters, setFilters] = useState({ category: 'all', status: 'active' });
   const [sortBy, setSortBy] = useState('priority');
   
   // Navigation View State: 'dashboard' or 'map'
@@ -627,7 +627,15 @@ export default function App() {
   // Perform client-side filtering and sorting for display
   const displayedReports = reports.filter(r => {
     const matchCategory = filters.category === 'all' || r.category === filters.category;
-    const matchStatus = filters.status === 'all' || r.status === filters.status;
+    
+    let matchStatus = true;
+    if (filters.status === 'active') {
+      // Hide fully resolved complaints from default active view
+      matchStatus = r.status !== 'resolved';
+    } else if (filters.status !== 'all') {
+      matchStatus = r.status === filters.status;
+    }
+    
     return matchCategory && matchStatus;
   }).sort((a, b) => {
     if (sortBy === 'newest') {
