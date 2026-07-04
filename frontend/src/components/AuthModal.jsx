@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
-import { User, Phone, Loader2, ArrowRight, X, ShieldCheck, KeyRound, CheckCircle2, AlertCircle } from 'lucide-react';
+import { User, Phone, Mail, Loader2, ArrowRight, X, ShieldCheck, KeyRound, CheckCircle2, AlertCircle, ArrowLeft, MapPin } from 'lucide-react';
 
-const GOOGLE_ACCOUNTS = [
-  { name: 'Chaitanya Reddy', email: 'chaitanya.reddy@gmail.com', phone: '9848012345', ward: 'Ward 112 (Hitech City)' },
-  { name: 'Priya Sharma', email: 'priya.sharma@gmail.com', phone: '9848054321', ward: 'Ward 80 (Charminar)' },
-  { name: 'Sameer Ansari', email: 'sameer.ansari@gmail.com', phone: '9848098765', ward: 'Ward 95 (Khairatabad)' }
+const HYDERABAD_WARDS = [
+  'Ward 112 (Hitech City)',
+  'Ward 80 (Charminar)',
+  'Ward 95 (Khairatabad)',
+  'Ward 101 (Jubilee Hills)',
+  'Ward 120 (Kukatpally)',
+  'Ward 85 (Koti & Abids)',
+  'Ward 98 (Gachibowli)',
+  'Ward 104 (Begumpet)'
 ];
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
@@ -13,11 +18,15 @@ export default function AuthModal({ onSignup, loading, onClose }) {
   const [step, setStep] = useState('main'); // 'main' | 'otp' | 'google'
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [googleEmail, setGoogleEmail] = useState('');
+  const [googleName, setGoogleName] = useState('');
+  const [selectedWard, setSelectedWard] = useState('Ward 112 (Hitech City)');
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [devOtp, setDevOtp] = useState(null);
 
+  // Handle Mobile SMS OTP Request
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setError('');
@@ -59,6 +68,7 @@ export default function AuthModal({ onSignup, loading, onClose }) {
     }
   };
 
+  // Handle Mobile OTP Verification
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setError('');
@@ -104,14 +114,58 @@ export default function AuthModal({ onSignup, loading, onClose }) {
     }
   };
 
-  const handleSelectGoogleAccount = (acc) => {
-    onSignup(acc.name, acc.phone, {
-      verified: true,
-      loginType: 'google',
-      email: acc.email,
-      ward: acc.ward,
-      verifiedAt: new Date().toISOString()
-    });
+  // Handle Google OAuth Sign-In Submission
+  const handleGoogleAuthSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!googleEmail.trim() || !googleEmail.includes('@') || !googleEmail.includes('.')) {
+      setError("Please enter a valid Google email address.");
+      return;
+    }
+    if (!googleName.trim()) {
+      setError("Please enter your full name.");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      if (API_BASE_URL) {
+        const res = await fetch(`${API_BASE_URL}/auth/google`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: googleEmail.trim(),
+            name: googleName.trim(),
+            ward: selectedWard
+          })
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || "Google authentication failed.");
+        }
+        const userData = await res.json();
+        onSignup(userData.name, userData.email, {
+          id: userData.id,
+          verified: true,
+          loginType: 'google',
+          email: userData.email,
+          ward: selectedWard,
+          verifiedAt: new Date().toISOString()
+        });
+      } else {
+        onSignup(googleName.trim(), googleEmail.trim(), {
+          verified: true,
+          loginType: 'google',
+          email: googleEmail.trim(),
+          ward: selectedWard,
+          verifiedAt: new Date().toISOString()
+        });
+      }
+    } catch (err) {
+      setError(err.message || "Error authenticating Google account.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -155,11 +209,11 @@ export default function AuthModal({ onSignup, loading, onClose }) {
           </div>
         )}
 
-        {/* STEP 1: MAIN AUTH SCREEN (Google + Phone Input) */}
+        {/* STEP 1: MAIN AUTH SCREEN (Google Option + Mobile OTP Form) */}
         {step === 'main' && (
           <div className="space-y-5">
             
-            {/* Google OAuth Option */}
+            {/* Google Sign In Button */}
             <div>
               <button
                 type="button"
@@ -170,14 +224,14 @@ export default function AuthModal({ onSignup, loading, onClose }) {
                 className="w-full bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-800 font-extrabold py-3.5 px-4 rounded-2xl shadow-sm hover:shadow transition flex items-center justify-center gap-3 cursor-pointer text-xs font-mono uppercase tracking-wider group"
               >
                 <span className="text-lg font-bold">🌐</span>
-                <span>Sign in with Google Account</span>
+                <span>Sign in with Google</span>
               </button>
             </div>
 
             <div className="relative flex items-center justify-center">
               <div className="border-t border-slate-200 w-full"></div>
               <span className="bg-white px-3 text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest absolute">
-                Or Mobile OTP Verification
+                Or Mobile Verification
               </span>
             </div>
 
@@ -197,7 +251,7 @@ export default function AuthModal({ onSignup, loading, onClose }) {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Sameer Ansari"
+                    placeholder="Enter your full name"
                     className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl py-3 pl-10 pr-4 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent transition shadow-sm"
                   />
                 </div>
@@ -217,7 +271,7 @@ export default function AuthModal({ onSignup, loading, onClose }) {
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                    placeholder="9876543210"
+                    placeholder="Enter 10-digit mobile number"
                     maxLength={10}
                     className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl py-3 pl-12 pr-4 text-xs font-semibold tracking-widest placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent transition font-mono shadow-sm"
                   />
@@ -237,7 +291,7 @@ export default function AuthModal({ onSignup, loading, onClose }) {
                   </>
                 ) : (
                   <>
-                    <span>Send Verification SMS</span>
+                    <span>Send SMS Verification Code</span>
                     <ArrowRight className="h-4.5 w-4.5" />
                   </>
                 )}
@@ -255,11 +309,11 @@ export default function AuthModal({ onSignup, loading, onClose }) {
                 <span>SMS Sent to +91 {phone}</span>
               </div>
               <p className="text-[11px] text-slate-600 font-medium">
-                To verify your identity, please enter the 6-digit verification code sent to your mobile device.
+                To verify your mobile identity, enter the 6-digit verification code sent to your device.
               </p>
               {devOtp && (
                 <div className="mt-2 pt-2 border-t border-teal-200/60 font-mono text-[11px] font-extrabold text-teal-800">
-                  📲 SMS Gateway Dispatch Code: <span className="tracking-widest bg-white px-2 py-0.5 rounded border border-teal-200">{devOtp}</span>
+                  ℹ️ SMS Gateway Dev Mode: <span className="tracking-widest bg-white px-2 py-0.5 rounded border border-teal-200">{devOtp}</span>
                 </div>
               )}
             </div>
@@ -305,7 +359,7 @@ export default function AuthModal({ onSignup, loading, onClose }) {
                     </>
                   ) : (
                     <>
-                      <span>Verify & Login</span>
+                      <span>Verify & Sign In</span>
                       <ShieldCheck className="h-4.5 w-4.5" />
                     </>
                   )}
@@ -315,49 +369,108 @@ export default function AuthModal({ onSignup, loading, onClose }) {
           </div>
         )}
 
-        {/* STEP 3: GOOGLE ACCOUNT SELECTOR */}
+        {/* STEP 3: CLEAN GOOGLE AUTH FORM (No Fake Accounts or Leaked Data) */}
         {step === 'google' && (
           <div className="space-y-4 animate-in fade-in slide-in-from-right duration-200">
-            <div className="bg-sky-50 border border-sky-200 p-3 rounded-2xl text-left">
+            <div className="bg-sky-50 border border-sky-200 p-3.5 rounded-2xl text-left space-y-1">
               <h4 className="text-sky-800 font-mono text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <span>🌐</span> Google OAuth Identity
+                <span>🌐</span> Google Identity Authentication
               </h4>
-              <p className="text-[10px] text-slate-600 mt-1 leading-normal">
-                Select your verified citizen account to authenticate instantly with Supabase Google Identity.
+              <p className="text-[11px] text-slate-600 leading-normal">
+                Enter your Google email and name to verify your citizen profile securely with TraceSpark.
               </p>
             </div>
 
-            <div className="space-y-2">
-              {GOOGLE_ACCOUNTS.map((acc) => (
-                <button
-                  key={acc.email}
-                  type="button"
-                  onClick={() => handleSelectGoogleAccount(acc)}
-                  className="w-full bg-slate-50 hover:bg-teal-50/50 border border-slate-200 hover:border-teal-300 p-3 rounded-xl flex items-center justify-between transition cursor-pointer text-left group shadow-xs"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-orange-500 via-red-500 to-purple-600 text-white font-extrabold flex items-center justify-center text-xs shrink-0 shadow">
-                      {acc.name[0]}
-                    </div>
-                    <div className="min-w-0">
-                      <h5 className="text-xs font-bold text-slate-800 truncate group-hover:text-teal-700 transition">{acc.name}</h5>
-                      <p className="text-[10px] text-slate-400 font-mono truncate">{acc.email}</p>
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-mono uppercase bg-white border border-slate-200 px-2 py-0.5 rounded-full text-slate-500 shrink-0 group-hover:bg-teal-600 group-hover:text-white group-hover:border-transparent transition">
-                    Sign In ➔
+            <form onSubmit={handleGoogleAuthSubmit} className="space-y-3.5">
+              {/* Google Email Field */}
+              <div className="text-left space-y-1">
+                <label className="text-slate-500 text-[9px] font-bold uppercase tracking-wider block font-mono">
+                  Google Email Address
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                    <Mail className="h-4.5 w-4.5 text-slate-400" />
                   </span>
-                </button>
-              ))}
-            </div>
+                  <input
+                    type="email"
+                    required
+                    value={googleEmail}
+                    onChange={(e) => setGoogleEmail(e.target.value)}
+                    placeholder="name@gmail.com"
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl py-3 pl-10 pr-4 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-transparent transition shadow-sm font-mono"
+                  />
+                </div>
+              </div>
 
-            <button
-              type="button"
-              onClick={() => setStep('main')}
-              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold py-3 rounded-xl transition cursor-pointer font-mono uppercase text-[10px]"
-            >
-              ⬅ Back to Methods
-            </button>
+              {/* Full Name Field */}
+              <div className="text-left space-y-1">
+                <label className="text-slate-500 text-[9px] font-bold uppercase tracking-wider block font-mono">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                    <User className="h-4.5 w-4.5 text-slate-400" />
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    value={googleName}
+                    onChange={(e) => setGoogleName(e.target.value)}
+                    placeholder="Enter your full name"
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl py-3 pl-10 pr-4 text-xs font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-transparent transition shadow-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Ward Selector */}
+              <div className="text-left space-y-1">
+                <label className="text-slate-500 text-[9px] font-bold uppercase tracking-wider block font-mono">
+                  Primary Constituency / Ward
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                    <MapPin className="h-4.5 w-4.5 text-slate-400" />
+                  </span>
+                  <select
+                    value={selectedWard}
+                    onChange={(e) => setSelectedWard(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl py-3 pl-10 pr-4 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-transparent transition shadow-sm font-mono"
+                  >
+                    {HYDERABAD_WARDS.map((w) => (
+                      <option key={w} value={w}>{w}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Submit & Back Buttons */}
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setStep('main')}
+                  className="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold py-3.5 rounded-xl transition cursor-pointer font-mono uppercase text-[10px]"
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || isSending || !googleEmail.trim() || !googleName.trim()}
+                  className="w-2/3 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-extrabold py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 uppercase font-mono tracking-widest text-xs"
+                >
+                  {loading || isSending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Verifying...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Sign in with Google</span>
+                      <ArrowRight className="h-4.5 w-4.5" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         )}
 

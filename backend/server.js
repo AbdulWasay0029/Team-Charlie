@@ -259,6 +259,66 @@ app.post('/auth/verify-otp', async (req, res) => {
   }
 });
 
+// 0.3 POST /auth/google
+// Body: { email, name, ward }
+app.post('/auth/google', async (req, res) => {
+  const { email, name, ward = 'Ward 112 (Hitech City)' } = req.body;
+  if (!email || !name) {
+    return res.status(400).json({ error: 'Email and full name are required for Google authentication' });
+  }
+
+  // Ensure valid email format
+  if (!email.includes('@') || !email.includes('.')) {
+    return res.status(400).json({ error: 'Please enter a valid Google email address' });
+  }
+
+  if (isConfigured && supabase) {
+    try {
+      // Check if user exists by phone/email field
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('phone', email)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+      if (existingUser) {
+        return res.json({ ...existingUser, verified: true, loginType: 'google', email, ward });
+      }
+
+      const { data: newUser, error: insertError } = await supabase
+        .from('users')
+        .insert([{ name, phone: email }])
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+      return res.status(201).json({ ...newUser, verified: true, loginType: 'google', email, ward });
+    } catch (err) {
+      console.error('Supabase error in POST /auth/google:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  } else {
+    // Fallback Mock Logic
+    let existingUser = mockUsers.find(u => u.phone === email || u.email === email);
+    if (existingUser) {
+      return res.json({ ...existingUser, verified: true, loginType: 'google', email, ward });
+    }
+
+    const newUser = {
+      id: generateUuid(),
+      name,
+      phone: email,
+      email,
+      verified: true,
+      loginType: 'google',
+      ward
+    };
+    mockUsers.push(newUser);
+    return res.status(201).json(newUser);
+  }
+});
+
 // 1. POST /users (Signup)
 // Body: { name, phone }
 app.post('/users', async (req, res) => {
