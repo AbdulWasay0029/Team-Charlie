@@ -29,7 +29,13 @@ app.use(cors({
       return callback(null, true);
     }
     
-    if (formattedOrigin.startsWith('http://localhost:') || formattedOrigin.startsWith('http://127.0.0.1:')) {
+    // Hackathon demo safety net: Allow localhost, Vercel preview/prod domains, and Render domains
+    if (
+      formattedOrigin.startsWith('http://localhost:') || 
+      formattedOrigin.startsWith('http://127.0.0.1:') ||
+      formattedOrigin.endsWith('.vercel.app') ||
+      formattedOrigin.endsWith('.onrender.com')
+    ) {
       return callback(null, true);
     }
     
