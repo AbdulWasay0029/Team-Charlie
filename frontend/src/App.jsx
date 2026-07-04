@@ -84,6 +84,7 @@ export default function App() {
 
   // Guest-friendly Deferred Auth States
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState('signin'); // 'signin' | 'signup'
   const [pendingAction, setPendingAction] = useState(null); // { type: 'vote'|'report', payload }
 
   // AI Chatbot State
@@ -284,6 +285,7 @@ export default function App() {
 
     if (!currentUser) {
       setPendingAction({ type: 'report', formData });
+      setAuthModalTab('signin');
       setIsAuthModalOpen(true);
       showToast("Verification required to lodge civic reports.", "info");
       return;
@@ -357,6 +359,7 @@ export default function App() {
   const handleVote = async (reportId) => {
     if (!currentUser) {
       setPendingAction({ type: 'vote', reportId });
+      setAuthModalTab('signin');
       setIsAuthModalOpen(true);
       showToast("Verification required to cast upvotes.", "info");
       return;
@@ -648,12 +651,20 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => setIsAuthModalOpen(true)}
-              className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-extrabold text-xs uppercase tracking-wider py-2.5 px-4 rounded-xl transition cursor-pointer shadow-md shadow-orange-500/5 font-mono"
-            >
-              Sign Up
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setAuthModalTab('signin'); setIsAuthModalOpen(true); }}
+                className="bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-mono font-extrabold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl transition cursor-pointer shadow-2xs"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => { setAuthModalTab('signup'); setIsAuthModalOpen(true); }}
+                className="bg-slate-900 hover:bg-slate-800 text-white font-mono font-extrabold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl transition cursor-pointer shadow-sm border border-slate-800"
+              >
+                Sign Up
+              </button>
+            </div>
           )}
         </div>
       </header>
@@ -1186,6 +1197,7 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
       {/* 8. INLINE AUTHENTICATION MODAL */}
       {isAuthModalOpen && (
         <AuthModal
+          initialTab={authModalTab}
           onSignup={handleSignup}
           loading={signupLoading}
           onClose={() => {

@@ -15,8 +15,8 @@ const HYDERABAD_WARDS = [
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-export default function AuthModal({ onSignup, loading, onClose }) {
-  const [activeTab, setActiveTab] = useState('signin'); // 'signin' | 'signup'
+export default function AuthModal({ initialTab = 'signin', onSignup, loading, onClose }) {
+  const [activeTab, setActiveTab] = useState(initialTab); // 'signin' | 'signup'
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
