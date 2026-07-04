@@ -1,5 +1,5 @@
-import React from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { CATEGORIES } from '../mockData';
 import ReportPopup from './ReportPopup';
@@ -137,6 +137,20 @@ const clickPinIcon = L.divIcon({
   popupAnchor: [0, -32]
 });
 
+// User's Current Location Marker
+const userLocationIcon = L.divIcon({
+  html: `
+    <div class="relative flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 border-2 border-white shadow-2xl animate-pulse cursor-pointer transition-all duration-300 hover:scale-110" style="box-shadow: 0 0 16px rgba(37, 99, 235, 0.8)">
+      <span class="text-base">🧭</span>
+      <span class="absolute -bottom-5 whitespace-nowrap bg-slate-900 text-white font-mono font-bold text-[8px] px-1.5 py-0.5 rounded shadow border border-white/20">You Are Here</span>
+    </div>
+  `,
+  className: 'user-location-marker',
+  iconSize: [36, 36],
+  iconAnchor: [18, 18],
+  popupAnchor: [0, -18]
+});
+
 // Sub-component to capture map click events
 function MapClickEvents({ onMapClick }) {
   useMapEvents({
@@ -147,6 +161,27 @@ function MapClickEvents({ onMapClick }) {
   return null;
 }
 
+// Sub-component for Recenter to User Location button
+function RecenterControl({ userPos }) {
+  const map = useMap();
+  return (
+    <div className="absolute top-28 right-4 z-[1000] font-mono uppercase tracking-widest text-[9px]">
+      <button
+        onClick={() => {
+          if (userPos) {
+            map.flyTo(userPos, 15, { duration: 1.5 });
+          }
+        }}
+        className="p-3 bg-white hover:bg-slate-50 text-slate-700 rounded-xl shadow-2xl border border-slate-200 flex items-center justify-center gap-2 font-bold cursor-pointer transition backdrop-blur-md"
+        title="Recenter to My Location"
+      >
+        <span className="text-sm">🧭</span>
+        <span className="hidden md:inline">My Location</span>
+      </button>
+    </div>
+  );
+}
+
 export default function MapView({ 
   reports, 
   activeClick, 
@@ -155,6 +190,22 @@ export default function MapView({
   onConfirmResolution,
   showHeatmap 
 }) {
+  const [userPos, setUserPos] = useState(HYDERABAD_CENTER);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserPos([pos.coords.latitude, pos.coords.longitude]);
+        },
+        () => {
+          setUserPos(HYDERABAD_CENTER);
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    }
+  }, []);
+
   const clusteredReportsList = clusterReports(reports);
 
   const heatmapPoints = reports
@@ -175,6 +226,9 @@ export default function MapView({
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
 
+        {/* Recenter to User Location Control */}
+        <RecenterControl userPos={userPos} />
+
         {/* Dynamic Density Heatmap Overlay */}
         {showHeatmap && heatmapPoints.length > 0 && (
           <HeatmapLayer points={heatmapPoints} />
@@ -182,6 +236,19 @@ export default function MapView({
 
         {/* Capture Map Clicks */}
         <MapClickEvents onMapClick={onMapClick} />
+
+        {/* Render User Current Location Marker */}
+        {userPos && (
+          <Marker position={userPos} icon={userLocationIcon}>
+            <Popup className="custom-popup-window" keepInView={true}>
+              <div className="p-2.5 text-center font-body min-w-[160px]">
+                <span className="text-2xl block mb-1">🧭</span>
+                <h4 className="font-extrabold text-xs text-slate-800 uppercase tracking-wide">Your Current Location</h4>
+                <p className="text-[10px] text-slate-500 font-medium mt-1 leading-normal">We use your location to verify nearby civic reports and route to your ward councillor.</p>
+              </div>
+            </Popup>
+          </Marker>
+        )}
 
         {/* Render Temp Marker where user clicked to report */}
         {activeClick && (

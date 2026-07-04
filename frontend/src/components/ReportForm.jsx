@@ -194,10 +194,10 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4.5 w-4.5 animate-spin" />
-                  <span>AI Inspecting Inline...</span>
+                  <span>Verifying Photo...</span>
                 </>
               ) : (
-                <span>Submit to AI Inspector</span>
+                <span>Submit Complaint</span>
               )}
             </button>
           </div>

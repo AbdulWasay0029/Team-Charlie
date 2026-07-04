@@ -250,11 +250,11 @@ export default function App() {
         const reportRow = await res.json();
         
         if (reportRow.status === 'rejected') {
-          showToast("AI Verification Rejected: Not a valid civic issue.", "error");
+          showToast("Photo Verification Failed: No civic hazard detected.", "error");
           setEscalationAlert({
             category: reportRow.category,
             ward: getMockWard(reportRow.lat, reportRow.lng),
-            description: reportRow.description || "Selfie detected. The uploaded photo shows a human face rather than a road, drain, or public utility hazard. Verification failed.",
+            description: reportRow.description || "Our automated check couldn't verify a civic hazard in this photo. Please upload a clear picture showing road damage, garbage, or other infrastructure issues.",
             rejected: true
           });
         } else {
@@ -264,7 +264,7 @@ export default function App() {
             ward: getMockWard(reportRow.lat, reportRow.lng)
           };
           setReports(prev => [mappedReport, ...prev]);
-          showToast("AI Verification Approved: Issue is live!", "success");
+          showToast("Photo Verified: Complaint is now live on the map!", "success");
         }
       }
     } catch (err) {
@@ -1018,10 +1018,10 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
               </div>
               <div className="text-left font-mono">
                 <h3 className="font-extrabold text-xs uppercase tracking-widest">
-                  {escalationAlert.rejected ? "AI Verification Rejected" : "Auto Escalation Fired"}
+                  {escalationAlert.rejected ? "Photo Verification Failed" : "Auto Escalation Fired"}
                 </h3>
                 <p className="text-orange-100 text-[9px] font-bold">
-                  {escalationAlert.rejected ? "Groq Llama-4-Scout Vision analysis" : "Priority crossed 25 votes threshold"}
+                  {escalationAlert.rejected ? "Automated Civic Quality Check" : "Priority crossed 25 votes threshold"}
                 </p>
               </div>
               <button
@@ -1038,7 +1038,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
                 <div className="space-y-3 text-left">
                   <div className="bg-red-50 border border-red-200 p-3 rounded-xl text-red-600 font-mono text-[10px] font-bold leading-normal flex items-start gap-2">
                     <AlertCircle className="h-4 w-4 shrink-0 text-red-500 animate-bounce" />
-                    <span>Llama Vision AI classified this image as invalid/unrelated. Submission has been rejected and will not be displayed on the map.</span>
+                    <span>Our quality check couldn't verify a civic infrastructure hazard in this photo. To prevent spam and false alarms, complaints must clearly show road damage, garbage piles, or other civic issues.</span>
                   </div>
                   <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm text-xs font-semibold text-slate-700 leading-relaxed">
                     {escalationAlert.description}
@@ -1072,7 +1072,7 @@ Under GHMC Service Level Agreement guidelines, urgent dispatch is requested to r
                   onClick={() => setEscalationAlert(null)}
                   className="flex-1 bg-teal-600 hover:bg-teal-500 text-white font-extrabold py-3 rounded-2xl cursor-pointer transition text-center shadow-md hover:shadow-teal-500/10"
                 >
-                  Confirm Alert
+                  {escalationAlert.rejected ? "Got It, I'll Try Again" : "Confirm Alert"}
                 </button>
               </div>
 
