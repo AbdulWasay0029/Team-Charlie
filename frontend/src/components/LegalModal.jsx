@@ -91,24 +91,42 @@ export default function LegalModal({ initialTab = 'tos', onClose }) {
           {activeTab === 'privacy' && (
             <div className="space-y-4 animate-in fade-in duration-150">
               <div className="border-l-4 border-teal-500 pl-3 py-1 bg-teal-50/50 rounded-r-xl">
-                <h4 className="font-extrabold text-slate-900 text-sm">2. Privacy Policy & DPDP Act 2023 Compliance</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5">Digital Personal Data Protection Act, 2023 • Zero-Trust Security</p>
+                <h4 className="font-extrabold text-slate-900 text-sm">2. Statutory Compliance: Indian DPDP Act, 2023 (Act No. 22 of 2023)</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">Digital Personal Data Protection Act, 2023 • Data Fiduciary & Principal Rights</p>
               </div>
               <p>
-                TraceSpark is committed to safeguarding citizen privacy in strict accordance with India's <strong>Digital Personal Data Protection (DPDP) Act, 2023</strong> and international data protection standards.
+                TraceSpark operates as a compliant <strong>Data Fiduciary</strong> under India's statutory <strong>Digital Personal Data Protection (DPDP) Act, 2023 (Act No. 22 of 2023)</strong>. We process citizen personal data strictly for the lawful purpose of public grievance redressal and municipal SLA enforcement in Greater Hyderabad Municipal Corporation (GHMC).
               </p>
-              <h5 className="font-bold text-slate-800">2.1 Cryptographic Identity Verification (Google OAuth 2.0)</h5>
+              
+              <h5 className="font-bold text-slate-800">2.1 Section 4 & 6: Lawful Consent & Purpose Limitation</h5>
               <p>
-                When authenticating via <strong>Google Identity Services (GIS)</strong>, TraceSpark does not store or access your Google account password. Our Node.js backend receives an encrypted JSON Web Token (JWT) ID Token, which is cryptographically validated using official public certificates via <code>OAuth2Client.verifyIdToken()</code>. We only retain your verified display name, email address, and unique citizen identifier.
+                Under Section 4 and Section 6 of the DPDP Act, personal data (such as citizen name, email, and location) is collected only after explicit, affirmative consent upon user registration or OAuth login. Data is processed strictly for the purpose of verifying infrastructure hazards, routing grievances to municipal ward officers, and executing SLA escalations.
               </p>
-              <h5 className="font-bold text-slate-800">2.2 Spatial GPS & Location Data Processing</h5>
+
+              <h5 className="font-bold text-slate-800">2.2 Section 7(b): Legitimate Use for Municipal Service Delivery</h5>
               <p>
-                When submitting a hazard report, TraceSpark collects exact GPS coordinates <code>(Latitude, Longitude)</code> exclusively to execute our Euclidean Spatial GIS routing algorithm (<code>detectWardFromGPS</code>). This data binds the hazard to canonical municipal ward boundaries and responsible Zonal Commissioners. Location data is never sold, monetized, or shared with third-party advertisers.
+                In accordance with <strong>Section 7(b) of the DPDP Act, 2023</strong>, processing of personal data for the provision of any subsidy, benefit, service, certificate, or license by the State or Municipal Corporation is recognized as a "Certain Legitimate Use." This enables TraceSpark to autonomously dispatch WhatsApp and Email SLAs to municipal authorities without causing friction or delay in emergency hazard resolution.
               </p>
-              <h5 className="font-bold text-slate-800">2.3 Mobile Number Protection & Public Display Restraint</h5>
+
+              <h5 className="font-bold text-slate-800">2.3 Section 8: Data Fiduciary Security Obligations & Zero-Trust Architecture</h5>
               <p>
-                Citizens registering via Mobile Number + Password have their credentials hashed using industry-standard bcrypt algorithms. Phone numbers are strictly utilized for vital civic alerts and account recovery; they are **never displayed publicly** on community report feeds or map overlays.
+                As mandated by Section 8, TraceSpark implements rigorous technical and organizational safeguards to prevent personal data breach:
               </p>
+              <ul className="list-disc pl-5 space-y-1 text-slate-600">
+                <li><strong>Cryptographic Google OAuth 2.0 (GIS)</strong>: We never store Google passwords. Our backend verifies encrypted JSON Web Tokens (JWT) against Google's public cryptographic certificates via <code>OAuth2Client.verifyIdToken()</code>.</li>
+                <li><strong>Mobile Number Restraint & Hashing</strong>: Citizen phone numbers and passwords are hashed using industry-standard bcrypt algorithms. Mobile numbers are utilized strictly for vital SLA notifications and account recovery—they are **never displayed publicly** on community feeds or map overlays.</li>
+                <li><strong>Euclidean GIS Routing Math</strong>: GPS coordinates <code>(Latitude, Longitude)</code> are processed exclusively to map hazards to canonical ward boundaries via our spatial algorithm (<code>detectWardFromGPS</code>). Location data is never monetized or shared with third parties.</li>
+              </ul>
+
+              <h5 className="font-bold text-slate-800">2.4 Section 11 & 13: Rights of Data Principal (Citizen Rights) & Grievance Redressal</h5>
+              <p>
+                Under Section 11 of the DPDP Act, citizens (Data Principals) retain the absolute right to:
+              </p>
+              <ul className="list-disc pl-5 space-y-1 text-slate-600">
+                <li>Request a comprehensive summary of all personal data and grievance reports submitted to TraceSpark.</li>
+                <li>Request immediate correction, updating, or erasure of their personal profile data from our reactive state engine.</li>
+                <li>Escalate data privacy grievances to our designated Data Protection Officer (DPO) or the statutory <strong>Data Protection Board of India</strong> under Section 13.</li>
+              </ul>
             </div>
           )}
 

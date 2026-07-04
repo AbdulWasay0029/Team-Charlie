@@ -139,3 +139,10 @@ When pitching to technical juries, engineers, or hackathon judges, memorize thes
 
 ### Q8: "What is your Future Roadmap beyond this hackathon?"
 > **Answer**: *"Phase 1 is our current B2G Web Portal and WhatsApp SLA engine. Phase 2 introduces **IoT & Dashcam Integration**—partnering with city buses (TSRTC) and Uber/Ola drivers with dashboard cameras that automatically scan roads using Llama Vision while driving. Phase 3 is **Predictive Maintenance Analytics** using historical GIS data to forecast road degradation before potholes even form!"*
+
+### Q9: "How does TraceSpark comply with India's statutory Digital Personal Data Protection (DPDP) Act, 2023?"
+> **Answer**: *"TraceSpark is engineered from Day 1 as a statutory **Data Fiduciary** under the **Indian DPDP Act, 2023 (Act No. 22 of 2023)**:
+> 1. **Section 4 & 6 (Lawful Consent & Purpose Limitation)**: Personal data is collected strictly upon explicit user consent and utilized exclusively for municipal grievance redressal under GHMC Citizen Charters.
+> 2. **Section 7(b) (Certain Legitimate Uses)**: Processing of citizen data for state/municipal service delivery and SLA enforcement is explicitly recognized as a legitimate use, allowing seamless executive dispatch without bureaucratic friction.
+> 3. **Section 8 (Data Security & Zero-Trust)**: We enforce cryptographic Google OAuth 2.0 JWT verification (`OAuth2Client.verifyIdToken()`), bcrypt password hashing, and complete suppression of citizen mobile numbers from public API payloads or map feeds.
+> 4. **Section 11 & 13 (Data Principal Rights)**: Citizens retain absolute statutory rights to access their grievance logs, request immediate correction/erasure of their profile data, or escalate privacy grievances to our designated DPO and the Data Protection Board of India!"*

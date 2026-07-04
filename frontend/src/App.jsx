@@ -1067,10 +1067,10 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
               </div>
 
             </div>
-          </div>
+          </main>
 
-          {/* 6. AUTHORITATIVE MUNICIPAL & LEGAL FOOTER */}
-          <footer className="bg-slate-900 text-slate-300 pt-12 pb-16 px-6 sm:px-12 border-t border-slate-800 mt-12 shadow-2xl font-body">
+          {/* 6. AUTHORITATIVE MUNICIPAL & LEGAL FOOTER (100% FULL WIDTH EDGE-TO-EDGE) */}
+          <footer className="w-full bg-slate-900 text-slate-300 pt-12 pb-16 px-6 sm:px-12 border-t border-slate-800 shadow-2xl font-body">
             <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 pb-12 border-b border-slate-800/80 text-left">
               
               {/* Col 1: Brand & Mission */}
@@ -1130,13 +1130,13 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
               </div>
               <div className="flex items-center gap-2 bg-slate-800/80 px-3.5 py-1.5 rounded-xl border border-slate-700/60 text-slate-400 text-[10px]">
                 <span>Designed & Developed by</span>
-                <span className="bg-teal-600 text-white font-bold px-1.5 py-0.5 rounded text-[9px] tracking-wider">CGG</span>
-                <span className="font-semibold text-slate-300">Centre for Good Governance</span>
+                <span className="bg-teal-600 text-white font-bold px-1.5 py-0.5 rounded text-[9px] tracking-wider">TEAM CHARLIE</span>
+                <span className="font-semibold text-slate-300">TraceSpark AI Civic Loop</span>
               </div>
             </div>
           </footer>
 
-        </main>
+        </div>
       ) : (
         /* 4. ACTIVE MAP OVERLAY VIEW */
         <div className="flex-1 w-full h-full relative flex">
