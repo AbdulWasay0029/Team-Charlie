@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: bharat-patrol-backend
+    name: tracespark-backend
     env: node
     plan: free
     rootDir: backend

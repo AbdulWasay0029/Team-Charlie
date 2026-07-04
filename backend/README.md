@@ -1,6 +1,6 @@
-# 🚨 Bharat Patrol — Backend & Escalation Service
+# 🚨 TraceSpark — Backend & Escalation Service
 
-This backend powers the **Bharat Patrol** civic issue reporting app. It features inline AI photo verification (Groq Vision) and automated high-priority WhatsApp escalations via Twilio Sandbox.
+This backend powers the **TraceSpark** civic issue reporting app. It features inline AI photo verification (Groq Vision) and automated high-priority WhatsApp escalations via Twilio Sandbox.
 
 ---
 

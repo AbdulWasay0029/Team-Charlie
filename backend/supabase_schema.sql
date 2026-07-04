@@ -1,4 +1,4 @@
--- Updated Supabase SQL Schema for Bharat Patrol (Simplified Model)
+-- Updated Supabase SQL Schema for TraceSpark (Simplified Model)
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
