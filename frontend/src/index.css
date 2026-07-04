@@ -8,6 +8,52 @@
   --color-brand-orange-end: #ea580c;
   --color-brand-teal-start: #0d9488;
   --color-brand-teal-end: #0f766e;
+
+  /* Custom palette numbers used across legacy components */
+  --color-slate-350: #94a3b8;
+  --color-slate-450: #64748b;
+  --color-slate-455: #64748b;
+  --color-slate-505: #475569;
+  --color-slate-550: #475569;
+  --color-slate-555: #475569;
+  --color-slate-650: #334155;
+  --color-slate-750: #1e293b;
+  --color-slate-850: #1a2333;
+  --color-slate-955: #030611;
+  --color-slate-960: #02040a;
+
+  --color-orange-355: #fdba74;
+  --color-orange-450: #f97316;
+  --color-orange-650: #ea580c;
+  --color-orange-955: #431407;
+
+  --color-red-405: #f87171;
+  --color-red-550: #ef4444;
+  --color-red-650: #dc2626;
+  --color-red-655: #dc2626;
+  --color-red-955: #450a0a;
+
+  --color-rose-455: #f43f5e;
+  --color-rose-955: #4c0519;
+
+  --color-emerald-350: #34d399;
+  --color-emerald-450: #10b981;
+  --color-emerald-455: #10b981;
+  --color-emerald-650: #059669;
+  --color-emerald-955: #022c22;
+
+  --color-teal-350: #5eead4;
+  --color-teal-555: #14b8a6;
+  --color-teal-650: #0d9488;
+  --color-teal-955: #042f2e;
+
+  --color-amber-450: #f59e0b;
+  --color-amber-955: #451a03;
+
+  --color-blue-955: #172554;
+  --color-indigo-955: #1e1b4b;
+  --color-purple-955: #3b0764;
+  --color-sky-955: #082f49;
   
   --font-display: "Inter", sans-serif;
   --font-body: "Albert Sans", system-ui, sans-serif;
@@ -251,20 +297,57 @@ html.light input:focus, html.light textarea:focus, html.light select:focus {
   box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15) !important;
 }
 
-/* Icon / Pastel Background Overrides for Grid Cards */
-html.light .bg-red-950\/20 { background-color: #fee2e2 !important; color: #dc2626 !important; }
-html.light .border-red-900\/30 { border-color: #fca5a5 !important; }
+/* Icon / Pastel / Logout Button Background Overrides for Grid Cards & Controls */
+html.light .bg-red-950\/40, html.light .bg-red-950\/30, html.light .bg-red-950\/20, html.light .bg-red-900\/50, html.light .bg-red-900\/40, html.light .bg-red-900\/20,
+html.light .bg-rose-955\/20, html.light .bg-rose-950\/20 {
+  background-color: #fee2e2 !important;
+  color: #dc2626 !important;
+}
+html.light .border-red-900\/50, html.light .border-red-900\/40, html.light .border-red-900\/30,
+html.light .border-rose-900\/40, html.light .border-rose-900\/30 {
+  border-color: #fca5a5 !important;
+}
+html.light .text-red-400, html.light .text-red-405, html.light .text-rose-455 {
+  color: #dc2626 !important;
+}
+html.light .hover\:bg-red-900\/40:hover, html.light .hover\:bg-red-900\/20:hover {
+  background-color: #fecaca !important;
+  color: #b91c1c !important;
+}
+
+html.light .bg-amber-955\/20, html.light .bg-amber-950\/20 {
+  background-color: #fef3c7 !important;
+  color: #d97706 !important;
+}
+html.light .border-amber-900\/30, html.light .border-amber-900\/40 {
+  border-color: #fde68a !important;
+}
+html.light .text-amber-450, html.light .text-amber-400 {
+  color: #d97706 !important;
+}
+
 html.light .bg-blue-950\/20 { background-color: #dbeafe !important; color: #2563eb !important; }
 html.light .border-blue-900\/30 { border-color: #93c5fd !important; }
 html.light .bg-orange-950\/20 { background-color: #ffedd5 !important; color: #ea580c !important; }
 html.light .border-orange-900\/30 { border-color: #fdba74 !important; }
 html.light .bg-purple-950\/20 { background-color: #f3e8ff !important; color: #7c3aed !important; }
 html.light .border-purple-900\/30 { border-color: #d8b4fe !important; }
-html.light .bg-emerald-950\/35 { background-color: #d1fae5 !important; color: #059669 !important; }
-html.light .border-emerald-900\/35 { border-color: #6ee7b7 !important; }
-html.light .text-emerald-455 { color: #059669 !important; }
+html.light .bg-emerald-950\/35, html.light .bg-emerald-950\/20 { background-color: #d1fae5 !important; color: #059669 !important; }
+html.light .border-emerald-900\/35, html.light .border-emerald-900\/30 { border-color: #6ee7b7 !important; }
+html.light .text-emerald-455, html.light .text-emerald-450, html.light .text-emerald-400 { color: #059669 !important; }
 html.light .bg-teal-950\/20 { background-color: #ccfbf1 !important; color: #0d9488 !important; }
 html.light .border-teal-900\/30 { border-color: #5eead4 !important; }
+
+/* Keep Gradient Logo Text Transparent in Light Mode */
+html.light .bg-clip-text,
+html.light .text-transparent {
+  color: transparent !important;
+}
+
+/* Unloaded Leaflet Map Chunks in Light Mode */
+html.light .leaflet-container {
+  background-color: #e2e8f0 !important;
+}
 
 /* Leaflet Popup overrides for Light Mode */
 html.light .leaflet-popup-content-wrapper {
