@@ -47,6 +47,9 @@ app.use(cors({
 }));
 
 // --- HELPER FUNCTION AND DATA MAPPING FOR COUNCILLORS ---
+// Stateful in-memory tracker for resolved reports to persist changes across UI refreshes
+const locallyResolvedReports = new Map();
+
 const getMockWard = (lat, lng) => {
   const wards = [
     "Ward 112 (Hitech City)",
@@ -559,10 +562,20 @@ app.get('/reports', async (req, res) => {
         const votesObj = r.votes && r.votes[0];
         const vote_count = votesObj ? votesObj.count : 0;
         const { votes, ...rest } = r;
-        return {
+        
+        let finalReport = {
           ...rest,
           vote_count
         };
+        
+        if (locallyResolvedReports.has(r.id)) {
+          finalReport = {
+            ...finalReport,
+            ...locallyResolvedReports.get(r.id)
+          };
+        }
+        
+        return finalReport;
       });
 
       return res.json(mappedReports);
@@ -860,6 +873,15 @@ app.post('/reports/:id/resolve', async (req, res) => {
         .single();
 
       if (error) throw error;
+      
+      // Cache locally to ensure persistence during session
+      locallyResolvedReports.set(id, {
+        status: 'resolved',
+        resolved_at: new Date().toISOString(),
+        resolution_photo_url,
+        resolved_by
+      });
+
       return res.json(data);
     } catch (err) {
       console.error('Supabase error in POST /reports/:id/resolve:', err);
@@ -874,6 +896,15 @@ app.post('/reports/:id/resolve', async (req, res) => {
 
         if (existingReport) {
           console.log('Simulating resolved response for report:', id);
+          
+          // Cache in memory so it persists across refreshes
+          locallyResolvedReports.set(id, {
+            status: 'resolved',
+            resolved_at: new Date().toISOString(),
+            resolution_photo_url,
+            resolved_by
+          });
+
           return res.json({
             ...existingReport,
             status: 'resolved',

@@ -13,7 +13,7 @@ import {
   AlertCircle, CheckCircle2, Info, RefreshCw, X, Shield, 
   Map, Award, Flame, User, LogOut, MessageSquare, AlertOctagon, History, Loader2,
   Send, Mic, Bell, Settings, ArrowRight, Folder, MapPin, CheckCircle, Clock, ChevronRight, Sparkles, SendHorizontal, AlertTriangle,
-  BarChart3
+  BarChart3, Sun, Moon
 } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
@@ -40,6 +40,34 @@ export default function App() {
   const [votedReportIds, setVotedReportIds] = useState([]);
   const [filters, setFilters] = useState({ category: 'all', status: 'active' });
   const [sortBy, setSortBy] = useState('priority');
+  
+  // Theme state & handler
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light') {
+      document.documentElement.classList.add('light');
+      return false;
+    } else {
+      document.documentElement.classList.remove('light');
+      return true;
+    }
+  });
+
+  const toggleDarkMode = () => {
+    setDarkMode(prev => {
+      const newVal = !prev;
+      if (newVal) {
+        document.documentElement.classList.remove('light');
+        localStorage.setItem('theme', 'dark');
+        showToast("Theme switched to Dark Command Mode", "success");
+      } else {
+        document.documentElement.classList.add('light');
+        localStorage.setItem('theme', 'light');
+        showToast("Theme switched to Light Clean Mode", "success");
+      }
+      return newVal;
+    });
+  };
   
   // Navigation View State: 'dashboard' or 'map'
   const [viewMode, setViewMode] = useState('dashboard');
@@ -709,6 +737,8 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
         councillor={councillorUser} 
         onLogout={handleCouncillorLogout} 
         showToast={showToast} 
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
       />
     );
   }
@@ -743,6 +773,14 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
 
         {/* Top Header Actions */}
         <div className="flex items-center gap-3">
+          <button 
+            onClick={toggleDarkMode}
+            className="bg-slate-850 border border-slate-800 text-slate-350 p-2.5 rounded-xl hover:bg-slate-800 hover:text-white transition cursor-pointer flex items-center justify-center shadow-sm"
+            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {darkMode ? <Sun className="h-4.5 w-4.5 text-orange-400" /> : <Moon className="h-4.5 w-4.5 text-indigo-400" />}
+          </button>
+
           <button 
             onClick={() => showToast("No new alerts", "info")}
             className="bg-slate-850 border border-slate-800 text-slate-300 p-2.5 rounded-xl hover:bg-slate-800 transition relative cursor-pointer"

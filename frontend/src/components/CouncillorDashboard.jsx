@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LogOut, CheckCircle, AlertCircle, Clock, BarChart3, Image as ImageIcon, ClipboardCheck, ArrowRight, ShieldCheck, Calendar, MapPin, ExternalLink, X, Camera, Upload, Loader2 } from 'lucide-react';
+import { LogOut, CheckCircle, AlertCircle, Clock, BarChart3, Image as ImageIcon, ClipboardCheck, ArrowRight, ShieldCheck, Calendar, MapPin, ExternalLink, X, Camera, Upload, Loader2, Sun, Moon } from 'lucide-react';
 import { CATEGORIES } from '../mockData';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-export default function CouncillorDashboard({ councillor, onLogout, showToast }) {
+export default function CouncillorDashboard({ councillor, onLogout, showToast, darkMode, toggleDarkMode }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -225,6 +225,14 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast })
               <p className="text-xs font-bold text-slate-200">Welcome, {councillor.name}</p>
               <span className="text-[9px] font-mono text-emerald-400 uppercase tracking-wider block font-bold mt-0.5">Ward Councillor Account</span>
             </div>
+            <button 
+              onClick={toggleDarkMode}
+              className="bg-slate-800 border border-slate-700 text-slate-350 p-2 rounded-xl hover:bg-slate-700 hover:text-white transition cursor-pointer flex items-center justify-center shadow-sm"
+              title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {darkMode ? <Sun className="h-4 w-4 text-orange-400" /> : <Moon className="h-4 w-4 text-indigo-400" />}
+            </button>
+
             <button
               onClick={onLogout}
               className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700/80 text-slate-300 hover:text-white border border-slate-700 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer shadow-sm active:scale-95"
