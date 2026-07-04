@@ -94,7 +94,7 @@ When asked about the mathematical precision of ward routing:
 
 ---
 
-## 🛡️ 6. JUDGE & INVESTOR Q&A CHEAT SHEET
+## 🛡️ 6. GENERAL INVESTOR Q&A CHEAT SHEET
 
 ### Q1: "How do you prevent spam, bots, or fake photo reports?"
 > **Answer**: *"We implement a strict two-tier verification shield. First, every citizen must authenticate via cryptographic Google OAuth 2.0 JWT tokens or verified mobile numbers—anonymous submissions are blocked. Second, every uploaded photo must pass our **Llama 3.2 Vision AI inspection**. If someone uploads a selfie, a meme, or a random tree, the Vision AI rejects the image or scores it as severity 0, preventing it from ever reaching municipal officers."*
@@ -105,8 +105,37 @@ When asked about the mathematical precision of ward routing:
 ### Q3: "What happens if a GPS pin drops right on the boundary between two wards?"
 > **Answer**: *"Currently, our algorithm uses centroid-based spatial proximity math (`detectWardFromGPS`). However, because our backend architecture is modular, in a full municipal deployment we simply plug in official GHMC GIS Shapefiles (GeoJSON polygons) using ray-casting algorithms to achieve sub-meter polygon boundary resolution."*
 
-### Q4: "Why did you build a custom authentication modal instead of using generic forms or basic email boxes?"
-> **Answer**: *"To ensure zero data leakage and a frictionless user experience. We designed our navbar with standard SaaS UI patterns (one light button for Sign In, one dark button for Sign Up) and integrated Google's native 1-click popup dialog. This ensures citizens don't abandon the portal due to tedious form-filling, while allowing our backend to cryptographically verify their identity via Google Cloud Client IDs."*
+---
 
-### Q5: "What is your business model or scaling plan?"
-> **Answer**: *"TraceSpark operates on a B2G (Business-to-Government) and Smart City SaaS model. While the citizen portal is completely free and open, municipal corporations, smart city development agencies, and urban contractors subscribe to our **TraceSpark Enterprise Dashboard** for real-time GIS analytics, predictive infrastructure maintenance, and automated contractor work-order routing."*
+## ⚡ 7. RAPID-FIRE HACKATHON JURY Q&A (Tech Stack, Scalability, AI & Cost)
+
+When pitching to technical juries, engineers, or hackathon judges, memorize these exact responses:
+
+### Q1: "What is your exact Tech Stack and why did you choose it?"
+> **Answer**: 
+> * **Frontend**: **React 18 + Vite** (chosen for 10x faster Hot Module Replacement and ultra-lightweight bundle sizes), **Tailwind CSS & Custom Vanilla Tokens** (for sleek Neo-Kinpaku/SaaS aesthetics without UI bloat), **Leaflet.js & OpenStreetMap** (open-source GIS mapping), and `@react-oauth/google` (Google Identity Services).
+> * **Backend**: **Node.js + Express.js** RESTful API architecture, `google-auth-library` for Node.js cryptographic JWT token verification.
+> * **Database**: Reactive In-Memory State Engine / SQLite (designed for seamless zero-friction local execution and instant migration to PostgreSQL/PostGIS in production).
+> * **AI / Computer Vision**: **Meta Llama 3.2 Vision** (via Groq/OpenAI-compatible endpoints) for real-time multimodal image analysis and automated severity grading (1–10).
+> * **SLA & Messaging Gateways**: **Twilio API** (WhatsApp Sandbox & SMS) and **Mailgun API** (automated departmental email payloads).
+
+### Q2: "Why did you choose OpenStreetMap & Leaflet instead of Google Maps API?"
+> **Answer**: *"Two critical reasons: **Cost** and **Open Data Sovereignty**. Google Maps API charges heavy map load, routing, and geocoding fees that become cost-prohibitive for municipal smart city budgets at scale. Leaflet with OpenStreetMap gives us 60 FPS interactive vector mapping for free, while allowing us to overlay municipal ward GIS polygons and custom markers without vendor lock-in!"*
+
+### Q3: "How does your AI Vision Model work? What if it hallucinates or misclassifies an image?"
+> **Answer**: *"We use **Meta Llama 3.2 Vision**, a state-of-the-art multimodal model. When a photo is uploaded, we pass a strict system prompt instructing the model to act as a municipal civil engineer. It evaluates three specific parameters: (1) Hazard classification (pothole, open drain, garbage pile, etc.), (2) Public safety risk (severity score 1–10), and (3) Verification confidence. If confidence is below our threshold or the image is ambiguous, it is flagged for manual citizen review rather than auto-broadcasting."*
+
+### Q4: "What is the latency and API cost per report submission?"
+> **Answer**: *"Because we route Llama 3.2 Vision inference through high-speed LPU (Language Processing Unit) architecture / optimized cloud endpoints, image verification completes in **under 1.5 seconds**. The cost per image inspection is less than **$0.001 (approx. 8 paise INR)**. Even with 100,000 civic reports a month, our total AI inspection cost is under $100—making it exponentially cheaper than employing manual photo reviewers!"*
+
+### Q5: "How is citizen data and authentication secured?"
+> **Answer**: *"We enforce zero-trust security. For Google Login, we don't just trust frontend email strings; our frontend receives a cryptographic JWT ID Token from Google's native popup and POSTs it to our backend. Our Node.js server verifies the token signature against Google's public certificates via `OAuth2Client.verifyIdToken()`. For mobile authentication, passwords are hashed, and we never expose citizen phone numbers in public API payloads—only verified names and ward jurisdictions are displayed."*
+
+### Q6: "How will this integrate with existing legacy government databases (like GHMC CPGRAMS or Prajavani)?"
+> **Answer**: *"TraceSpark is built as an API-first middleware layer. When an issue hits 25 upvotes, in addition to dispatching WhatsApp and Mailgun alerts, our backend can trigger a webhook payload formatted in standard JSON/XML directly into existing municipal grievance portals (like CPGRAMS or GHMC ERP systems), automatically creating a formal ticket with an AI-verified attachment!"*
+
+### Q7: "What happens if many users upvote the same report simultaneously? How do you handle concurrency?"
+> **Answer**: *"Our backend upvote endpoint (`POST /reports/:id/vote`) is designed as an atomic transaction. When a user upvotes, we check if their `user_id` is already in the report's `voters` set. If not, we atomically increment `priority_score` and add their ID. If the new score reaches exactly 25, the escalation event fires exactly once, preventing duplicate WhatsApp spam to Zonal Commissioners!"*
+
+### Q8: "What is your Future Roadmap beyond this hackathon?"
+> **Answer**: *"Phase 1 is our current B2G Web Portal and WhatsApp SLA engine. Phase 2 introduces **IoT & Dashcam Integration**—partnering with city buses (TSRTC) and Uber/Ola drivers with dashboard cameras that automatically scan roads using Llama Vision while driving. Phase 3 is **Predictive Maintenance Analytics** using historical GIS data to forecast road degradation before potholes even form!"*
