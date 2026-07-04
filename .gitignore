@@ -1,3 +1,23 @@
+# Node.js dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Local envs
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+frontend/.env
+backend/.env
+
+# Build outputs
+dist/
+frontend/dist/
+dist-ssr/
+*.local
+
 # Logs
 logs
 *.log
@@ -7,12 +27,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# Editor and OS files
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -23,7 +38,7 @@ dist-ssr
 *.sln
 *.sw?
 
-# Designing folders
+# Designing folders (excluded per request)
 taste*
 ui-ux*
 impeccable*
@@ -33,4 +48,3 @@ impeccable/
 taste-skill-main/
 ui-ux-pro-max-skill-main/
 impeccable-main/
-

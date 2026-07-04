@@ -17,7 +17,7 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
 
   const fileInputRef = useRef(null);
 
-  // Simulate AI Vision verification
+  // Simulate AI Vision verification (Groq Vision llama-4-scout-17b)
   const processImageAI = (imageType) => {
     setIsVerifying(true);
     setAiVerified(null);
@@ -117,24 +117,24 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
   };
 
   return (
-    <div className="absolute inset-0 bg-lacquer-deep/80 backdrop-blur-sm z-[2000] flex items-center justify-center p-4 overflow-y-auto font-body">
-      <div className="bg-raised-lacquer border border-white/10 w-full max-w-lg rounded-none shadow-2xl overflow-hidden relative my-auto animate-in fade-in zoom-in-95 duration-200">
+    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-[2000] flex items-center justify-center p-4 overflow-y-auto font-body">
+      <div className="bg-white border border-slate-100 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden relative my-auto animate-in fade-in zoom-in-95 duration-200">
         
-        {/* Impeccable Urushi/Gold Header */}
-        <div className="bg-lacquer-deep border-b border-kinpaku-gold px-6 py-4 flex items-center justify-between text-champagne">
+        {/* Header with warm orange gradient */}
+        <div className="bg-gradient-to-r from-orange-500 to-red-650 px-6 py-4 flex items-center justify-between text-white">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-kinpaku-gold animate-pulse" />
+            <Sparkles className="h-5 w-5 text-yellow-300 animate-pulse" />
             <div>
-              <h2 className="text-xl font-display font-light tracking-wide uppercase">
+              <h2 className="text-lg font-bold tracking-wide flex items-center gap-1.5">
                 AI Vision Report Portal
               </h2>
-              <p className="text-text-muted text-[10px] font-mono tracking-wider uppercase mt-0.5">Verify and pin complaints in realtime</p>
+              <p className="text-orange-100 text-[10px] tracking-wider uppercase mt-0.5">Verify and pin complaints in realtime</p>
             </div>
           </div>
           <button 
             type="button" 
             onClick={onClose}
-            className="text-text-muted hover:text-kinpaku-gold bg-white/5 hover:bg-white/10 p-1.5 rounded-none border border-white/5 transition cursor-pointer"
+            className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-full transition cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
@@ -144,34 +144,34 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           
           {/* Coordinates Info */}
-          <div className="bg-lacquer-deep border border-white/5 rounded-none p-3.5 flex items-center gap-3">
-            <div className="bg-kinpaku-gold/10 p-2 rounded-none text-kinpaku-gold">
+          <div className="bg-slate-50 border border-slate-150 rounded-xl p-3 flex items-center gap-3">
+            <div className="bg-orange-500/10 p-2 rounded-xl text-orange-600">
               <MapPin className="h-4.5 w-4.5" />
             </div>
             <div className="text-left font-mono">
-              <span className="text-text-muted text-[9px] block font-bold uppercase tracking-widest">Verified Geolocation</span>
-              <span className="text-champagne font-bold text-xs">Lat: {lat.toFixed(5)}, Lng: {lng.toFixed(5)}</span>
+              <span className="text-slate-400 text-[9px] block font-bold uppercase tracking-wider">Verified Geolocation</span>
+              <span className="text-slate-800 font-bold text-xs">Lat: {lat.toFixed(5)}, Lng: {lng.toFixed(5)}</span>
             </div>
           </div>
 
           {/* AI Vision Verification Options (JUDGES DEMO TRIGGER) */}
-          <div className="bg-graphite/40 border border-white/5 rounded-none p-3.5 space-y-2.5 text-left">
-            <span className="text-[9px] text-kinpaku-gold font-mono font-extrabold uppercase tracking-widest flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5" />
+          <div className="bg-slate-50 border border-slate-150 rounded-xl p-3 space-y-2.5 text-left">
+            <span className="text-[9px] text-orange-600 font-mono font-extrabold uppercase tracking-widest flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-orange-500" />
               Groq Llama-4-Scout Vision Simulator
             </span>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => processImageAI('issue')}
-                className="bg-lacquer-deep hover:bg-graphite border border-white/5 hover:border-kinpaku-gold/30 text-champagne rounded-none p-2 text-xs font-bold text-center transition cursor-pointer"
+                className="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl p-2.5 text-xs font-bold text-center transition cursor-pointer shadow-sm"
               >
                 📸 Demo: Pothole Photo
               </button>
               <button
                 type="button"
                 onClick={() => processImageAI('selfie')}
-                className="bg-lacquer-deep hover:bg-graphite border border-white/5 hover:border-vermilion-warning/40 text-champagne rounded-none p-2 text-xs font-bold text-center transition cursor-pointer"
+                className="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl p-2.5 text-xs font-bold text-center transition cursor-pointer shadow-sm"
               >
                 🤳 Demo: Selfie Fail
               </button>
@@ -180,8 +180,8 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
 
           {/* Category Selector */}
           <div className="space-y-1.5 text-left">
-            <label className="text-text-muted text-[10px] font-mono font-extrabold uppercase tracking-widest">
-              Issue Category <span className="text-vermilion-warning">*</span>
+            <label className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+              Issue Category <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto pr-1">
               {Object.entries(CATEGORIES).map(([key, cat]) => {
@@ -191,10 +191,10 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
                     key={key}
                     type="button"
                     onClick={() => setCategory(key)}
-                    className={`flex items-center gap-2.5 p-2.5 rounded-none border text-[11px] font-bold transition text-left cursor-pointer ${
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-[11px] font-semibold transition text-left cursor-pointer ${
                       isSelected
-                        ? 'bg-kinpaku-gold border-transparent text-lacquer-deep shadow-md'
-                        : 'bg-graphite border-white/5 text-text-warm hover:bg-graphite-2 hover:border-white/10'
+                        ? 'bg-teal-600 border-transparent text-white shadow-md'
+                        : 'bg-slate-50 border-slate-200/60 text-slate-700 hover:bg-slate-100 hover:border-slate-350'
                     }`}
                   >
                     <span className="text-base">{cat.icon}</span>
@@ -207,7 +207,7 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
 
           {/* Photo File Input & Preview */}
           <div className="space-y-1.5 text-left">
-            <label className="text-text-muted text-[10px] font-mono font-extrabold uppercase tracking-widest block">
+            <label className="text-slate-500 text-[10px] font-bold uppercase tracking-widest block">
               Photo Evidence
             </label>
             
@@ -220,25 +220,25 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
             />
 
             {isVerifying ? (
-              <div className="w-full border border-kinpaku-gold/20 bg-lacquer-deep rounded-none p-8 flex flex-col items-center justify-center gap-2">
-                <Loader2 className="h-6 w-6 animate-spin text-kinpaku-gold" />
-                <span className="text-xs text-kinpaku-gold font-mono font-bold uppercase tracking-widest animate-pulse">Running Vision Inference...</span>
-                <span className="text-[9px] text-text-faint font-mono">Groq Llama-4-Scout Vision processing</span>
+              <div className="w-full border border-teal-500/20 bg-slate-50 rounded-xl p-8 flex flex-col items-center justify-center gap-2">
+                <Loader2 className="h-6 w-6 animate-spin text-teal-650" />
+                <span className="text-xs text-teal-600 font-mono font-bold uppercase tracking-widest animate-pulse">Running Vision Inference...</span>
+                <span className="text-[9px] text-slate-400 font-mono">Groq Llama-4-Scout Vision processing</span>
               </div>
             ) : !photoPreview ? (
               <button
                 type="button"
                 onClick={triggerFileInput}
-                className="w-full border border-dashed border-white/10 hover:border-kinpaku-gold/40 bg-graphite/30 hover:bg-graphite/50 transition rounded-none p-6 flex flex-col items-center justify-center gap-2 cursor-pointer text-text-muted"
+                className="w-full border border-dashed border-slate-200 hover:border-teal-500/40 bg-slate-50/50 hover:bg-slate-50 transition rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer text-slate-400"
               >
-                <div className="bg-graphite p-2.5 rounded-none text-champagne border border-white/5">
+                <div className="bg-white p-2.5 rounded-xl text-teal-650 border border-slate-200 shadow-sm">
                   <Camera className="h-5 w-5" />
                 </div>
-                <span className="text-xs font-bold text-text-warm">Attach Photo Evidence</span>
-                <span className="text-[9px] text-text-faint font-mono uppercase tracking-wider">Supports camera capture & gallery files</span>
+                <span className="text-xs font-bold text-slate-700">Attach Photo Evidence</span>
+                <span className="text-[9px] text-slate-400 font-mono uppercase tracking-wider">Supports camera capture & gallery files</span>
               </button>
             ) : (
-              <div className="relative rounded-none overflow-hidden border border-white/10 bg-lacquer-deep aspect-video group">
+              <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-100 aspect-video group">
                 <img
                   src={photoPreview}
                   alt="Complaint Preview"
@@ -247,21 +247,21 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
                 
                 {/* AI vision overlay results */}
                 {aiVerified === true && (
-                  <div className="absolute top-2 left-2 bg-raised-lacquer/90 border border-verdigris-patina/40 text-verdigris-patina rounded-none p-1.5 text-[9px] font-mono font-bold shadow-xl flex items-center gap-1.5 backdrop-blur-md">
-                    <ShieldCheck className="h-3.5 w-3.5 text-verdigris-patina" />
+                  <div className="absolute top-2 left-2 bg-white/95 border border-teal-500/30 text-teal-655 rounded-xl p-1.5 text-[9px] font-mono font-bold shadow-md flex items-center gap-1.5 backdrop-blur-sm">
+                    <ShieldCheck className="h-3.5 w-3.5 text-teal-600" />
                     <span className="tracking-widest uppercase">AI VERIFIED ({aiSeverity}/10)</span>
                   </div>
                 )}
 
                 {aiVerified === false && (
-                  <div className="absolute inset-0 bg-lacquer-deep/95 backdrop-blur-sm p-4 flex flex-col items-center justify-center text-center text-vermilion-warning space-y-2.5">
-                    <AlertTriangle className="h-8 w-8 text-vermilion-warning animate-bounce" />
-                    <span className="text-xs font-mono font-black uppercase tracking-widest text-champagne">AI VERIFICATION REJECTED</span>
-                    <p className="text-[10px] leading-relaxed max-w-[260px] text-text-warm">{aiReason}</p>
+                  <div className="absolute inset-0 bg-white/95 backdrop-blur-sm p-4 flex flex-col items-center justify-center text-center text-red-650 space-y-2.5">
+                    <AlertTriangle className="h-8 w-8 text-red-500 animate-bounce" />
+                    <span className="text-xs font-mono font-black uppercase tracking-widest text-slate-800">AI VERIFICATION REJECTED</span>
+                    <p className="text-[10px] leading-relaxed max-w-[260px] text-slate-600">{aiReason}</p>
                     <button
                       type="button"
                       onClick={() => { setPhotoPreview(null); setAiVerified(null); }}
-                      className="bg-vermilion-warning/20 hover:bg-vermilion-warning/30 text-champagne font-bold text-[9px] py-1.5 px-4 rounded-none border border-vermilion-warning/40 transition cursor-pointer uppercase tracking-wider font-mono"
+                      className="bg-red-50 hover:bg-red-100 text-red-600 font-bold text-[9px] py-1.5 px-4 rounded-xl border border-red-200 transition cursor-pointer uppercase tracking-wider font-mono"
                     >
                       Try Another Photo
                     </button>
@@ -269,8 +269,8 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
                 )}
 
                 {aiVerified === true && (
-                  <div className="absolute inset-x-0 bottom-0 bg-lacquer-deep/90 p-2.5 border-t border-white/10 text-[10px] text-text-warm text-left font-medium">
-                    🔍 <span className="font-bold text-kinpaku-gold">{aiIssueType}</span>: {aiReason}
+                  <div className="absolute inset-x-0 bottom-0 bg-white/90 p-2.5 border-t border-slate-200 text-[10px] text-slate-700 text-left font-medium">
+                    🔍 <span className="font-bold text-teal-600">{aiIssueType}</span>: {aiReason}
                   </div>
                 )}
               </div>
@@ -279,14 +279,14 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
 
           {/* Description Textarea */}
           <div className="space-y-1.5 text-left">
-            <label className="text-text-muted text-[10px] font-mono font-extrabold uppercase tracking-widest">
-              Issue Description <span className="text-text-faint font-normal font-mono">(Llama Vision auto-generation)</span>
+            <label className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+              Issue Description <span className="text-slate-400 font-normal font-mono">(Llama Vision auto-generation)</span>
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Select photo above to trigger auto description generation..."
-              className="w-full bg-lacquer-deep border border-white/15 text-champagne rounded-none py-2 px-3 text-xs placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-kinpaku-gold focus:border-transparent transition h-14 resize-none font-medium"
+              className="w-full bg-white border border-slate-200 text-slate-800 rounded-xl py-2 px-3 text-xs placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition h-14 resize-none font-medium shadow-sm"
             />
           </div>
 
@@ -295,7 +295,7 @@ export default function ReportForm({ lat, lng, onSubmit, onClose }) {
             <button
               type="submit"
               disabled={isSubmitting || !category || aiVerified === false}
-              className={`w-full bg-kinpaku-gold hover:bg-kinpaku-pale text-lacquer-deep font-extrabold py-3.5 px-4 rounded-none flex items-center justify-center gap-2 transition duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed uppercase font-mono tracking-widest text-xs`}
+              className={`w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-extrabold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed uppercase font-mono tracking-widest text-xs shadow-lg hover:shadow-orange-500/10`}
             >
               {isSubmitting ? (
                 <>

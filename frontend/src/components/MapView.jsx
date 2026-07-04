@@ -18,7 +18,7 @@ const createCustomIcon = (report) => {
 
   // 1. Status specific logic
   if (report.status === 'pending') {
-    pinBgColor = 'bg-slate-700/80 border-slate-400';
+    pinBgColor = 'bg-slate-400 border-slate-300';
     statusBorder = 'border-2 border-dashed';
     pulseColor = 'rgba(148, 163, 184, 0.5)';
     animationClass = 'custom-pin-pulse';
@@ -27,14 +27,14 @@ const createCustomIcon = (report) => {
     pulseColor = 'rgba(37, 99, 235, 0.6)';
     animationClass = 'animate-pulse';
   } else if (report.status === 'resolved_pending_confirmation') {
-    pinBgColor = 'bg-amber-500 border-amber-400';
+    pinBgColor = 'bg-amber-500 border-amber-455';
     pulseColor = 'rgba(245, 158, 11, 0.8)';
     animationClass = 'animate-pulse';
   } else if (report.status === 'resolved') {
-    pinBgColor = 'bg-slate-600 border-slate-500 opacity-60';
-    pulseColor = 'rgba(100, 116, 139, 0.2)';
+    pinBgColor = 'bg-slate-400 border-slate-300 opacity-60';
+    pulseColor = 'rgba(148, 163, 184, 0.2)';
   } else if (report.status === 'reopened') {
-    pinBgColor = 'bg-red-700 border-red-500';
+    pinBgColor = 'bg-red-655 border-red-500';
     pulseColor = 'rgba(239, 68, 68, 0.8)';
     animationClass = 'animate-bounce';
   } else {
@@ -52,7 +52,6 @@ const createCustomIcon = (report) => {
     }
   }
 
-  // Get specific category emoji
   const catEmoji = CATEGORIES[report.category]?.icon || iconEmoji;
 
   const html = `
@@ -79,7 +78,7 @@ const createCustomIcon = (report) => {
 // Temp marker for click-to-report action
 const clickPinIcon = L.divIcon({
   html: `
-    <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 border-dashed border-orange-500 bg-orange-500/20 text-orange-500 shadow-lg animate-bounce">
+    <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 border-dashed border-orange-500 bg-orange-500/20 text-orange-600 shadow-lg animate-bounce">
       <span class="text-lg font-bold">+</span>
     </div>
   `,
@@ -107,8 +106,6 @@ export default function MapView({
   onConfirmResolution,
   showHeatmap 
 }) {
-  // Compute points for the density heatmap overlay
-  // Format: [lat, lng, intensity] where intensity is determined by priority score (upvotes)
   const heatmapPoints = reports
     .filter(r => r.status !== 'resolved')
     .map(r => [r.lat, r.lng, Math.min(1.0, (r.priority_score || 1) / 25)]);
@@ -121,10 +118,10 @@ export default function MapView({
         className="w-full h-full"
         zoomControl={false}
       >
-        {/* OpenStreetMap Dark Styled Tile Server */}
+        {/* OpenStreetMap Light Voyager Styled Tile Server */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
 
         {/* Dynamic Density Heatmap Overlay */}
@@ -140,7 +137,7 @@ export default function MapView({
           <Marker position={[activeClick.lat, activeClick.lng]} icon={clickPinIcon} />
         )}
 
-        {/* Render Report Markers (Only when heatmap is not active, or together. Usually rendering them together or hiding markers to see heat is perfect. Let's render markers on top of heatmap so citizens can click on hot spots!) */}
+        {/* Render Report Markers */}
         {reports.map((report) => (
           <Marker
             key={report.id}
@@ -159,13 +156,13 @@ export default function MapView({
       </MapContainer>
 
       {/* Floating Instructions Banner (Bottom Left) */}
-      <div className="absolute bottom-4 left-4 bg-slate-900/90 backdrop-blur-sm border border-white/10 rounded-xl py-2 px-3 shadow-xl z-[1000] text-xs pointer-events-none select-none max-w-[280px]">
+      <div className="absolute bottom-4 left-4 bg-white/95 border border-slate-200 rounded-xl py-2 px-3 shadow-xl z-[1000] text-xs pointer-events-none select-none max-w-[280px] text-slate-700 font-body">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-orange-500 animate-ping"></div>
-          <p className="text-slate-300 font-bold">Hackathon Mode</p>
+          <p className="text-slate-800 font-bold">Grievance Map Mode</p>
         </div>
-        <p className="text-slate-400 mt-1 leading-normal font-medium text-left">
-          Tap anywhere on the map to file a live complaint. Active filters are visible on markers.
+        <p className="text-slate-500 mt-1 leading-normal text-left font-medium">
+          Tap anywhere on the map to drop a new complaint pin.
         </p>
       </div>
     </div>
