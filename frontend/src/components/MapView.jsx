@@ -237,7 +237,7 @@ function MapToolDock({ userPos, showHeatmap, onToggleHeatmap, onOpenHistory }) {
   return (
     <div 
       ref={dockRef}
-      className="absolute bottom-8 right-6 z-[1000] flex flex-col gap-2.5 font-mono uppercase tracking-widest text-[9px] select-none"
+      className="absolute bottom-8 right-6 z-[1000] flex flex-col gap-2.5 font-body font-bold uppercase tracking-widest text-[9px] select-none"
     >
       {/* 1. Recenter to My Location */}
       <button
@@ -251,7 +251,7 @@ function MapToolDock({ userPos, showHeatmap, onToggleHeatmap, onOpenHistory }) {
         title="Recenter to My Location"
       >
         <span className="text-base">🧭</span>
-        <span className="hidden md:inline font-mono">My Location</span>
+        <span className="hidden md:inline font-body">My Location</span>
       </button>
 
       {/* 2. Toggle Heatmap */}
@@ -266,7 +266,7 @@ function MapToolDock({ userPos, showHeatmap, onToggleHeatmap, onOpenHistory }) {
         title="Density Heatmap Overlay"
       >
         <span className="text-base">🔥</span>
-        <span className="hidden md:inline font-mono">Heatmap</span>
+        <span className="hidden md:inline font-body">Heatmap</span>
       </button>
 
       {/* 3. Open My Reports */}
@@ -277,7 +277,7 @@ function MapToolDock({ userPos, showHeatmap, onToggleHeatmap, onOpenHistory }) {
         title="My Reports History"
       >
         <span className="text-base">📁</span>
-        <span className="hidden md:inline font-mono">My Reports</span>
+        <span className="hidden md:inline font-body">My Reports</span>
       </button>
     </div>
   );
