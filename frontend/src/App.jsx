@@ -764,8 +764,8 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
             className="w-10 h-10 rounded-xl object-cover shadow-md select-none cursor-pointer"
           />
           <div className="text-left cursor-pointer" onClick={() => setViewMode('dashboard')}>
-            <h1 className="text-slate-100 font-display font-extrabold text-xl leading-none tracking-tight bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
-              Bharat Patrol
+            <h1 className="font-display font-extrabold text-xl leading-none tracking-tight bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+              TraceSpark
             </h1>
             <p className="text-slate-400 text-[10px] tracking-wider uppercase font-semibold mt-0.5">AI Civic Accountability Loop</p>
           </div>
@@ -819,13 +819,17 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
             <div className="flex items-center gap-2">
               <button
                 onClick={() => { setAuthModalTab('signin'); setIsAuthModalOpen(true); }}
-                className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-mono font-extrabold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl transition cursor-pointer shadow-2xs"
+                className={`font-mono font-extrabold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl transition cursor-pointer shadow-2xs border ${
+                  darkMode 
+                    ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' 
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                }`}
               >
                 Sign In
               </button>
               <button
                 onClick={() => { setAuthModalTab('signup'); setIsAuthModalOpen(true); }}
-                className="bg-gradient-to-r from-orange-500 to-red-650 hover:from-orange-450 hover:to-red-550 text-white font-mono font-extrabold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl transition cursor-pointer shadow-sm"
+                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-mono font-extrabold text-xs uppercase tracking-wider py-2 px-3.5 rounded-xl transition cursor-pointer shadow-sm border-0"
               >
                 Sign Up
               </button>
@@ -835,12 +839,18 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
       </header>
 
       {/* 2. DYNAMIC BROADCAST WEATHER/ALERTS TICKER */}
-      <div className="bg-slate-900/90 text-slate-350 py-2 px-6 overflow-hidden flex items-center shrink-0 border-b border-slate-800/80">
-        <div className="bg-emerald-950/45 text-emerald-400 font-mono text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-emerald-900/30 shrink-0 select-none mr-4">
+      <div className={`py-2 px-6 overflow-hidden flex items-center shrink-0 border-b transition-all duration-300 ${
+        darkMode ? 'bg-slate-900/90 text-slate-350 border-slate-800/80' : 'bg-gradient-to-r from-teal-600 to-teal-800 text-white border-teal-900/10'
+      }`}>
+        <div className={`font-mono text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded shrink-0 select-none mr-4 border transition-all duration-300 ${
+          darkMode ? 'bg-emerald-950/45 text-emerald-400 border-emerald-900/30' : 'bg-teal-900/30 text-teal-200 border-teal-500/20'
+        }`}>
           TraceSpark Alert
         </div>
         <div className="relative w-full flex items-center overflow-hidden">
-          <div className="animate-marquee whitespace-nowrap text-xs font-mono font-bold tracking-wider text-slate-300 flex gap-12">
+          <div className={`animate-marquee whitespace-nowrap text-xs font-mono font-bold tracking-wider flex gap-12 transition-all duration-300 ${
+            darkMode ? 'text-slate-300' : 'text-teal-100'
+          }`}>
             <span>🌦️ {weatherData.city}: {weatherData.temp} • {weatherData.condition}</span>
             <span>🚨 Mosquito Outbreak Warning - Stagnant drains flagged in Charminar area</span>
             <span>🚧 Jubilee Hills Road No. 36: Ward repair order active</span>
@@ -902,7 +912,7 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
             {/* Quick Action Button to direct map access */}
             <button
               onClick={() => setViewMode('map')}
-              className="bg-gradient-to-r from-orange-500 to-red-650 hover:from-orange-450 hover:to-red-550 text-white font-extrabold px-6 py-5 rounded-2xl flex items-center justify-center gap-2 transition cursor-pointer shadow-lg hover:shadow-orange-500/10 shrink-0 md:w-56 text-sm uppercase tracking-widest font-mono border-0"
+              className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-extrabold px-6 py-5 rounded-2xl flex items-center justify-center gap-2 transition cursor-pointer shadow-lg hover:shadow-orange-500/10 shrink-0 md:w-56 text-sm uppercase tracking-widest font-mono border-0"
             >
               <Map className="h-5 w-5 animate-pulse text-white" />
               Open Live Map
@@ -939,13 +949,13 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
                 <span className="text-[8px] text-slate-400 uppercase font-bold tracking-wider">Damaged Roads</span>
               </div>
               <div className={`p-3 border rounded-xl shadow-2xs transition-all ${
-                darkMode ? 'bg-slate-955 border-emerald-950/40 text-emerald-400' : 'bg-white border-emerald-200/50 text-teal-650'
+                darkMode ? 'bg-slate-950 border-emerald-950/40 text-emerald-400' : 'bg-white border-emerald-200/50 text-teal-650'
               }`}>
                 <span className="font-extrabold text-lg block">100%</span>
                 <span className="text-[8px] text-slate-400 uppercase font-bold tracking-wider">AI Vision Check</span>
               </div>
               <div className={`p-3 border rounded-xl shadow-2xs transition-all ${
-                darkMode ? 'bg-slate-955 border-teal-950/40 text-teal-400' : 'bg-white border-teal-200/50 text-teal-650'
+                darkMode ? 'bg-slate-950 border-teal-950/40 text-teal-400' : 'bg-white border-teal-200/50 text-teal-650'
               }`}>
                 <span className="font-extrabold text-lg block">25 Votes</span>
                 <span className="text-[8px] text-slate-400 uppercase font-bold tracking-wider">Auto-Escalation</span>

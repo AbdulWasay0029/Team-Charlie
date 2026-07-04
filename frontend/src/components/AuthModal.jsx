@@ -278,7 +278,7 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
             <ShieldCheck className="w-4 h-4" />
           </div>
           <div className="text-left">
-            <h2 className="text-base font-display font-black text-slate-100 leading-tight">Bharat Patrol</h2>
+            <h2 className="text-base font-display font-black text-slate-100 leading-tight">TraceSpark</h2>
             <p className="text-[10px] font-mono text-slate-450 tracking-wider uppercase mt-0.5 block">
               {isCouncillorMode ? "Councillor Portal" : "Citizen Identity"}
             </p>
