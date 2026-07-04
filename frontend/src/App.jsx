@@ -137,9 +137,13 @@ export default function App() {
         const res = await fetch(url.toString());
         if (!res.ok) throw new Error("Failed to fetch reports");
         const data = await res.json();
+        const reportsArray = Array.isArray(data) ? data : [];
+        
+        // Safeguard Leaflet rendering from crash by removing records with invalid coordinates
+        const validReports = reportsArray.filter(r => r && r.lat !== undefined && r.lat !== null && r.lng !== undefined && r.lng !== null && !isNaN(r.lat) && !isNaN(r.lng));
         
         // Map database fields to UI keys
-        const mapped = data.map(r => ({
+        const mapped = validReports.map(r => ({
           ...r,
           priority_score: r.priority_score !== undefined ? r.priority_score : (r.vote_count || 0),
           ward: getMockWard(r.lat, r.lng)

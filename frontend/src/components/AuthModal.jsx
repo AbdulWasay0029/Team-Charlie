@@ -255,31 +255,31 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[1000] p-4 animate-in fade-in duration-200">
-      <div className="bg-white border border-slate-200 rounded-2xl max-w-xs w-full p-5 shadow-2xl relative overflow-hidden text-left bg-linear-to-b from-white to-slate-50/50">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[1000] p-4 animate-in fade-in duration-200">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xs w-full p-6 shadow-2xl relative overflow-hidden text-left bg-linear-to-b from-slate-900 to-slate-950/60">
         
         {/* Close Button */}
         {onClose && (
           <button 
             onClick={onClose}
-            className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+            className="absolute top-4 right-4 text-slate-550 hover:text-slate-200 p-1.5 rounded-full hover:bg-slate-800 transition-all cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         )}
 
         {/* Header Branding */}
-        <div className="flex items-center gap-2.5 mb-4">
+        <div className="flex items-center gap-2.5 mb-4 text-left">
           <div className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-md shrink-0 text-white ${
             isCouncillorMode 
-              ? 'bg-gradient-to-tr from-emerald-500 to-teal-600 shadow-emerald-500/20' 
-              : 'bg-gradient-to-tr from-orange-500 to-red-600 shadow-orange-500/20'
+              ? 'bg-gradient-to-tr from-emerald-500 to-teal-650 shadow-emerald-500/20' 
+              : 'bg-gradient-to-tr from-orange-500 to-red-650 shadow-orange-500/20'
           }`}>
             <ShieldCheck className="w-4 h-4" />
           </div>
-          <div>
-            <h2 className="text-base font-display font-black text-slate-800 leading-tight">Bharat Patrol</h2>
-            <p className="text-[10px] font-mono text-slate-400 tracking-wider uppercase">
+          <div className="text-left">
+            <h2 className="text-base font-display font-black text-slate-100 leading-tight">Bharat Patrol</h2>
+            <p className="text-[10px] font-mono text-slate-450 tracking-wider uppercase mt-0.5 block">
               {isCouncillorMode ? "Councillor Portal" : "Citizen Identity"}
             </p>
           </div>
@@ -287,14 +287,14 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
 
         {/* Top Navigation Tabs: SIGN IN vs SIGN UP (hidden in councillor mode) */}
         {!isCouncillorMode && (
-          <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200/80 mb-4 font-mono text-xs font-bold">
+          <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-850 mb-4 font-mono text-xs font-bold">
             <button
               type="button"
               onClick={() => { setActiveTab('signin'); setError(''); }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg transition-all cursor-pointer ${
                 activeTab === 'signin'
-                  ? 'bg-white text-slate-800 shadow-2xs font-extrabold border border-slate-200/60'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-slate-800 text-slate-100 shadow-2xs font-extrabold border border-slate-700'
+                  : 'text-slate-500 hover:text-slate-200'
               }`}
             >
               <LogIn className="w-3.5 h-3.5" />
@@ -305,8 +305,8 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
               onClick={() => { setActiveTab('signup'); setError(''); }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg transition-all cursor-pointer ${
                 activeTab === 'signup'
-                  ? 'bg-white text-slate-800 shadow-2xs font-extrabold border border-slate-200/60'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'bg-slate-800 text-slate-100 shadow-2xs font-extrabold border border-slate-700'
+                  : 'text-slate-500 hover:text-slate-200'
               }`}
             >
               <UserPlus className="w-3.5 h-3.5" />
@@ -317,7 +317,7 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
 
         {/* Error Display */}
         {error && (
-          <div className="mb-4 p-2.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 text-red-600 text-[11px] font-medium animate-shake">
+          <div className="mb-4 p-2.5 bg-red-955/20 border border-red-900/40 text-red-405 rounded-xl flex items-start gap-2 text-[11px] font-medium animate-shake">
             <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
@@ -325,14 +325,14 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
 
         {/* 1-Click Google OAuth Section (hidden in councillor mode) */}
         {!isCouncillorMode && (
-          <div className="mb-4 flex justify-center">
+          <div className="mb-4 flex justify-center bg-slate-950 border border-slate-850 py-2.5 px-1 rounded-2xl">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => setError("Google Sign-In failed. Please try again.")}
-              theme="outline"
-              shape="rectangular"
+              theme="filled_blue"
+              shape="pill"
               size="medium"
-              width="280"
+              width="240"
               text={activeTab === 'signin' ? "signin_with" : "signup_with"}
             />
           </div>
@@ -341,8 +341,8 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
         {/* Divider (hidden in councillor mode) */}
         {!isCouncillorMode && (
           <div className="relative flex items-center justify-center mb-4">
-            <div className="border-t border-slate-200 w-full" />
-            <span className="bg-white px-2 text-[9px] font-mono font-extrabold uppercase tracking-widest text-slate-400 absolute">
+            <div className="border-t border-slate-800 w-full" />
+            <span className="bg-slate-900 px-2 text-[9px] font-mono font-extrabold uppercase tracking-widest text-slate-500 absolute">
               or mobile
             </span>
           </div>
@@ -356,7 +356,7 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
                 Mobile Number
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-bold text-xs">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 font-bold text-xs">
                   +91
                 </div>
                 <input
@@ -366,9 +366,9 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                   placeholder="10-digit number"
-                  className="w-full pl-10 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium text-xs focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-400"
+                  className="w-full pl-10 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 font-medium text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-650 text-left"
                 />
-                <Phone className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
+                <Phone className="w-3.5 h-3.5 text-slate-550 absolute right-3 top-2.5 pointer-events-none" />
               </div>
             </div>
 
@@ -383,9 +383,9 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-3 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium text-xs focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-400"
+                  className="w-full pl-3 pr-9 py-2 bg-slate-955 border border-slate-800 rounded-xl text-slate-200 font-medium text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-650 text-left"
                 />
-                <Lock className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
+                <Lock className="w-3.5 h-3.5 text-slate-555 absolute right-3 top-2.5 pointer-events-none" />
               </div>
             </div>
 
@@ -394,8 +394,8 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
               disabled={loading || isSending}
               className={`w-full py-2.5 px-4 rounded-xl font-mono font-extrabold text-xs uppercase tracking-wider text-white shadow-md flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 mt-1 cursor-pointer ${
                 isCouncillorMode 
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 shadow-emerald-500/15'
-                  : 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 shadow-orange-500/15'
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-650 hover:from-emerald-450 hover:to-teal-555 shadow-emerald-500/15'
+                  : 'bg-gradient-to-r from-orange-500 to-red-655 hover:from-orange-450 hover:to-red-550 shadow-orange-500/15'
               }`}
             >
               {loading || isSending ? (
@@ -417,7 +417,7 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
         {!isCouncillorMode && activeTab === 'signup' && (
           <form onSubmit={handleSignup} className="space-y-2.5 font-sans">
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-0.5">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-505 mb-0.5">
                 Full Name
               </label>
               <div className="relative">
@@ -427,18 +427,18 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Citizen Name"
-                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium text-xs focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-400"
+                  className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 font-medium text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-650 text-left"
                 />
-                <User className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2 pointer-events-none" />
+                <User className="w-3.5 h-3.5 text-slate-550 absolute left-2.5 top-2 pointer-events-none" />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-0.5">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-505 mb-0.5">
                 Mobile Number
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 font-bold text-xs">
+                <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-500 font-bold text-xs">
                   +91
                 </div>
                 <input
@@ -448,14 +448,14 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                   placeholder="10-digit number"
-                  className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium text-xs focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-400"
+                  className="w-full pl-9 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 font-medium text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-650 text-left"
                 />
-                <Phone className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2 pointer-events-none" />
+                <Phone className="w-3.5 h-3.5 text-slate-550 absolute right-2.5 top-2 pointer-events-none" />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-0.5">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-550 mb-0.5">
                 Create Password
               </label>
               <div className="relative">
@@ -465,24 +465,24 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="6+ characters"
-                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium text-xs focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-400"
+                  className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 font-medium text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-650 text-left"
                 />
-                <Lock className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2 pointer-events-none" />
+                <Lock className="w-3.5 h-3.5 text-slate-555 absolute left-2.5 top-2 pointer-events-none" />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-0.5">
+              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-550 mb-0.5">
                 Primary Municipal Ward
               </label>
               <div className="relative">
                 <select
                   value={selectedWard}
                   onChange={(e) => setSelectedWard(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium text-xs focus:outline-none focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all appearance-none cursor-pointer"
+                  className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 font-medium text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all appearance-none cursor-pointer"
                 >
                   {HYDERABAD_WARDS.map(w => (
-                    <option key={w} value={w} className="bg-white text-slate-800">{w}</option>
+                    <option key={w} value={w} className="bg-slate-950 text-slate-200">{w}</option>
                   ))}
                 </select>
                 <MapPin className="w-3.5 h-3.5 text-orange-500 absolute left-2.5 top-2 pointer-events-none" />
@@ -492,7 +492,7 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
             <button
               type="submit"
               disabled={loading || isSending}
-              className="w-full py-2 px-4 rounded-xl font-mono font-extrabold text-xs uppercase tracking-wider bg-gradient-to-r from-orange-500 to-red-600 text-white hover:from-orange-400 hover:to-red-500 shadow-md shadow-orange-500/15 flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 mt-2 cursor-pointer"
+              className="w-full py-2 px-4 rounded-xl font-mono font-extrabold text-xs uppercase tracking-wider bg-gradient-to-r from-orange-500 to-red-650 text-white hover:from-orange-450 hover:to-red-550 shadow-md shadow-orange-500/15 flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 mt-2 cursor-pointer"
             >
               {loading || isSending ? (
                 <>
@@ -510,14 +510,14 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
         )}
 
         {/* Bottom Switcher */}
-        <div className="mt-4 pt-3 border-t border-slate-100 text-center flex flex-col gap-1.5">
+        <div className="mt-4 pt-3 border-t border-slate-800 text-center flex flex-col gap-1.5">
           {isCouncillorMode ? (
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-slate-400">
               Are you a citizen?{' '}
               <button
                 type="button"
                 onClick={() => { setIsCouncillorMode(false); setActiveTab('signin'); setError(''); }}
-                className="text-orange-600 hover:text-orange-700 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
+                className="text-orange-400 hover:text-orange-355 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
               >
                 Sign In as Citizen
               </button>
@@ -525,34 +525,34 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
           ) : (
             <>
               {activeTab === 'signin' ? (
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-slate-400">
                   No account?{' '}
                   <button
                     type="button"
                     onClick={() => { setActiveTab('signup'); setError(''); }}
-                    className="text-orange-600 hover:text-orange-700 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
+                    className="text-orange-400 hover:text-orange-355 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
                   >
                     Sign Up
                   </button>
                 </p>
               ) : (
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-slate-400">
                   Have an account?{' '}
                   <button
                     type="button"
                     onClick={() => { setActiveTab('signin'); setError(''); }}
-                    className="text-orange-600 hover:text-orange-700 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
+                    className="text-orange-400 hover:text-orange-355 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
                   >
                     Sign In
                   </button>
                 </p>
               )}
-              <p className="text-[11px] text-slate-500 pt-1.5 border-t border-slate-100/50">
+              <p className="text-[11px] text-slate-500 pt-1.5 border-t border-slate-800/50">
                 Are you a Ward Councillor?{' '}
                 <button
                   type="button"
                   onClick={() => { setIsCouncillorMode(true); setError(''); }}
-                  className="text-emerald-600 hover:text-emerald-700 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
+                  className="text-emerald-450 hover:text-emerald-350 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
                 >
                   Councillor Portal
                 </button>

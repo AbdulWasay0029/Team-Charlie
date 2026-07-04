@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { LogOut, CheckCircle, AlertCircle, Clock, BarChart3, Image, ClipboardCheck, ArrowRight, ShieldCheck, Calendar, MapPin, ExternalLink, X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { LogOut, CheckCircle, AlertCircle, Clock, BarChart3, Image as ImageIcon, ClipboardCheck, ArrowRight, ShieldCheck, Calendar, MapPin, ExternalLink, X, Camera, Upload, Loader2 } from 'lucide-react';
 import { CATEGORIES } from '../mockData';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
@@ -19,6 +19,9 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast })
   const [selectedReport, setSelectedReport] = useState(null);
   const [proofPhotoUrl, setProofPhotoUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [compressing, setCompressing] = useState(false);
+
+  const fileInputRef = useRef(null);
 
   const fetchWardData = async () => {
     setLoading(true);
@@ -28,7 +31,8 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast })
       if (API_BASE_URL) {
         const res = await fetch(`${API_BASE_URL}/reports`);
         if (res.ok) {
-          allReports = await res.json();
+          const data = await res.json();
+          allReports = Array.isArray(data) ? data : [];
         }
       } else {
         // Fallback or Mock
@@ -37,6 +41,7 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast })
 
       // Helper function matching backend
       const getMockWard = (lat, lng) => {
+        if (!lat || !lng) return "Ward 112 (Hitech City)";
         const wards = [
           "Ward 112 (Hitech City)",
           "Ward 95 (Khairatabad)",
@@ -96,10 +101,48 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast })
     fetchWardData();
   }, [councillor]);
 
+  // Compress proof image to base64
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCompressing(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        const MAX_WIDTH = 400;
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        const base64 = canvas.toDataURL('image/jpeg', 0.6);
+        setProofPhotoUrl(base64);
+        setCompressing(false);
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleResolveSubmit = async (e) => {
     e.preventDefault();
     if (!proofPhotoUrl.trim()) {
-      showToast("Please provide a proof photo URL.", "info");
+      showToast("Please select or capture a proof photo first.", "info");
       return;
     }
 
@@ -124,6 +167,13 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast })
         setProofPhotoUrl('');
         fetchWardData();
       } else {
+        // Stateful Mock Update locally
+        setReports(prev => prev.map(r => r.id === selectedReport.id ? {
+          ...r,
+          status: 'resolved',
+          resolution_photo_url: proofPhotoUrl
+        } : r));
+        
         showToast("Resolution completed successfully (Mock Mode).", "success");
         setSelectedReport(null);
         setProofPhotoUrl('');
@@ -136,17 +186,17 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast })
     }
   };
 
-  // Get SLA aging text and color
+  // Get SLA aging text and color in premium dark mode styles
   const getSLADuration = (createdAt) => {
     const createdDate = new Date(createdAt);
     const diffTime = Math.abs(new Date() - createdDate);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    let color = 'text-emerald-600 bg-emerald-50 border-emerald-100';
+    let color = 'text-emerald-400 bg-emerald-950/20 border-emerald-900/30';
     if (diffDays >= 7) {
-      color = 'text-rose-600 bg-rose-50 border-rose-100 animate-pulse';
+      color = 'text-rose-455 bg-rose-955/20 border-rose-900/40 animate-pulse';
     } else if (diffDays >= 3) {
-      color = 'text-amber-600 bg-amber-50 border-amber-100';
+      color = 'text-amber-450 bg-amber-955/20 border-amber-900/30';
     }
     
     return {
@@ -160,37 +210,37 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast })
       {/* Header Bar */}
       <header className="bg-slate-900/80 border-b border-slate-800/80 sticky top-0 z-40 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <ShieldCheck className="w-5 h-5" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-650 flex items-center justify-center font-black text-slate-950 font-display select-none">
+              BP
             </div>
-            <div>
-              <h1 className="text-lg font-display font-black leading-tight bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Bharat Patrol Councillor</h1>
+            <div className="text-left leading-tight">
+              <h1 className="text-sm font-display font-black tracking-wider uppercase text-slate-100">Zonal Command Room</h1>
               <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest mt-0.5">{councillor.ward}</p>
             </div>
           </div>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden md:block text-right">
+          
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden sm:block">
               <p className="text-xs font-bold text-slate-200">Welcome, {councillor.name}</p>
-              <p className="text-[9px] font-mono text-emerald-400 font-bold uppercase tracking-wider">Pre-Provisioned Authority</p>
+              <span className="text-[9px] font-mono text-emerald-400 uppercase tracking-wider block font-bold mt-0.5">Ward Councillor Account</span>
             </div>
             <button
               onClick={onLogout}
               className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700/80 text-slate-300 hover:text-white border border-slate-700 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer shadow-sm active:scale-95"
             >
               <LogOut className="w-3.5 h-3.5" />
-              Sign Out
+              Logout
             </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 mt-8 space-y-8">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <main className="max-w-7xl mx-auto px-4 mt-8 space-y-6 text-left">
+        {/* Ward Overview Aggregations */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 shadow-xl flex items-center gap-4">
-            <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/10">
+            <div className="p-3 bg-slate-950 text-slate-400 rounded-xl border border-slate-800">
               <ClipboardCheck className="w-5 h-5" />
             </div>
             <div>
@@ -266,14 +316,14 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast })
                 const sla = getSLADuration(report.created_at);
 
                 return (
-                  <div key={report.id} className={`bg-slate-950 border rounded-2xl overflow-hidden shadow-md flex flex-col h-[400px] transition-all hover:border-slate-700/80 ${
+                  <div key={report.id} className={`bg-slate-955 border rounded-2xl overflow-hidden shadow-md flex flex-col h-[400px] transition-all hover:border-slate-700/80 ${
                     isResolved ? 'border-teal-950/60 opacity-80' : 'border-slate-800/80'
                   }`}>
-                    {/* Photo Header */}
+                    {/* Image Header */}
                     <div className="relative h-44 bg-slate-900 shrink-0">
-                      <img
-                        src={report.photo_url}
-                        alt={cat.label}
+                      <img 
+                        src={report.photo_url} 
+                        alt={cat.label} 
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           e.target.src = "https://images.unsplash.com/photo-1599740831464-54c86b24d775?auto=format&fit=crop&w=400&q=80";
@@ -307,19 +357,19 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast })
                     {/* Details Container */}
                     <div className="p-4 flex flex-col flex-1 min-h-0 justify-between">
                       <div className="space-y-3 min-h-0 overflow-y-auto">
-                        <p className="text-xs text-slate-400 leading-relaxed text-left">
+                        <p className="text-xs text-slate-450 leading-relaxed text-left font-medium">
                           {report.description || "Civic hazard reported nearby. Verified by AI. Councillor resolution required."}
                         </p>
 
                         {/* Location GPS */}
                         <div className="flex items-center gap-1.5 text-[9px] font-mono text-slate-500 bg-slate-900/50 p-2 rounded-xl border border-slate-800/40">
                           <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span className="truncate">Lat {report.lat.toFixed(5)}, Lng {report.lng.toFixed(5)}</span>
+                          <span className="truncate">Lat {report.lat ? report.lat.toFixed(5) : '0'}, Lng {report.lng ? report.lng.toFixed(5) : '0'}</span>
                           <a 
                             href={`https://www.google.com/maps/search/?api=1&query=${report.lat},${report.lng}`} 
                             target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="ml-auto text-emerald-400 hover:text-emerald-300 flex items-center gap-0.5"
+                            rel="_blank" 
+                            className="ml-auto text-emerald-400 hover:text-emerald-300 flex items-center gap-0.5 font-bold"
                           >
                             Map <ExternalLink className="w-2.5 h-2.5" />
                           </a>
@@ -337,7 +387,7 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast })
                               rel="noopener noreferrer"
                               className="text-[10px] text-teal-400 font-bold hover:underline flex items-center gap-1 mt-0.5 font-mono uppercase"
                             >
-                              <Image className="w-3 h-3" /> View Proof
+                              <ImageIcon className="w-3 h-3" /> View Proof
                             </a>
                           </div>
                         ) : (
@@ -348,14 +398,17 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast })
 
                         {isResolved ? (
                           <div className="flex items-center gap-1 text-teal-400 text-xs font-mono font-bold uppercase tracking-wider">
-                            <CheckCircle className="w-4 h-4 shrink-0" /> Closed
+                            <span>SLA Met</span>
+                            <CheckCircle className="w-4.5 h-4.5 text-teal-400" />
                           </div>
                         ) : (
                           <button
+                            type="button"
                             onClick={() => setSelectedReport(report)}
-                            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-mono font-extrabold text-[10px] uppercase tracking-wider py-1.5 px-3 rounded-xl transition-all hover:scale-105 flex items-center gap-1.5 cursor-pointer shadow-sm"
+                            className="bg-emerald-500 hover:bg-emerald-450 text-slate-950 font-mono font-extrabold text-[10px] uppercase tracking-wider py-1.5 px-3 rounded-xl transition-all hover:scale-105 flex items-center gap-1.5 cursor-pointer shadow-sm animate-pulse"
                           >
-                            Mark Resolved <ArrowRight className="w-3 h-3" />
+                            <span>Lodge Proof</span>
+                            <ArrowRight className="w-3 h-3" />
                           </button>
                         )}
                       </div>
@@ -373,7 +426,7 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast })
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[1000] p-4 animate-in fade-in duration-200">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative text-left">
             <button 
-              onClick={() => setSelectedReport(null)}
+              onClick={() => { setSelectedReport(null); setProofPhotoUrl(''); }}
               className="absolute top-4 right-4 text-slate-500 hover:text-slate-300 p-1.5 rounded-full hover:bg-slate-800 transition-all cursor-pointer"
             >
               <X className="w-4.5 h-4.5" />
@@ -383,25 +436,59 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast })
               <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/15 shrink-0">
                 <ClipboardCheck className="w-4 h-4" />
               </div>
-              <div>
-                <h3 className="text-sm font-display font-extrabold text-slate-100">Upload Resolution Proof</h3>
-                <p className="text-[9px] font-mono text-slate-400 uppercase tracking-widest mt-0.5">SLA Closed Loop Workflow</p>
+              <div className="text-left">
+                <h3 className="text-sm font-display font-extrabold text-slate-100 leading-none">Upload Resolution Proof</h3>
+                <p className="text-[9px] font-mono text-slate-400 uppercase tracking-widest mt-1.5">SLA Closed Loop Workflow</p>
               </div>
             </div>
 
             <form onSubmit={handleResolveSubmit} className="space-y-4 font-sans">
-              <div>
-                <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                  Resolution Proof Image URL
+              <div className="space-y-2">
+                <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500">
+                  Select Evidence Proof Image
                 </label>
+
                 <input
-                  type="url"
-                  required
-                  value={proofPhotoUrl}
-                  onChange={(e) => setProofPhotoUrl(e.target.value)}
-                  placeholder="https://example.com/resolved-pothole.jpg"
-                  className="w-full pl-3 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 font-medium text-xs focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-slate-650"
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
                 />
+
+                {compressing ? (
+                  <div className="w-full border border-emerald-500/15 bg-slate-950 rounded-xl p-8 flex flex-col items-center justify-center gap-2">
+                    <Loader2 className="h-6 w-6 animate-spin text-emerald-450" />
+                    <span className="text-[10px] text-emerald-400 font-mono font-bold uppercase tracking-widest">Compressing Image...</span>
+                  </div>
+                ) : !proofPhotoUrl ? (
+                  <button
+                    type="button"
+                    onClick={triggerFileInput}
+                    className="w-full border border-dashed border-slate-800 hover:border-emerald-500/20 bg-slate-950 hover:bg-slate-950/80 transition rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer text-slate-400 shadow-inner"
+                  >
+                    <div className="bg-slate-900 p-2.5 rounded-xl text-emerald-400 border border-slate-800 shadow-sm">
+                      <Camera className="h-5 w-5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-350">Camera / Gallery Upload</span>
+                    <span className="text-[9px] text-slate-500 font-mono uppercase tracking-wider">Compresses file automatically</span>
+                  </button>
+                ) : (
+                  <div className="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950 aspect-video group">
+                    <img
+                      src={proofPhotoUrl}
+                      alt="Proof Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setProofPhotoUrl('')}
+                      className="absolute top-2 right-2 bg-slate-950/80 hover:bg-slate-950 text-white p-1 rounded-full cursor-pointer transition shadow-md border border-slate-800"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Quick Dummy Image Presets for Hackathon Demo */}
@@ -427,7 +514,7 @@ export default function CouncillorDashboard({ councillor, onLogout, showToast })
 
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || compressing}
                 className="w-full py-2.5 px-4 rounded-xl font-mono font-extrabold text-xs uppercase tracking-wider bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/15 flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 mt-1 cursor-pointer"
               >
                 {submitting ? (
