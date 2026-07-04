@@ -264,7 +264,7 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
     <div className={`fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[1000] p-4 animate-in fade-in duration-200 ${
       darkMode ? 'bg-slate-950/80' : 'bg-slate-900/40'
     }`}>
-      <div className={`border rounded-3xl max-w-xs w-full p-6 shadow-2xl relative overflow-hidden text-left transition-all ${
+      <div className={`border rounded-3xl max-w-xs w-full p-5 shadow-2xl relative max-h-[85vh] overflow-y-auto text-left transition-all ${
         darkMode 
           ? 'bg-slate-900 border-slate-800 bg-gradient-to-b from-slate-900 to-slate-950/60 text-slate-100' 
           : 'bg-white border-slate-200 bg-gradient-to-b from-white to-slate-50 text-slate-900 shadow-xl'
@@ -294,42 +294,10 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
           <div className="text-left">
             <h2 className={`text-base font-display font-black leading-tight ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>TraceSpark</h2>
             <p className={`text-[10px] font-mono tracking-wider uppercase mt-0.5 block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              {isCouncillorMode ? "Councillor Portal" : "Citizen Identity"}
+              {isCouncillorMode ? "Councillor Portal" : (activeTab === 'signin' ? "Citizen Sign In" : "Citizen Sign Up")}
             </p>
           </div>
         </div>
-
-        {/* Top Navigation Tabs: SIGN IN vs SIGN UP (hidden in councillor mode) */}
-        {!isCouncillorMode && (
-          <div className={`flex rounded-xl p-1 border mb-4 font-mono text-xs font-bold ${
-            darkMode ? 'bg-slate-950 border-slate-850' : 'bg-slate-100 border-slate-200'
-          }`}>
-            <button
-              type="button"
-              onClick={() => { setActiveTab('signin'); setError(''); }}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg transition-all cursor-pointer ${
-                activeTab === 'signin'
-                  ? (darkMode ? 'bg-slate-800 text-slate-100 shadow-sm font-extrabold border border-slate-700' : 'bg-white text-slate-900 shadow-sm font-extrabold border border-slate-200/80')
-                  : (darkMode ? 'text-slate-500 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
-              }`}
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => { setActiveTab('signup'); setError(''); }}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg transition-all cursor-pointer ${
-                activeTab === 'signup'
-                  ? (darkMode ? 'bg-slate-800 text-slate-100 shadow-sm font-extrabold border border-slate-700' : 'bg-white text-slate-900 shadow-sm font-extrabold border border-slate-200/80')
-                  : (darkMode ? 'text-slate-500 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
-              }`}
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              Sign Up
-            </button>
-          </div>
-        )}
 
         {/* Error Display */}
         {error && (
@@ -491,23 +459,7 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
               </div>
             </div>
 
-            <div>
-              <label className={labelClass}>
-                Primary Municipal Ward
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedWard}
-                  onChange={(e) => setSelectedWard(e.target.value)}
-                  className={`w-full pl-8 pr-3 py-1.5 rounded-xl font-medium text-xs focus:outline-none transition-all appearance-none cursor-pointer ${inputBgClass}`}
-                >
-                  {HYDERABAD_WARDS.map(w => (
-                    <option key={w} value={w} className={darkMode ? "bg-slate-950 text-slate-200" : "bg-white text-slate-900"}>{w}</option>
-                  ))}
-                </select>
-                <MapPin className="w-3.5 h-3.5 text-orange-500 absolute left-2.5 top-2 pointer-events-none" />
-              </div>
-            </div>
+
 
             <button
               type="submit"
