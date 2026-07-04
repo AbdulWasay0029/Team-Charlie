@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { CATEGORIES } from '../mockData';
@@ -177,6 +177,7 @@ function AutoZoomToUser({ userPos }) {
 function CustomZoomWidget() {
   const map = useMap();
   const [zoom, setZoom] = useState(map.getZoom());
+  const widgetRef = useRef(null);
 
   useEffect(() => {
     const onZoom = () => setZoom(map.getZoom());
@@ -186,12 +187,17 @@ function CustomZoomWidget() {
     };
   }, [map]);
 
+  useEffect(() => {
+    if (widgetRef.current) {
+      L.DomEvent.disableClickPropagation(widgetRef.current);
+      L.DomEvent.disableScrollPropagation(widgetRef.current);
+    }
+  }, []);
+
   return (
     <div 
-      onMouseDown={(e) => e.stopPropagation()}
-      onClick={(e) => e.stopPropagation()}
-      onDoubleClick={(e) => e.stopPropagation()}
-      className="absolute bottom-32 left-4 z-[1000] flex items-center bg-white border border-slate-205/90 rounded-2xl shadow-xl p-1.5 font-mono font-extrabold text-[12px] text-slate-800 select-none transition-all hover:border-slate-350"
+      ref={widgetRef}
+      className="absolute bottom-24 left-4 z-[1000] flex items-center bg-white border border-slate-205/90 rounded-2xl shadow-xl p-1.5 font-mono font-extrabold text-[12px] text-slate-800 select-none transition-all hover:border-slate-350"
     >
       <button
         type="button"
@@ -219,11 +225,18 @@ function CustomZoomWidget() {
 // Sub-component for Unified GIS Control Dock (bottom-right)
 function MapToolDock({ userPos, showHeatmap, onToggleHeatmap, onOpenHistory }) {
   const map = useMap();
+  const dockRef = useRef(null);
+
+  useEffect(() => {
+    if (dockRef.current) {
+      L.DomEvent.disableClickPropagation(dockRef.current);
+      L.DomEvent.disableScrollPropagation(dockRef.current);
+    }
+  }, []);
+
   return (
     <div 
-      onMouseDown={(e) => e.stopPropagation()}
-      onClick={(e) => e.stopPropagation()}
-      onDoubleClick={(e) => e.stopPropagation()}
+      ref={dockRef}
       className="absolute bottom-8 right-6 z-[1000] flex flex-col gap-2.5 font-mono uppercase tracking-widest text-[9px] select-none"
     >
       {/* 1. Recenter to My Location */}
