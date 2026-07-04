@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { CATEGORIES } from '../mockData';
 import { ThumbsUp, Calendar, ShieldCheck, ShieldAlert, AlertTriangle } from 'lucide-react';
 
-export default function ReportPopup({ report, onVote }) {
+export default function ReportPopup({ report, onVote, hasVoted }) {
   const [voting, setVoting] = useState(false);
   const [photoIdx, setPhotoIdx] = useState(0);
   
@@ -39,7 +39,7 @@ export default function ReportPopup({ report, onVote }) {
   };
 
   const handleVote = async () => {
-    if (voting) return;
+    if (voting || hasVoted) return;
     setVoting(true);
     try {
       await onVote(currentReport.id);
@@ -174,11 +174,15 @@ export default function ReportPopup({ report, onVote }) {
             <button
               type="button"
               onClick={handleVote}
-              disabled={voting}
-              className="bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-700 border border-slate-200 hover:border-orange-500/35 py-1.5 px-3.5 rounded-xl text-xs font-bold font-mono uppercase tracking-widest transition flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-40"
+              disabled={voting || hasVoted}
+              className={`border py-1.5 px-3.5 rounded-xl text-xs font-bold font-mono uppercase tracking-widest transition flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                hasVoted 
+                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
+                  : 'bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-700 border-slate-200 hover:border-orange-500/35'
+              }`}
             >
-              <ThumbsUp className={`h-3.5 w-3.5 text-orange-500 ${voting ? 'animate-bounce' : ''}`} />
-              Upvote
+              <ThumbsUp className={`h-3.5 w-3.5 ${hasVoted ? 'text-emerald-600' : 'text-orange-500'} ${voting ? 'animate-bounce' : ''}`} />
+              {hasVoted ? 'Voted' : 'Upvote'}
             </button>
           )}
         </div>

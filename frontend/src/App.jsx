@@ -32,6 +32,7 @@ const getMockWard = (lat, lng) => {
 
 export default function App() {
   const [reports, setReports] = useState([]);
+  const [votedReportIds, setVotedReportIds] = useState([]);
   const [filters, setFilters] = useState({ category: 'all', status: 'all' });
   const [sortBy, setSortBy] = useState('priority');
   
@@ -139,6 +140,27 @@ export default function App() {
       setIsPolling(false);
     }
   };
+
+  const fetchUserVotes = async (userId) => {
+    if (IS_MOCK_MODE || !userId) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/users/${userId}/votes`);
+      if (res.ok) {
+        const data = await res.json();
+        setVotedReportIds(data);
+      }
+    } catch (err) {
+      console.error("Error fetching user votes:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchUserVotes(currentUser.id);
+    } else {
+      setVotedReportIds([]);
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     fetchReports();
@@ -316,6 +338,7 @@ export default function App() {
             return r;
           })
         );
+        setVotedReportIds(prev => [...prev, reportId]);
         showToast("Upvoted! Priority score increased.", "success");
       } else {
         const res = await fetch(`${API_BASE_URL}/reports/${reportId}/vote`, {
@@ -336,7 +359,12 @@ export default function App() {
           })
         );
         
-        showToast("Vote recorded!", "success");
+        if (data.isNewVote) {
+          setVotedReportIds(prev => [...prev, reportId]);
+          showToast("Vote recorded!", "success");
+        } else {
+          showToast("You have already voted for this report.", "info");
+        }
 
         if (data.escalation_fired) {
           const currentReport = reports.find(r => r.id === reportId);
@@ -1077,6 +1105,7 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
               showToast(showHeatmap ? "Heatmap disabled" : "Heatmap density overlay enabled", "info");
             }}
             onOpenHistory={() => setIsSidePanelOpen(true)}
+            votedReportIds={votedReportIds}
           />
         </div>
       )}

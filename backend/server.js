@@ -612,7 +612,8 @@ app.post('/reports/:id/vote', async (req, res) => {
 
       return res.json({
         priority_score: currentScore,
-        escalation_fired
+        escalation_fired,
+        isNewVote
       });
     } catch (err) {
       console.error('Supabase error in POST /reports/:id/vote:', err);
@@ -664,8 +665,31 @@ app.post('/reports/:id/vote', async (req, res) => {
 
     return res.json({
       priority_score: report.priority_score,
-      escalation_fired
+      escalation_fired,
+      isNewVote: mockIsNewVote
     });
+  }
+});
+
+// 4.1 GET /users/:userId/votes (Retrieve report IDs the user has upvoted)
+app.get('/users/:userId/votes', async (req, res) => {
+  const { userId } = req.params;
+
+  if (isConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('votes')
+        .select('report_id')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      return res.json(data.map(v => v.report_id));
+    } catch (err) {
+      console.error('Supabase error in GET /users/:userId/votes:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  } else {
+    return res.json([]);
   }
 });
 

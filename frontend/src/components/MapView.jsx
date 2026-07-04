@@ -268,7 +268,8 @@ export default function MapView({
   onConfirmResolution,
   showHeatmap,
   onToggleHeatmap,
-  onOpenHistory
+  onOpenHistory,
+  votedReportIds = []
 }) {
   const [userPos, setUserPos] = useState(HYDERABAD_CENTER);
 
@@ -358,6 +359,7 @@ export default function MapView({
                 report={report}
                 onVote={onVote}
                 onConfirmResolution={onConfirmResolution}
+                hasVoted={votedReportIds.includes(report.id)}
               />
             </Popup>
           </Marker>
