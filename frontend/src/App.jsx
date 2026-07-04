@@ -1414,6 +1414,7 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
             setIsAuthModalOpen(false);
             setPendingAction(null);
           }}
+          darkMode={darkMode}
         />
       )}
 

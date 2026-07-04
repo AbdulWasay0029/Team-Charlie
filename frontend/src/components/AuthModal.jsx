@@ -15,7 +15,7 @@ const HYDERABAD_WARDS = [
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
 
-export default function AuthModal({ initialTab = 'signin', onSignup, loading, onClose }) {
+export default function AuthModal({ initialTab = 'signin', onSignup, loading, onClose, darkMode = true }) {
   const [activeTab, setActiveTab] = useState(initialTab); // 'signin' | 'signup'
   const [isCouncillorMode, setIsCouncillorMode] = useState(false);
   const [name, setName] = useState('');
@@ -254,15 +254,29 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
     }
   };
 
+  const inputBgClass = darkMode 
+    ? 'bg-slate-950 border border-slate-800 text-slate-200 placeholder:text-slate-600 focus:border-orange-500 focus:ring-orange-500' 
+    : 'bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-orange-500 focus:ring-orange-500 shadow-sm';
+  const labelClass = `block text-[10px] font-mono font-bold uppercase tracking-wider mb-1 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`;
+  const iconClass = darkMode ? 'text-slate-500' : 'text-slate-400';
+
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[1000] p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xs w-full p-6 shadow-2xl relative overflow-hidden text-left bg-linear-to-b from-slate-900 to-slate-950/60">
+    <div className={`fixed inset-0 backdrop-blur-sm flex items-center justify-center z-[1000] p-4 animate-in fade-in duration-200 ${
+      darkMode ? 'bg-slate-950/80' : 'bg-slate-900/40'
+    }`}>
+      <div className={`border rounded-3xl max-w-xs w-full p-6 shadow-2xl relative overflow-hidden text-left transition-all ${
+        darkMode 
+          ? 'bg-slate-900 border-slate-800 bg-gradient-to-b from-slate-900 to-slate-950/60 text-slate-100' 
+          : 'bg-white border-slate-200 bg-gradient-to-b from-white to-slate-50 text-slate-900 shadow-xl'
+      }`}>
         
         {/* Close Button */}
         {onClose && (
           <button 
             onClick={onClose}
-            className="absolute top-4 right-4 text-slate-550 hover:text-slate-200 p-1.5 rounded-full hover:bg-slate-800 transition-all cursor-pointer"
+            className={`absolute top-4 right-4 p-1.5 rounded-full transition-all cursor-pointer ${
+              darkMode ? 'text-slate-500 hover:text-slate-200 hover:bg-slate-800' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+            }`}
           >
             <X className="w-4 h-4" />
           </button>
@@ -278,8 +292,8 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
             <ShieldCheck className="w-4 h-4" />
           </div>
           <div className="text-left">
-            <h2 className="text-base font-display font-black text-slate-100 leading-tight">TraceSpark</h2>
-            <p className="text-[10px] font-mono text-slate-450 tracking-wider uppercase mt-0.5 block">
+            <h2 className={`text-base font-display font-black leading-tight ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>TraceSpark</h2>
+            <p className={`text-[10px] font-mono tracking-wider uppercase mt-0.5 block ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
               {isCouncillorMode ? "Councillor Portal" : "Citizen Identity"}
             </p>
           </div>
@@ -287,14 +301,16 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
 
         {/* Top Navigation Tabs: SIGN IN vs SIGN UP (hidden in councillor mode) */}
         {!isCouncillorMode && (
-          <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-850 mb-4 font-mono text-xs font-bold">
+          <div className={`flex rounded-xl p-1 border mb-4 font-mono text-xs font-bold ${
+            darkMode ? 'bg-slate-950 border-slate-850' : 'bg-slate-100 border-slate-200'
+          }`}>
             <button
               type="button"
               onClick={() => { setActiveTab('signin'); setError(''); }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg transition-all cursor-pointer ${
                 activeTab === 'signin'
-                  ? 'bg-slate-800 text-slate-100 shadow-2xs font-extrabold border border-slate-700'
-                  : 'text-slate-500 hover:text-slate-200'
+                  ? (darkMode ? 'bg-slate-800 text-slate-100 shadow-sm font-extrabold border border-slate-700' : 'bg-white text-slate-900 shadow-sm font-extrabold border border-slate-200/80')
+                  : (darkMode ? 'text-slate-500 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
               }`}
             >
               <LogIn className="w-3.5 h-3.5" />
@@ -305,8 +321,8 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
               onClick={() => { setActiveTab('signup'); setError(''); }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg transition-all cursor-pointer ${
                 activeTab === 'signup'
-                  ? 'bg-slate-800 text-slate-100 shadow-2xs font-extrabold border border-slate-700'
-                  : 'text-slate-500 hover:text-slate-200'
+                  ? (darkMode ? 'bg-slate-800 text-slate-100 shadow-sm font-extrabold border border-slate-700' : 'bg-white text-slate-900 shadow-sm font-extrabold border border-slate-200/80')
+                  : (darkMode ? 'text-slate-500 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
               }`}
             >
               <UserPlus className="w-3.5 h-3.5" />
@@ -325,11 +341,13 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
 
         {/* 1-Click Google OAuth Section (hidden in councillor mode) */}
         {!isCouncillorMode && (
-          <div className="mb-4 flex justify-center bg-slate-950 border border-slate-850 py-2.5 px-1 rounded-2xl">
+          <div className={`mb-4 flex justify-center py-2.5 px-1 rounded-2xl border ${
+            darkMode ? 'bg-slate-950 border-slate-850' : 'bg-slate-50 border-slate-200/80'
+          }`}>
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => setError("Google Sign-In failed. Please try again.")}
-              theme="filled_blue"
+              theme={darkMode ? "filled_black" : "outline"}
               shape="pill"
               size="medium"
               width="240"
@@ -341,8 +359,10 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
         {/* Divider (hidden in councillor mode) */}
         {!isCouncillorMode && (
           <div className="relative flex items-center justify-center mb-4">
-            <div className="border-t border-slate-800 w-full" />
-            <span className="bg-slate-900 px-2 text-[9px] font-mono font-extrabold uppercase tracking-widest text-slate-500 absolute">
+            <div className={`border-t w-full ${darkMode ? 'border-slate-800' : 'border-slate-200'}`} />
+            <span className={`px-2 text-[9px] font-mono font-extrabold uppercase tracking-widest absolute ${
+              darkMode ? 'bg-slate-900 text-slate-500' : 'bg-white text-slate-400'
+            }`}>
               or mobile
             </span>
           </div>
@@ -352,11 +372,11 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
         {(activeTab === 'signin' || isCouncillorMode) && (
           <form onSubmit={isCouncillorMode ? handleCouncillorSignin : handleSignin} className="space-y-3 font-sans">
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={labelClass}>
                 Mobile Number
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 font-bold text-xs">
+                <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none font-bold text-xs ${iconClass}`}>
                   +91
                 </div>
                 <input
@@ -366,14 +386,14 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                   placeholder="10-digit number"
-                  className="w-full pl-10 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 font-medium text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-650 text-left"
+                  className={`w-full pl-10 pr-3 py-2 rounded-xl font-medium text-xs focus:outline-none transition-all text-left ${inputBgClass}`}
                 />
-                <Phone className="w-3.5 h-3.5 text-slate-550 absolute right-3 top-2.5 pointer-events-none" />
+                <Phone className={`w-3.5 h-3.5 absolute right-3 top-2.5 pointer-events-none ${iconClass}`} />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-1">
+              <label className={labelClass}>
                 Password
               </label>
               <div className="relative">
@@ -383,9 +403,9 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-3 pr-9 py-2 bg-slate-955 border border-slate-800 rounded-xl text-slate-200 font-medium text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-650 text-left"
+                  className={`w-full pl-3 pr-9 py-2 rounded-xl font-medium text-xs focus:outline-none transition-all text-left ${inputBgClass}`}
                 />
-                <Lock className="w-3.5 h-3.5 text-slate-555 absolute right-3 top-2.5 pointer-events-none" />
+                <Lock className={`w-3.5 h-3.5 absolute right-3 top-2.5 pointer-events-none ${iconClass}`} />
               </div>
             </div>
 
@@ -417,7 +437,7 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
         {!isCouncillorMode && activeTab === 'signup' && (
           <form onSubmit={handleSignup} className="space-y-2.5 font-sans">
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-505 mb-0.5">
+              <label className={labelClass}>
                 Full Name
               </label>
               <div className="relative">
@@ -427,18 +447,18 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Citizen Name"
-                  className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 font-medium text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-650 text-left"
+                  className={`w-full pl-8 pr-3 py-1.5 rounded-xl font-medium text-xs focus:outline-none transition-all text-left ${inputBgClass}`}
                 />
-                <User className="w-3.5 h-3.5 text-slate-550 absolute left-2.5 top-2 pointer-events-none" />
+                <User className={`w-3.5 h-3.5 absolute left-2.5 top-2 pointer-events-none ${iconClass}`} />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-505 mb-0.5">
+              <label className={labelClass}>
                 Mobile Number
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-500 font-bold text-xs">
+                <div className={`absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none font-bold text-xs ${iconClass}`}>
                   +91
                 </div>
                 <input
@@ -448,14 +468,14 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                   placeholder="10-digit number"
-                  className="w-full pl-9 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 font-medium text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-650 text-left"
+                  className={`w-full pl-9 pr-3 py-1.5 rounded-xl font-medium text-xs focus:outline-none transition-all text-left ${inputBgClass}`}
                 />
-                <Phone className="w-3.5 h-3.5 text-slate-550 absolute right-2.5 top-2 pointer-events-none" />
+                <Phone className={`w-3.5 h-3.5 absolute right-2.5 top-2 pointer-events-none ${iconClass}`} />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-550 mb-0.5">
+              <label className={labelClass}>
                 Create Password
               </label>
               <div className="relative">
@@ -465,24 +485,24 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="6+ characters"
-                  className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 font-medium text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all placeholder:text-slate-650 text-left"
+                  className={`w-full pl-8 pr-3 py-1.5 rounded-xl font-medium text-xs focus:outline-none transition-all text-left ${inputBgClass}`}
                 />
-                <Lock className="w-3.5 h-3.5 text-slate-555 absolute left-2.5 top-2 pointer-events-none" />
+                <Lock className={`w-3.5 h-3.5 absolute left-2.5 top-2 pointer-events-none ${iconClass}`} />
               </div>
             </div>
 
             <div>
-              <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-550 mb-0.5">
+              <label className={labelClass}>
                 Primary Municipal Ward
               </label>
               <div className="relative">
                 <select
                   value={selectedWard}
                   onChange={(e) => setSelectedWard(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 font-medium text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all appearance-none cursor-pointer"
+                  className={`w-full pl-8 pr-3 py-1.5 rounded-xl font-medium text-xs focus:outline-none transition-all appearance-none cursor-pointer ${inputBgClass}`}
                 >
                   {HYDERABAD_WARDS.map(w => (
-                    <option key={w} value={w} className="bg-slate-950 text-slate-200">{w}</option>
+                    <option key={w} value={w} className={darkMode ? "bg-slate-950 text-slate-200" : "bg-white text-slate-900"}>{w}</option>
                   ))}
                 </select>
                 <MapPin className="w-3.5 h-3.5 text-orange-500 absolute left-2.5 top-2 pointer-events-none" />
@@ -510,14 +530,14 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
         )}
 
         {/* Bottom Switcher */}
-        <div className="mt-4 pt-3 border-t border-slate-800 text-center flex flex-col gap-1.5">
+        <div className={`mt-4 pt-3 border-t text-center flex flex-col gap-1.5 ${darkMode ? 'border-slate-800' : 'border-slate-200'}`}>
           {isCouncillorMode ? (
-            <p className="text-[11px] text-slate-400">
+            <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
               Are you a citizen?{' '}
               <button
                 type="button"
                 onClick={() => { setIsCouncillorMode(false); setActiveTab('signin'); setError(''); }}
-                className="text-orange-400 hover:text-orange-355 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
+                className="text-orange-500 hover:text-orange-600 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
               >
                 Sign In as Citizen
               </button>
@@ -525,34 +545,34 @@ export default function AuthModal({ initialTab = 'signin', onSignup, loading, on
           ) : (
             <>
               {activeTab === 'signin' ? (
-                <p className="text-[11px] text-slate-400">
+                <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                   No account?{' '}
                   <button
                     type="button"
                     onClick={() => { setActiveTab('signup'); setError(''); }}
-                    className="text-orange-400 hover:text-orange-355 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
+                    className="text-orange-500 hover:text-orange-600 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
                   >
                     Sign Up
                   </button>
                 </p>
               ) : (
-                <p className="text-[11px] text-slate-400">
+                <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                   Have an account?{' '}
                   <button
                     type="button"
                     onClick={() => { setActiveTab('signin'); setError(''); }}
-                    className="text-orange-400 hover:text-orange-355 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
+                    className="text-orange-500 hover:text-orange-600 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
                   >
                     Sign In
                   </button>
                 </p>
               )}
-              <p className="text-[11px] text-slate-500 pt-1.5 border-t border-slate-800/50">
+              <p className={`text-[11px] pt-1.5 border-t ${darkMode ? 'text-slate-500 border-slate-800/50' : 'text-slate-500 border-slate-200'}`}>
                 Are you a Ward Councillor?{' '}
                 <button
                   type="button"
                   onClick={() => { setIsCouncillorMode(true); setError(''); }}
-                  className="text-emerald-450 hover:text-emerald-350 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
+                  className="text-emerald-600 hover:text-emerald-500 font-bold underline underline-offset-2 ml-0.5 cursor-pointer font-sans"
                 >
                   Councillor Portal
                 </button>
