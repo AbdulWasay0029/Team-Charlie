@@ -4,7 +4,7 @@ import FilterBar from './components/FilterBar';
 import ReportForm from './components/ReportForm';
 import SidePanel from './components/SidePanel';
 import AuthModal from './components/AuthModal';
-import { INITIAL_REPORTS, CATEGORIES } from './mockData';
+import { INITIAL_REPORTS, CATEGORIES, WARDS_DATABASE } from './mockData';
 import { 
   AlertCircle, CheckCircle2, Info, RefreshCw, X, Shield, 
   Map, Award, Flame, User, LogOut, MessageSquare, AlertOctagon, History, Loader2,
