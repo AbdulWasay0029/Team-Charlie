@@ -758,34 +758,13 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
               </div>
             </div>
 
-            {/* Quick Action Button to direct map access with cool static GIS map background */}
+            {/* Quick Action Button to direct map access */}
             <button
               onClick={() => setViewMode('map')}
-              style={{
-                backgroundImage: `linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.75) 100%), url('https://a.basemaps.cartocdn.com/dark_all/13/5798/3642.png')`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-              className="group relative overflow-hidden border border-slate-700/80 hover:border-teal-400 text-white font-extrabold px-6 py-4 rounded-2xl flex items-center justify-between gap-4 transition-all duration-300 cursor-pointer shadow-xl hover:shadow-teal-500/20 shrink-0 md:w-64 text-left font-mono hover:scale-102 active:scale-98"
+              className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-extrabold px-6 py-5 rounded-2xl flex items-center justify-center gap-2 transition cursor-pointer shadow-lg hover:shadow-orange-500/10 shrink-0 md:w-56 text-sm uppercase tracking-widest font-mono"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-teal-500/15 via-transparent to-sky-500/15 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              
-              <div className="flex flex-col z-10">
-                <span className="text-white font-display font-black text-sm leading-tight tracking-wide flex items-center gap-1.5">
-                  <span>OPEN LIVE MAP</span>
-                  <span className="text-teal-400 group-hover:translate-x-1 transition-transform">→</span>
-                </span>
-                <span className="text-[9px] text-teal-300 font-mono tracking-widest uppercase mt-0.5 flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-teal-400 animate-pulse"></span>
-                  GIS Ward Overlay
-                </span>
-              </div>
-
-              {/* Radar pulse icon on map */}
-              <div className="relative z-10 flex items-center justify-center w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-400/50 text-teal-300 group-hover:bg-teal-500 group-hover:text-slate-950 transition-colors duration-300 shadow-md shrink-0">
-                <span className="absolute h-2.5 w-2.5 rounded-full bg-teal-400 animate-ping"></span>
-                <Map className="h-5 w-5" />
-              </div>
+              <Map className="h-5 w-5 animate-pulse text-white" />
+              Open Live Map
             </button>
           </div>
 
@@ -873,90 +852,54 @@ Under GHMC Service Level Agreement guidelines, immediate municipal action is req
             
             <div className="featured-scroll-container pb-2">
               
-              {/* Card 1: Lodge Grievance with static CartoDB Dark Matter map background */}
+              {/* Card 1: Lodge Grievance */}
               <div 
                 onClick={() => setViewMode('map')}
-                style={{
-                  backgroundImage: `linear-gradient(135deg, rgba(127, 29, 29, 0.88) 0%, rgba(69, 10, 10, 0.82) 100%), url('https://a.basemaps.cartocdn.com/dark_all/13/5798/3642.png')`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-                className="group relative overflow-hidden border border-red-700/60 hover:border-red-400/80 text-white p-5 rounded-2xl min-w-[280px] w-80 text-left shadow-xl cursor-pointer transform hover:scale-102 transition-all duration-300 flex flex-col justify-between h-40"
+                className="bg-gradient-to-br from-orange-500 to-red-600 text-white p-5 rounded-2xl min-w-[280px] w-80 text-left shadow-lg cursor-pointer transform hover:scale-102 transition flex flex-col justify-between h-40"
               >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-70"></div>
-                <div className="relative flex items-start justify-between z-10">
-                  <div className="bg-red-500/20 p-3 rounded-xl backdrop-blur-md border border-red-400/40 text-red-300 group-hover:bg-red-500 group-hover:text-white transition-colors shadow-md font-black text-lg">
+                <div className="flex items-start justify-between">
+                  <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-white font-black text-lg">
                     🚨
                   </div>
-                  <span className="text-[9px] font-mono uppercase tracking-widest font-extrabold bg-slate-900/80 text-red-300 px-2.5 py-1 rounded-lg border border-red-500/30 backdrop-blur-sm shadow-xs flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse"></span>
-                    Report
-                  </span>
+                  <span className="text-[9px] font-mono uppercase tracking-widest font-extrabold bg-white/20 px-2 py-0.5 rounded border border-white/15">Report</span>
                 </div>
-                <div className="relative z-10">
-                  <h4 className="font-extrabold text-sm tracking-wide text-white flex items-center gap-2">
-                    <span>TAP MAP TO REPORT</span>
-                    <span className="text-red-400 text-xs">→</span>
-                  </h4>
-                  <p className="text-red-100/90 text-[10px] mt-1 font-medium leading-relaxed">Lodge issue coordinates with inline Llama 3.2 AI Vision verification check.</p>
+                <div>
+                  <h4 className="font-extrabold text-sm tracking-wide">TAP MAP TO REPORT</h4>
+                  <p className="text-orange-100 text-[10px] mt-1 font-medium">Lodge issue coordinates with inline AI Vision verification check.</p>
                 </div>
               </div>
 
-              {/* Card 2: Live Map with static CartoDB Voyager map background */}
+              {/* Card 2: Live Map */}
               <div 
                 onClick={() => { setViewMode('map'); setShowHeatmap(false); }}
-                style={{
-                  backgroundImage: `linear-gradient(135deg, rgba(15, 23, 42, 0.88) 0%, rgba(30, 41, 59, 0.75) 100%), url('https://a.basemaps.cartocdn.com/rastertiles/voyager/13/5798/3642.png')`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-                className="group relative overflow-hidden border border-slate-700/80 hover:border-sky-400/80 text-white p-5 rounded-2xl min-w-[280px] w-80 text-left shadow-xl cursor-pointer transform hover:scale-102 transition-all duration-300 flex flex-col justify-between h-40"
+                className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-5 rounded-2xl min-w-[280px] w-80 text-left shadow-lg cursor-pointer transform hover:scale-102 transition flex flex-col justify-between h-40"
               >
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent opacity-70"></div>
-                <div className="relative flex items-start justify-between z-10">
-                  <div className="bg-sky-500/20 p-3 rounded-xl backdrop-blur-md border border-sky-400/40 text-sky-300 group-hover:bg-sky-500 group-hover:text-slate-950 transition-colors shadow-md">
+                <div className="flex items-start justify-between">
+                  <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-white">
                     <Map className="h-5 w-5" />
                   </div>
-                  <span className="text-[9px] font-mono uppercase tracking-widest font-extrabold bg-slate-900/80 text-sky-300 px-2.5 py-1 rounded-lg border border-sky-500/30 backdrop-blur-sm shadow-xs flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse"></span>
-                    GIS Map
-                  </span>
+                  <span className="text-[9px] font-mono uppercase tracking-widest font-extrabold bg-white/20 px-2 py-0.5 rounded border border-white/15">Explorer</span>
                 </div>
-                <div className="relative z-10">
-                  <h4 className="font-extrabold text-sm tracking-wide text-white flex items-center gap-2">
-                    <span>LIVE GRIEVANCE MAP</span>
-                    <span className="text-sky-400 text-xs">→</span>
-                  </h4>
-                  <p className="text-slate-300 text-[10px] mt-1 font-medium leading-relaxed">Browse neighborhood complaints, upvote tickets, and view active dispatches on interactive GIS overlay.</p>
+                <div>
+                  <h4 className="font-extrabold text-sm tracking-wide">LIVE GRIEVANCE MAP</h4>
+                  <p className="text-blue-100 text-[10px] mt-1 font-medium">Browse neighborhood complaints, upvote tickets, and view active dispatches.</p>
                 </div>
               </div>
 
-              {/* Card 3: Heatmap Density with static CartoDB Dark Matter background */}
+              {/* Card 3: Heatmap Density */}
               <div 
                 onClick={() => { setViewMode('map'); setShowHeatmap(true); }}
-                style={{
-                  backgroundImage: `linear-gradient(135deg, rgba(30, 15, 10, 0.9) 0%, rgba(67, 20, 7, 0.8) 100%), url('https://a.basemaps.cartocdn.com/dark_all/13/5798/3642.png')`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-                className="group relative overflow-hidden border border-amber-700/60 hover:border-amber-400/80 text-white p-5 rounded-2xl min-w-[280px] w-80 text-left shadow-xl cursor-pointer transform hover:scale-102 transition-all duration-300 flex flex-col justify-between h-40"
+                className="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-5 rounded-2xl min-w-[280px] w-80 text-left shadow-lg cursor-pointer transform hover:scale-102 transition flex flex-col justify-between h-40"
               >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-70"></div>
-                <div className="relative flex items-start justify-between z-10">
-                  <div className="bg-amber-500/20 p-3 rounded-xl backdrop-blur-md border border-amber-400/40 text-amber-300 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors shadow-md">
-                    <Flame className="h-5 w-5 animate-pulse" />
+                <div className="flex items-start justify-between">
+                  <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/10 text-white">
+                    <Flame className="h-5 w-5 text-amber-300 animate-pulse" />
                   </div>
-                  <span className="text-[9px] font-mono uppercase tracking-widest font-extrabold bg-slate-900/80 text-amber-300 px-2.5 py-1 rounded-lg border border-amber-500/30 backdrop-blur-sm shadow-xs flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-ping"></span>
-                    Hot-Spots
-                  </span>
+                  <span className="text-[9px] font-mono uppercase tracking-widest font-extrabold bg-white/20 px-2 py-0.5 rounded border border-white/15">Hot-Spots</span>
                 </div>
-                <div className="relative z-10">
-                  <h4 className="font-extrabold text-sm tracking-wide text-white flex items-center gap-2">
-                    <span>DENSITY HEATMAP</span>
-                    <span className="text-amber-400 text-xs">→</span>
-                  </h4>
-                  <p className="text-amber-100/90 text-[10px] mt-1 font-medium leading-relaxed">Pinpoint critical hubs of civic neglect based on crowdsourced upvotes and severity coordinates.</p>
+                <div>
+                  <h4 className="font-extrabold text-sm tracking-wide">DENSITY HEATMAP</h4>
+                  <p className="text-amber-100 text-[10px] mt-1 font-medium">Pinpoint critical hubs of civic neglect based on crowdsourced upvotes.</p>
                 </div>
               </div>
 
