@@ -368,11 +368,11 @@ export default function MapView({
   const totalVotes = reports.reduce((acc, r) => acc + (r.priority_score || 0), 0);
 
   return (
-    <div className="w-full h-full relative z-0">
+    <div className="w-full h-full relative z-0 flex flex-col flex-1 font-body">
       <MapContainer
         center={HYDERABAD_CENTER}
         zoom={13}
-        className="w-full h-full"
+        className="w-full h-full flex-1"
         zoomControl={false}
       >
         {/* Dynamic Tile Layer Server */}
